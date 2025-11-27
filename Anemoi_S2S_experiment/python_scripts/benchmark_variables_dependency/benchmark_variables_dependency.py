@@ -374,5 +374,4 @@ def plot_rmse_time(rmse_r, rmse_rh, savename, times=None, title="RMSE over time"
 plot_rmse_time(rmse_r_sur, rmse_rh_sur, "rmse_sur", times=np.arange(121), title="Surface RMSE")
 plot_rmse_time(rmse_r_3D, rmse_rh_3D, "rmse_3D", times = np.arange(121), title = "Global RMSE")
 
-#github test
-test = "github test successful"
+
