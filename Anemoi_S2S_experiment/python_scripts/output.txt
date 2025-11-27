@@ -1,0 +1,10 @@
+centre
+shortName
+typeOfLevel
+level
+dataDate
+dataTime
+stepRange
+dataType
+number
+gridType
