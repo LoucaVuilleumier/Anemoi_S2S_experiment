@@ -5,9 +5,11 @@ from scipy.spatial import cKDTree
 import earthkit.data as ekd 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+from plotting_functions import plot_surface_field
+from physics_functions import compute_r_sur, compute_rh_sur
 
 ##Paths
-inference_output_path = "/ec/res4/hpcperm/nld4584/output_inference/output_benchmark_july2022.nc"
+inference_output_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_benchmark_july2022.nc"
 dataset_path = "/home/mlx/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr"
 
 
@@ -23,7 +25,6 @@ var_names = ds_dataset.attrs["variables"]
 init_time = np.datetime64("2022-07-01T00:00")
 t0 = np.where(times == init_time)[0][0]
 ds_dataset_sliced = ds_dataset.isel(time = slice(t0, t0 + n_steps))
-
 
 
 
@@ -52,41 +53,36 @@ dp2m_inference_C = dp2m_inference - 273.15
 sp_dataset_hPa = sp_dataset / 100.0
 sp_inference_hPa = sp_inference / 100.0
 
+
+#plot all surface fields
+plot_surface_field(ds_dataset, t2m_dataset_C, 1, "2m Temperature Dataset (°C)", "°C", "t2m_dataset.png", colormap='coolwarm')
+plot_surface_field(ds_dataset, t2m_inference_C, 1, "2m Temperature Inference  (°C)", "°C", "t2m_inference.png", colormap='coolwarm')
+plot_surface_field(ds_dataset, dp2m_dataset_C, 1, "2m Dew Point Temperature Dataset (°C)", "°C", "dp2m_dataset.png", colormap='coolwarm')
+plot_surface_field(ds_dataset, dp2m_inference_C, 1, "2m Dew Point Temperature Inference (°C)", "°C", "dp2m_inference.png", colormap='coolwarm')
+plot_surface_field(ds_dataset, sp_dataset_hPa, 1, "Surface Pressure Dataset (hPa)", "hPa", "sp_dataset.png", colormap='winter')
+plot_surface_field(ds_dataset, sp_inference_hPa, 1, "Surface Pressure Inference (hPa)", "hPa", "sp_inference.png", colormap='winter')
+
 #compute rh and r
-
-def compute_r_sur(t2m, dp2m, sp):       #mixing ratio
-    e = np.where(                       #water vapor partial pressure, in hPa  
-    t2m >= 0.0,
-    6.107 * np.exp((17.368 * dp2m) / (dp2m + 238.83)),
-    6.108 * np.exp((17.856 * dp2m) / (dp2m + 245.52)),
-    )
-    r_sur = 622.0 * (e / (sp - e))
-    return r_sur
-
-def compute_rh_sur(t2m, dp2m):       #relative humidity
-    e = np.where(                   #water vapor partial pressure, in hPa  
-    t2m >= 0.0,
-    6.107 * np.exp((17.368 * dp2m) / (dp2m + 238.83)),
-    6.108 * np.exp((17.856 * dp2m) / (dp2m + 245.52)),
-    )
-    e_sat =  np.where(          #saturation water vapor, in hPa
-    t2m >= 0.0,
-    6.107 * np.exp((17.368 * t2m) / (t2m + 238.83)),
-    6.108 * np.exp((17.856 * t2m) / (t2m + 245.52)),
-    )
-    rh_sur = 100 * e/e_sat
-    return rh_sur
-
-r_sur_inference = compute_r_sur(t2m_inference_C, dp2m_inference_C, sp_inference_hPa)
+rh_sur_dataset = compute_rh_sur(t2m_dataset_C, dp2m_dataset_C)
 r_sur_dataset = compute_r_sur(t2m_dataset_C, dp2m_dataset_C, sp_dataset_hPa)
 
-rh_sur_inference = compute_rh_sur(t2m_inference_C,dp2m_inference_C)
-rh_sur_dataset = compute_rh_sur(t2m_dataset_C, dp2m_dataset_C)
+rh_sur_inference_clipped = compute_rh_sur(t2m_inference_C, dp2m_inference_C, clip_for_plot=True)
+rh_sur_inference = compute_rh_sur(t2m_inference_C, dp2m_inference_C, clip_for_plot=False)  
+r_sur_inference = compute_r_sur(t2m_inference_C, dp2m_inference_C, sp_inference_hPa)
+
+
+#plot rh and r
+plot_surface_field(ds_dataset, rh_sur_dataset, 120, "RH Dataset", "%", "rh_dataset.png")
+plot_surface_field(ds_dataset, rh_sur_inference, 120, "RH Inference", "%", "rh_inference.png")
+plot_surface_field(ds_dataset, rh_sur_inference_clipped, 120, "RH Inference (clipped)", "%", "rh_inference_clipped.png")
+plot_surface_field(ds_dataset, r_sur_dataset, 120, "r Dataset", "g/kg", "r_dataset.png")
+plot_surface_field(ds_dataset, r_sur_inference, 120, "r Inference", "g/kg", "r_inference.png")
 
 
 #compute residuals
 r_res_sur =  (r_sur_dataset - r_sur_inference)
 rh_res_sur = (rh_sur_dataset -rh_sur_inference)
+rh_res_sur_clipped = (rh_sur_dataset -rh_sur_inference_clipped)
 
 #sanity checks
 def sanity_check(name, arr):
@@ -119,54 +115,17 @@ sanity_check("r_res_sur", r_res_sur.values)
 sanity_check("rh_res_sur", rh_res_sur)
 
 #Plot surface residues
+plot_surface_field(ds_dataset, r_res_sur, 120, "r surface residual", "g/kg", "r_residue_last_time.png")
+plot_surface_field(ds_dataset, rh_res_sur, 120, "RH surface residual", "%", "rh_residue_last_time.png")
+plot_surface_field(ds_dataset, r_res_sur, 1, "r surface residual", "g/kg", "r_residue_first_time.png")
+plot_surface_field(ds_dataset, rh_res_sur, 1, "RH surface residual", "%", "rh_residue_first_time.png")
+plot_surface_field(ds_dataset, rh_res_sur_clipped, 120, "RH surface residual (clipped)", "%", "rh_residue_clipped_last_time.png")
+plot_surface_field(ds_dataset, rh_res_sur_clipped, 1, "RH surface residual (clipped)", "%", "rh_residue_clipped_first_time.png")
 
-def plot_surface_residues(r_res_sur, rh_res_sur, timestep):
-    lons = ds_dataset["longitudes"].values.ravel()
-    lats = ds_dataset["latitudes"].values.ravel()
-    date = ds_dataset.dates.isel(time = (t0+ timestep)).values
-
-    r_plot = r_res_sur.isel(time=timestep).values.ravel()
-    rh_plot = rh_res_sur[timestep].ravel() 
-    
-    # remove duplicates
-    #coords = np.column_stack((lons, lats))
-    #_, idx_unique = np.unique(coords, axis=0, return_index=True)
-    #lons, lats, r_plot, rh_plot = lons[idx_unique], lats[idx_unique], r_plot[idx_unique], rh_plot[idx_unique]
-
-    # remove NaNs/infs
-    mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(r_plot) & np.isfinite(rh_plot)
-    lons, lats, r_plot, rh_plot = lons[mask], lats[mask], r_plot[mask], rh_plot[mask]
-
-    proj = ccrs.PlateCarree()
 
     
-    # --- r residuals ---
-    fig = plt.figure(figsize=(10, 6))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-    ax.set_global()
-    cf = ax.tricontourf(lons, lats, r_plot, 40, transform=proj)
-    ax.add_feature(cfeature.COASTLINE)
-    ax.set_title(f"r surface residual at {str(date)[:19]}")
-    cbar = plt.colorbar(cf, ax=ax, pad=0.05)
-    cbar.set_label("(g/kg)", fontsize=12)
-    plt.tight_layout()
-    plt.savefig("/ec/res4/hpcperm/nld4584/python_scripts/benchmark_variables_dependency/images/r_residue", dpi =150)
-
-    # --- RH residuals ---
-    fig = plt.figure(figsize=(10, 6))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-    cf = ax.tricontourf(lons, lats, rh_plot, 40, transform=proj)
-    ax.set_global()
-    ax.add_feature(cfeature.COASTLINE)
-    ax.set_title(f"RH surface residual at {str(date)[:19]}")
-    cbar = plt.colorbar(cf, ax=ax, pad=0.05)
-    cbar.set_label("%", fontsize=12)
-    plt.tight_layout()
-    plt.savefig("/ec/res4/hpcperm/nld4584/python_scripts/benchmark_variables_dependency/images/rh_residue", dpi =150)
-    plt.close()
     
-    
-plot_surface_residues(r_res_sur, rh_res_sur, 120)
+##################################################################################################################################################################
 
 
 
@@ -373,5 +332,4 @@ def plot_rmse_time(rmse_r, rmse_rh, savename, times=None, title="RMSE over time"
     
 plot_rmse_time(rmse_r_sur, rmse_rh_sur, "rmse_sur", times=np.arange(121), title="Surface RMSE")
 plot_rmse_time(rmse_r_3D, rmse_rh_3D, "rmse_3D", times = np.arange(121), title = "Global RMSE")
-
 

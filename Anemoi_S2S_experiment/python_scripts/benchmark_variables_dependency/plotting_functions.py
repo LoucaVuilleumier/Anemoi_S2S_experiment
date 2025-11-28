@@ -1,0 +1,64 @@
+import xarray as xr
+import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.colors import TwoSlopeNorm, Normalize
+from scipy.spatial import cKDTree
+import earthkit.data as ekd 
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+
+def plot_surface_field(ds_dataset, sur_field, timestep, title, unit, savename, colormap='RdBu_r'):
+    lons = ds_dataset["longitudes"].values.ravel()
+    lats = ds_dataset["latitudes"].values.ravel()
+    
+    times = ds_dataset.dates.values
+    init_time = np.datetime64("2022-07-01T00:00")
+    t0 = np.where(times == init_time)[0][0]
+    
+    date = ds_dataset.dates.isel(time = (t0+ timestep)).values
+
+    field_plot = sur_field.isel(time=timestep).values.ravel()
+    
+    
+    # remove NaNs/infs
+    mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(field_plot)
+    lons, lats, field_plot = lons[mask], lats[mask], field_plot[mask]
+    # Handle antimeridian: convert from 0-360 to -180 to 180 to avoid white band at 0 longitude
+    lons = np.where(lons > 180, lons - 360, lons)
+
+    proj = ccrs.PlateCarree()
+    
+    # Choose normalization and colormap safely.
+    # TwoSlopeNorm requires vmin < vcenter < vmax. For fields that don't
+    # cross zero (e.g., surface pressure), fall back to a linear Normalize
+    # and use a suitable sequential colormap to avoid the ValueError.
+    vmin, vmax = np.min(field_plot), np.max(field_plot)
+    if vmin < 0 < vmax:
+        norm = TwoSlopeNorm(vmin=vmin, vcenter=0, vmax=vmax)
+        cmap_use = colormap
+    else:
+        norm = Normalize(vmin=vmin, vmax=vmax)
+        # Pick a sensible sequential colormap when data are all positive
+        # or all negative to avoid misleading diverging maps.
+        if vmin >= 0:
+            cmap_use = 'winter'
+        elif vmax <= 0:
+            cmap_use = 'Blues_r'
+        else:
+            cmap_use = colormap
+
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    ax.set_global()
+    cf = ax.tricontourf(lons, lats, field_plot, 40, transform=proj, norm=norm, cmap=cmap_use)
+    ax.add_feature(cfeature.COASTLINE)
+    ax.set_title(f"{title} at {str(date)[:19]}")
+    cbar = plt.colorbar(cf, ax=ax, pad=0.05)
+    cbar.set_label(f"({unit})", fontsize=12)
+    plt.tight_layout()
+    plt.savefig(f"images/{savename}", dpi =150)
+    plt.close()
+    
+   
+    
+    
