@@ -5,18 +5,35 @@ from scipy.spatial import cKDTree
 import earthkit.data as ekd 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-from plotting_functions import plot_surface_field
+import plotting_functions as pf
 from physics_functions import compute_r_sur, compute_rh_sur
+from anemoi.training.losses.mse import MSELoss
+from anemoi.training.losses.PINNmse import PINNMSELoss
+import torch
+import metrics_function as mf
+from collections import defaultdict
 
 ##Paths
 inference_output_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_benchmark_july2022.nc"
 dataset_path = "/home/mlx/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr"
 
+#Variables of interest
+var_list = ['2t', '2d', 'sp'] 
 
 #inference output
 ds_inference = xr.open_dataset(inference_output_path, engine="netcdf4")
 n_steps = len(ds_inference.time)
 
+#Daily average (4 time steps = 24h at 6h resolution)
+ds_inference_daily_avg = ds_inference.coarsen(time=4, boundary='trim').mean()
+
+#Weekly average (28 time steps = 7 days at 6h resolution)
+ds_inference_weekly_avg = ds_inference.coarsen(time=28, boundary='trim').mean()
+
+#Create new dataset with only variables of interest
+ds_inference_6h = ds_inference[var_list]
+ds_inference_daily_avg = ds_inference_daily_avg[var_list]
+ds_inference_weekly_avg = ds_inference_weekly_avg[var_list]
 
 #dataset 
 ds_dataset = xr.open_zarr(dataset_path)
@@ -26,63 +43,100 @@ init_time = np.datetime64("2022-07-01T00:00")
 t0 = np.where(times == init_time)[0][0]
 ds_dataset_sliced = ds_dataset.isel(time = slice(t0, t0 + n_steps))
 
-
+#Daily, weekly, and monthly averages for dataset
+ds_dataset_daily_avg = ds_dataset_sliced.coarsen(time=4, boundary='trim').mean()
+ds_dataset_weekly_avg = ds_dataset_sliced.coarsen(time=28, boundary='trim').mean()
 
 #get the variables of interest for the dataset
-def get_var_dataset(variable):
+def get_var_dataset(dataset, variable):
     idx_variable = var_names.index(variable)
-    return ds_dataset_sliced["data"].isel(variable = idx_variable).squeeze(dim="ensemble").rename({"cell": "values"})
+    return dataset["data"].isel(variable = idx_variable).squeeze(dim="ensemble").rename({"cell": "values"})
 
-t2m_dataset = get_var_dataset("2t")
-dp2m_dataset = get_var_dataset("2d")
-sp_dataset = get_var_dataset("sp")
+
+ds_dataset_6h = xr.Dataset({var: get_var_dataset(ds_dataset_sliced, var) for var in var_list})
+ds_dataset_daily_avg = xr.Dataset({var: get_var_dataset(ds_dataset_daily_avg, var) for var in var_list})
+ds_dataset_weekly_avg = xr.Dataset({var: get_var_dataset(ds_dataset_weekly_avg, var) for var in var_list})
+
+#t2m_dataset = ds_dataset_6h["2t"]
+#dp2m_dataset = ds_dataset_6h["2d"]
+#sp_dataset = ds_dataset_6h["sp"]
 
 
 #get the variables of interest for the inference ouput
-t2m_inference = ds_inference["2t"]
-dp2m_inference = ds_inference["2d"]
-sp_inference = ds_inference["sp"]
+#t2m_inference = ds_inference["2t"]
+#dp2m_inference = ds_inference["2d"]
+#sp_inference = ds_inference["sp"]
 
 # Convert temperature from Kelvin to Celsius
-t2m_dataset_C = t2m_dataset - 273.15
-dp2m_dataset_C = dp2m_dataset - 273.15
-t2m_inference_C = t2m_inference - 273.15
-dp2m_inference_C = dp2m_inference - 273.15
+#t2m_dataset_C = t2m_dataset - 273.15
+#dp2m_dataset_C = dp2m_dataset - 273.15
+#t2m_inference_C = t2m_inference - 273.15
+#dp2m_inference_C = dp2m_inference - 273.15
+
+#Conversion to use physics equations
+list_datasets = [ds_dataset_6h, ds_dataset_daily_avg, ds_dataset_weekly_avg]
+for dataset in list_datasets:
+    dataset["2t"].values = dataset["2t"].values - 273.15
+    dataset["2d"].values = dataset["2d"].values - 273.15
+    dataset["sp"].values = dataset["sp"].values / 100.0  # Convert Pa to hPa
+
+list_inferences = [ds_inference_6h, ds_inference_daily_avg, ds_inference_weekly_avg]
+for inference in list_inferences:
+    inference["2t"].values = inference["2t"].values - 273.15
+    inference["2d"].values = inference["2d"].values - 273.15
+    inference["sp"].values = inference["sp"].values / 100.0  # Convert Pa to hPa
 
 # Convert surface pressure from Pa to hPa
-sp_dataset_hPa = sp_dataset / 100.0
-sp_inference_hPa = sp_inference / 100.0
+#sp_dataset_hPa = sp_dataset / 100.0
+#sp_inference_hPa = sp_inference / 100.0
 
 
 #plot all surface fields
-plot_surface_field(ds_dataset, t2m_dataset_C, 1, "2m Temperature Dataset (°C)", "°C", "t2m_dataset.png", colormap='coolwarm')
-plot_surface_field(ds_dataset, t2m_inference_C, 1, "2m Temperature Inference  (°C)", "°C", "t2m_inference.png", colormap='coolwarm')
-plot_surface_field(ds_dataset, dp2m_dataset_C, 1, "2m Dew Point Temperature Dataset (°C)", "°C", "dp2m_dataset.png", colormap='coolwarm')
-plot_surface_field(ds_dataset, dp2m_inference_C, 1, "2m Dew Point Temperature Inference (°C)", "°C", "dp2m_inference.png", colormap='coolwarm')
-plot_surface_field(ds_dataset, sp_dataset_hPa, 1, "Surface Pressure Dataset (hPa)", "hPa", "sp_dataset.png", colormap='winter')
-plot_surface_field(ds_dataset, sp_inference_hPa, 1, "Surface Pressure Inference (hPa)", "hPa", "sp_inference.png", colormap='winter')
+pf.plot_surface_field(ds_dataset, ds_dataset_6h["2t"], 1, "2m Temperature Dataset (°C)", "°C", "t2m_dataset.png", colormap='coolwarm')
+pf.plot_surface_field(ds_dataset, ds_inference_6h["2t"], 1, "2m Temperature Inference  (°C)", "°C", "t2m_inference.png", colormap='coolwarm')
+pf.plot_surface_field(ds_dataset, ds_dataset_6h["2d"], 1, "2m Dew Point Temperature Dataset (°C)", "°C", "dp2m_dataset.png", colormap='coolwarm')
+pf.plot_surface_field(ds_dataset, ds_inference_6h["2d"], 1, "2m Dew Point Temperature Inference (°C)", "°C", "dp2m_inference.png", colormap='coolwarm')
+pf.plot_surface_field(ds_dataset, ds_dataset_6h["sp"], 1, "Surface Pressure Dataset (hPa)", "hPa", "sp_dataset.png", colormap='winter')
+pf.plot_surface_field(ds_dataset, ds_inference_6h["sp"], 1, "Surface Pressure Inference (hPa)", "hPa", "sp_inference.png", colormap='winter')
 
 #compute rh and r
-rh_sur_dataset = compute_rh_sur(t2m_dataset_C, dp2m_dataset_C)
-r_sur_dataset = compute_r_sur(t2m_dataset_C, dp2m_dataset_C, sp_dataset_hPa)
+timesteps_list = ["6h", "daily_avg", "weekly_avg"]
+rh_sur_datasets = {}
+r_sur_datasets = {}
+for dataset, timestep in zip(list_datasets, timesteps_list):
+    rh_sur_datasets[timestep] = compute_rh_sur(dataset["2t"], dataset["2d"])
+    r_sur_datasets[timestep] = compute_r_sur(dataset["2t"], dataset["2d"], dataset["sp"])
 
-rh_sur_inference_clipped = compute_rh_sur(t2m_inference_C, dp2m_inference_C, clip_for_plot=True)
-rh_sur_inference = compute_rh_sur(t2m_inference_C, dp2m_inference_C, clip_for_plot=False)  
-r_sur_inference = compute_r_sur(t2m_inference_C, dp2m_inference_C, sp_inference_hPa)
+
+rh_sur_inferences = {}
+r_sur_inferences = {}
+for inference, timestep in zip(list_inferences, timesteps_list):
+    rh_sur_inferences[timestep] = compute_rh_sur(inference["2t"], inference["2d"], clip_for_plot=False)
+    r_sur_inferences[timestep] = compute_r_sur(inference["2t"], inference["2d"], inference["sp"])
 
 
 #plot rh and r
-plot_surface_field(ds_dataset, rh_sur_dataset, 120, "RH Dataset", "%", "rh_dataset.png")
-plot_surface_field(ds_dataset, rh_sur_inference, 120, "RH Inference", "%", "rh_inference.png")
-plot_surface_field(ds_dataset, rh_sur_inference_clipped, 120, "RH Inference (clipped)", "%", "rh_inference_clipped.png")
-plot_surface_field(ds_dataset, r_sur_dataset, 120, "r Dataset", "g/kg", "r_dataset.png")
-plot_surface_field(ds_dataset, r_sur_inference, 120, "r Inference", "g/kg", "r_inference.png")
+
+pf.plot_surface_field(ds_dataset, rh_sur_datasets["6h"], 1, "RH Dataset", "%", "rh_dataset.png")
+pf.plot_surface_field(ds_dataset, rh_sur_inferences["6h"], 1, "RH Inference", "%", "rh_inference.png")
+
+pf.plot_surface_field(ds_dataset, r_sur_datasets["6h"], 1, "r Dataset", "g/kg", "r_dataset.png")
+pf.plot_surface_field(ds_dataset, r_sur_inferences["6h"], 1, "r Inference", "g/kg", "r_inference.png")
+pf.plot_surface_field(ds_dataset, rh_sur_inferences["daily_avg"], 1, "RH Dataset", "%", "rh_dataset_daily_avg.png")
 
 
 #compute residuals
-r_res_sur =  (r_sur_dataset - r_sur_inference)
-rh_res_sur = (rh_sur_dataset -rh_sur_inference)
-rh_res_sur_clipped = (rh_sur_dataset -rh_sur_inference_clipped)
+r_res_sur = {}
+rh_res_sur = {}
+
+for timestep in timesteps_list:
+    r_res_sur[timestep] = r_sur_datasets[timestep] - r_sur_inferences[timestep]
+    rh_res_sur[timestep] = rh_sur_datasets[timestep] - rh_sur_inferences[timestep]
+
+
+#t2m_res = (t2m_dataset_C - t2m_inference_C)
+#dp2m_res = (dp2m_dataset_C - dp2m_inference_C)
+#sp_res = (sp_dataset_hPa - sp_inference_hPa)
 
 #sanity checks
 def sanity_check(name, arr):
@@ -115,20 +169,177 @@ sanity_check("r_res_sur", r_res_sur.values)
 sanity_check("rh_res_sur", rh_res_sur)
 
 #Plot surface residues
-plot_surface_field(ds_dataset, r_res_sur, 120, "r surface residual", "g/kg", "r_residue_last_time.png")
-plot_surface_field(ds_dataset, rh_res_sur, 120, "RH surface residual", "%", "rh_residue_last_time.png")
-plot_surface_field(ds_dataset, r_res_sur, 1, "r surface residual", "g/kg", "r_residue_first_time.png")
-plot_surface_field(ds_dataset, rh_res_sur, 1, "RH surface residual", "%", "rh_residue_first_time.png")
-plot_surface_field(ds_dataset, rh_res_sur_clipped, 120, "RH surface residual (clipped)", "%", "rh_residue_clipped_last_time.png")
-plot_surface_field(ds_dataset, rh_res_sur_clipped, 1, "RH surface residual (clipped)", "%", "rh_residue_clipped_first_time.png")
-
-
+last_indices =[120,29,3]  #last time step for 6h, daily avg, weekly avg
+for timestep, last in zip(timesteps_list, last_indices):
     
+    plot_surface_field(ds_dataset, r_res_sur[timestep], last, f"r surface residual, {timestep}", "g/kg", f"r_residue_last_time_{timestep}.png")
+    plot_surface_field(ds_dataset, rh_res_sur[timestep], last, f"RH surface residual, {timestep}", "%", f"rh_residue_last_time_{timestep}.png")
+    plot_surface_field(ds_dataset, r_res_sur[timestep], 1, f"r surface residual, {timestep}", "g/kg", f"r_residue_first_time_{timestep}.png")
+    plot_surface_field(ds_dataset, rh_res_sur[timestep], 1, f"RH surface residual, {timestep}", "%", f"rh_residue_first_time_{timestep}.png")
+
+#plot_surface_field(ds_dataset, t2m_res, 120, "2m Temperature residual", "°C", "t2m_residue_last_time.png", colormap='coolwarm')
+#plot_surface_field(ds_dataset, dp2m_res, 120, "2m Dew Point Temperature residual", "°C", "dp2m_residue_last_time.png", colormap='coolwarm')
+#plot_surface_field(ds_dataset, sp_res, 120, "Surface Pressure residual", "hPa", "sp_residue_last_time.png", colormap='winter')
+
+#plot_surface_field(ds_dataset, t2m_res, 1, "2m Temperature residual", "°C", "t2m_residue_first_time.png", colormap='coolwarm')
+#plot_surface_field(ds_dataset, dp2m_res, 1, "2m Dew Point Temperature residual", "°C", "dp2m_residue_first_time.png", colormap='coolwarm')
+#plot_surface_field(ds_dataset, sp_res, 1, "Surface Pressure residual", "hPa", "sp_residue_first_time.png", colormap='winter')
+
+##Compute relative MSE
+relative_mse = defaultdict(dict)
+
+for var in var_list:
+    for timestep, dataset, inference in zip(timesteps_list, list_datasets, list_inferences):
+        relative_mse[var][timestep] = mf.compute_relative_mse(
+            dataset[var],
+            inference[var]
+        )
+
+squashed_mse_6h = 1/3*(relative_mse['2t']['6h'] + relative_mse['2d']['6h'] + relative_mse['sp']['6h'] )
+
+#add the rh_sur variable
+for timestep in timesteps_list:
+    relative_mse["rh_sur"][timestep] = mf.compute_relative_mse(
+        rh_sur_datasets[timestep],
+        rh_sur_inferences[timestep]
+    )
     
+#add the r_sur variable
+for timestep in timesteps_list:
+    relative_mse["r_sur"][timestep] = mf.compute_relative_mse(
+        r_sur_datasets[timestep],
+        r_sur_inferences[timestep]
+    )
+    
+squashed_mse_6h_physics = 1/2*(relative_mse['rh_sur']['6h'] + relative_mse['r_sur']['6h'] )
+
+#plot relative MSE time series
+for timestep in timesteps_list:
+    pf.plot_multiple_lines(
+        {
+            "Relative MSE t2m": relative_mse["2t"][timestep],
+            "Relative MSE dp2m": relative_mse["2d"][timestep],
+            "Relative MSE sp": relative_mse["sp"][timestep],
+            "Relative MSE r_sur": relative_mse["r_sur"][timestep],
+            "Relative MSE rh_sur": relative_mse["rh_sur"][timestep]
+        },
+        xlabel="Time step",
+        ylabel="Relative MSE",
+        title=f"Relative MSE time series, {timestep}",
+        savename=f"relative_mse_time_series_{timestep}.png"
+    )
 ##################################################################################################################################################################
+#Reload the dataset to reset Kevlin and Pa to their original units
+ds_dataset = xr.open_zarr(dataset_path)
+times = ds_dataset.dates.values
+var_names = ds_dataset.attrs["variables"]
+init_time = np.datetime64("2022-07-01T00:00")
+t0 = np.where(times == init_time)[0][0]
+ds_dataset_sliced = ds_dataset.isel(time = slice(t0, t0 + n_steps))
+
+ds_inference = xr.open_dataset(inference_output_path, engine="netcdf4")
+ds_inference_6h = ds_inference[var_list]
+
+#prepare the pred and targe to use anemoi.training.losses.mse.MSELoss 
+var_list = ['2t', '2d', 'sp'] 
+pred_arrays = [ds_inference_6h[v].values for v in var_list]
+target_arrays = [get_var_dataset(ds_dataset_sliced,v).values for v in var_list]
+
+
+# Stack along new variable dimension
+pred_stacked = np.stack(pred_arrays, axis=-1)      # (time, values, n_vars)
+target_stacked = np.stack(target_arrays, axis=-1)  # (time, values, n_vars)
+
+pred_stacked = pred_stacked[:, np.newaxis, :, :]    # (time, 1, values, n_vars) 
+target_stacked = target_stacked[:, np.newaxis, :, :] # (time, 1, values, n_vars)
+
+pred_tensor = torch.from_numpy(pred_stacked).float()
+target_tensor = torch.from_numpy(target_stacked).float()
+
+#Instantiate the loss
+loss_fn = MSELoss(ignore_nans=False)
+
+#create scaler for grid weights (uniform weights here)
+n_grid = pred_tensor.shape[2]
+grid_weights = torch.ones(n_grid) / n_grid #Uniform weights
+loss_fn.add_scaler(2, grid_weights, name="grid_weights")  
+
+# Variable normalization (inverse variance scaling)
+# Compute std for each variable across all data
+var_variances = []
+for i in range(len(var_list)):
+    variance = target_stacked[:, :, :, i].var()  # Variance over values (=spatial dimension)
+    var_variances.append(1/variance)
+
+
+var_scales = torch.tensor(var_variances, dtype=torch.float32)
+loss_fn.add_scaler(3, var_scales, name="variable_scales") 
+
+#Compute loss
+mse_value = loss_fn(pred_tensor, target_tensor)
+print(f"MSE loss: {mse_value.item()}")
+
+#Compute The loss in a loop over time steps to get time series
+mse_time_series = []
+n_time_steps = pred_tensor.shape[0]
+for t in range(n_time_steps):
+    pred_t = pred_tensor[t:t+1, :, :, :]   # (1, 1, values, n_vars)
+    target_t = target_tensor[t:t+1, :, :, :] # (1, 1, values, n_vars)
+    mse_t = loss_fn(pred_t, target_t)
+    mse_time_series.append(mse_t.item())
+
+
+mse_time_series
 
 
 
+
+#############################
+#PINN Loss
+#Instantiate the PINN loss
+pinn_loss_pure_data = PINNMSELoss(physics_weight=1.0, alpha=0.0)  # Pure data loss
+pinn_loss_pure_physics = PINNMSELoss(physics_weight=1.0, alpha=1.0)  # Pure physics loss
+
+#Create scalers as before
+pinn_loss_pure_data.add_scaler(2, grid_weights, name="grid_weights")
+pinn_loss_pure_data.add_scaler(3, var_scales, name="variable_scales")
+
+pinn_loss_pure_physics.add_scaler(2, grid_weights, name="grid_weights")
+#pinn_loss_pure_physics.add_scaler(3, var_scales, name="variable_scales")
+
+# Set the variable indices manually for testing
+# var_list = ['2t', '2d', 'sp'], so indices are 0, 1, 2 respectively
+pinn_loss_pure_data.set_indices_manually(idx_2t=0, idx_2d=1, idx_sp=2)
+pinn_loss_pure_physics.set_indices_manually(idx_2t=0, idx_2d=1, idx_sp=2)
+
+#Compute PINN loss time series
+pinn_mse_pure_data_time_series = []
+pinn_mse_pure_physics_time_series = []
+for t in range(n_time_steps):
+    pred_t = pred_tensor[t:t+1, :, :, :]   # (1, 1, values, n_vars)
+    target_t = target_tensor[t:t+1, :, :, :] # (1, 1, values, n_vars)
+    
+    pinn_mse_data_t = pinn_loss_pure_data(pred_t, target_t)
+    pinn_mse_physics_t = pinn_loss_pure_physics(pred_t, target_t)
+    
+    pinn_mse_pure_data_time_series.append(pinn_mse_data_t.item())
+    pinn_mse_pure_physics_time_series.append(pinn_mse_physics_t.item())
+### Plotting
+pf.plot_multiple_lines(
+    {
+        "Hand-made, data Loss": squashed_mse_6h,
+        "Anemoi MSE": mse_time_series,
+        "Hand-made, Physics Loss": squashed_mse_6h_physics,
+        "PINN Loss (pure data)": pinn_mse_pure_data_time_series,
+        "PINN Loss (pure physics)": pinn_mse_pure_physics_time_series,
+
+    },
+    xlabel="Time step",
+    ylabel="Squashed Relative MSE",
+    title=f"Relative MSE time series comparison, 6h",
+    savename=f"comparison_relative_mse_time_series_6h.png"
+)
+##################################################################################################################
 #### 3D fields
 
 
@@ -139,7 +350,7 @@ n_cells = 40320
 p_levels = np.array([50, 100, 150, 200, 250, 300, 400, 500, 600, 700, 850, 925, 1000],)
 p_reshaped = p_levels.reshape(1, n_levels, 1)
 
-def get_3D_field_from_dataset(variable): #variable in form t_
+def get_3D_field_from_dataset(variable): 
     
         vars = [v for v in var_names if v.startswith(variable)]
         vars_sorted = sorted(vars, key=lambda x: int(x.split("_")[1]))

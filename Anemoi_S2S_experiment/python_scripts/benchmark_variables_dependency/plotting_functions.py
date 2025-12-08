@@ -15,9 +15,15 @@ def plot_surface_field(ds_dataset, sur_field, timestep, title, unit, savename, c
     init_time = np.datetime64("2022-07-01T00:00")
     t0 = np.where(times == init_time)[0][0]
     
-    date = ds_dataset.dates.isel(time = (t0+ timestep)).values
-
-    field_plot = sur_field.isel(time=timestep).values.ravel()
+    # Extract date and field data
+    if hasattr(sur_field, 'time'):
+        # xarray DataArray with time coordinate
+        date = sur_field.time[timestep].values
+        field_plot = sur_field.isel(time=timestep).values.ravel()
+    else:
+        # numpy array - fall back to original date indexing
+        date = ds_dataset.dates.isel(time=(t0 + timestep)).values
+        field_plot = sur_field[timestep].ravel()
     
     
     # remove NaNs/infs
@@ -52,13 +58,34 @@ def plot_surface_field(ds_dataset, sur_field, timestep, title, unit, savename, c
     ax.set_global()
     cf = ax.tricontourf(lons, lats, field_plot, 40, transform=proj, norm=norm, cmap=cmap_use)
     ax.add_feature(cfeature.COASTLINE)
-    ax.set_title(f"{title} at {str(date)[:19]}")
+    ax.set_title(f"{title} at {str(date)[:13]}", fontsize=14)
     cbar = plt.colorbar(cf, ax=ax, pad=0.05)
     cbar.set_label(f"({unit})", fontsize=12)
     plt.tight_layout()
     plt.savefig(f"images/{savename}", dpi =150)
     plt.close()
     
+    
+def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", savename=None):
+    """
+    series_dict: dict where keys are labels and values are 1D arrays.
+    x: optional x-array. If None, use index of values.
+    """
+    plt.figure()
+
+    for label, y in series_dict.items():
+        if x is None:
+            plt.plot(y, label=label, linestyle="--")
+        else:
+            plt.plot(x, y, label=label, linestyle="--")
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f"images/{savename}", dpi =150)
+    plt.close()
    
     
     
