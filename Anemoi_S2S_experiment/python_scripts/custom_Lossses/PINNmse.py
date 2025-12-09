@@ -34,8 +34,8 @@ LOGGER = logging.getLogger(__name__)
 class PINNMSELoss(FunctionalLoss):
     """MSE loss with optional PINN physics penalty.
 
-    The physics penalty compares predicted and target-derived diagnostics
-    (relative humidity and mixing ratio) and adds their area-weighted, normalized squared residuals)
+    The physics penalty compares predicted and target-derived
+    relative humidity and mixing ratio and adds their area-weighted, normalized squared residuals)
     """
 
     name: str = "pinn_mse"
@@ -57,32 +57,29 @@ class PINNMSELoss(FunctionalLoss):
         
         Looks for common name variants for 2m temperature, 2m dewpoint, and surface pressure.
         """
+        # Access the name_to_index dictionary from model output
+        name_to_index = data_indices.model.output.name_to_index
+        
         # Try common variants for 2m temperature
         for name in ['2t', 't2m']:
-            try:
-                self._idx_2t = data_indices[name].prognostic[0]
+            if name in name_to_index:
+                self._idx_2t = name_to_index[name]
                 LOGGER.info(f"PINNMSELoss: found 2m temperature at index {self._idx_2t} via '{name}'")
                 break
-            except (KeyError, IndexError, AttributeError):
-                pass
         
         # Try common variants for 2m dewpoint temperature
         for name in ['2d', 'd2m']:
-            try:
-                self._idx_2d = data_indices[name].prognostic[0]
+            if name in name_to_index:
+                self._idx_2d = name_to_index[name]
                 LOGGER.info(f"PINNMSELoss: found 2m dewpoint at index {self._idx_2d} via '{name}'")
                 break
-            except (KeyError, IndexError, AttributeError):
-                pass
         
         # Try common variants for surface pressure
         for name in ['sp', 'msl']:
-            try:
-                self._idx_sp = data_indices[name].prognostic[0]
+            if name in name_to_index:
+                self._idx_sp = name_to_index[name]
                 LOGGER.info(f"PINNMSELoss: found surface pressure at index {self._idx_sp} via '{name}'")
                 break
-            except (KeyError, IndexError, AttributeError):
-                pass
         
         if self._idx_2t is None or self._idx_2d is None or self._idx_sp is None:
             LOGGER.warning(
@@ -242,7 +239,7 @@ class PINNMSELoss(FunctionalLoss):
         physics_per_point = (self.physics_weight * physics_per_point).to(device=device, dtype=dtype)
 
         # Apply area weighting (grid dimension) and reduce
-        physics_scaled = self.scale(physics_per_point, grid_shard_slice=grid_shard_slice)
+        physics_scaled = self.scale(physics_per_point, grid_shard_slice=grid_shard_slice, without_scalers=["variable"])
         # Squash=True will average over the last dimension (the 2 physics variables)
         physics_loss = self.reduce(physics_scaled, squash=True, group=group if is_sharded else None)
 

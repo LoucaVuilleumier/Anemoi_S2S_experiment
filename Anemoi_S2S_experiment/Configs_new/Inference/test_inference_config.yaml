@@ -1,0 +1,7 @@
+checkpoint: /ec/res4/hpcperm/ecme5801/louca/inference-last.ckpt
+
+date: 2022-09-01T00:00
+lead_time: 60h
+output:
+  netcdf:
+    path: /ec/res4/hpcperm/nld4584/output_inference/output_test_inference.nc

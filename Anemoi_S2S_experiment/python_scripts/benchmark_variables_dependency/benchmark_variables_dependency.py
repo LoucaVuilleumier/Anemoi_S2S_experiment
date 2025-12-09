@@ -12,6 +12,9 @@ from anemoi.training.losses.PINNmse import PINNMSELoss
 import torch
 import metrics_function as mf
 from collections import defaultdict
+import importlib
+importlib.reload(pf)
+
 
 ##Paths
 inference_output_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_benchmark_july2022.nc"
@@ -223,6 +226,13 @@ for timestep in timesteps_list:
             "Relative MSE r_sur": relative_mse["r_sur"][timestep],
             "Relative MSE rh_sur": relative_mse["rh_sur"][timestep]
         },
+        linestyle={
+        "Relative MSE t2m": "-",
+        "Relative MSE dp2m": "--",
+        "Relative MSE sp": "-.",
+        "Relative MSE r_sur": ":",
+        "Relative MSE rh_sur": "-"
+        },
         xlabel="Time step",
         ylabel="Relative MSE",
         title=f"Relative MSE time series, {timestep}",
@@ -308,7 +318,7 @@ pinn_loss_pure_physics.add_scaler(2, grid_weights, name="grid_weights")
 #pinn_loss_pure_physics.add_scaler(3, var_scales, name="variable_scales")
 
 # Set the variable indices manually for testing
-# var_list = ['2t', '2d', 'sp'], so indices are 0, 1, 2 respectively
+# var_list = ['2t', '2d', 'sp']
 pinn_loss_pure_data.set_indices_manually(idx_2t=0, idx_2d=1, idx_sp=2)
 pinn_loss_pure_physics.set_indices_manually(idx_2t=0, idx_2d=1, idx_sp=2)
 
@@ -334,6 +344,13 @@ pf.plot_multiple_lines(
         "PINN Loss (pure physics)": pinn_mse_pure_physics_time_series,
 
     },
+        linestyle={
+        "Hand-made, data Loss": "-",
+        "Anemoi MSE": "--",
+        "Hand-made, Physics Loss": "--",
+        "PINN Loss (pure data)": "-.",
+        "PINN Loss (pure physics)": ":"
+        },    
     xlabel="Time step",
     ylabel="Squashed Relative MSE",
     title=f"Relative MSE time series comparison, 6h",

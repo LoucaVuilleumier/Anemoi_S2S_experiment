@@ -14,7 +14,7 @@ def compute_relative_mse(sur_field_dataset, sur_field_inference):
     mse = (diff ** 2).mean(dim="values")
 
     # Variance of the truth over the same spatial dimension
-    var = sur_field_dataset.var(dim="values")
+    var = sur_field_dataset.var()
 
     # Return time series (xarray DataArray)
     return mse / var

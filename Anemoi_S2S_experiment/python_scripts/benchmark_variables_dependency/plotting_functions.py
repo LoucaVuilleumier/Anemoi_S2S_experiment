@@ -66,18 +66,27 @@ def plot_surface_field(ds_dataset, sur_field, timestep, title, unit, savename, c
     plt.close()
     
     
-def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", savename=None):
+def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", savename=None, linestyle="--"):
     """
     series_dict: dict where keys are labels and values are 1D arrays.
     x: optional x-array. If None, use index of values.
+    linestyle: can be:
+        - a string (e.g., "--") to use same style for all lines
+        - a dict mapping labels to linestyles for per-line control
     """
     plt.figure()
 
     for label, y in series_dict.items():
-        if x is None:
-            plt.plot(y, label=label, linestyle="--")
+        # Determine linestyle for this line
+        if isinstance(linestyle, dict):
+            ls = linestyle.get(label, "-")  # default to solid if label not in dict
         else:
-            plt.plot(x, y, label=label, linestyle="--")
+            ls = linestyle
+        
+        if x is None:
+            plt.plot(y, label=label, linestyle=ls)
+        else:
+            plt.plot(x, y, label=label, linestyle=ls)
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
