@@ -1,0 +1,58 @@
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] -  This is the ECMWF jobfilter
+[ECMWF-INFO -sbatch] -  +++ Please report issues using the Support portal +++
+[ECMWF-INFO -sbatch] -  +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -sbatch] -  /usr/local/bin/ecsbatch: size: 53801, mtime: Tue Nov 25 12:31:30 2025
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] - Time at submit: Wed Dec 10 14:32:05 2025 (1765377125.6012404) on ac6-102.bullx:/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts
+[ECMWF-INFO -sbatch] - --- SLURM VARIABLES ---
+[ECMWF-INFO -sbatch] - EC_CLUSTER=ac
+[ECMWF-INFO -sbatch] - SLURM_EXPORT_ENV=ALL
+[ECMWF-INFO -sbatch] - SBATCH_EXPORT=NONE
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - jobscript: /lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/test_warm_up.sh
+[ECMWF-INFO -sbatch] - --- SCRIPT OPTIONS ---
+[ECMWF-INFO -sbatch] - #SBATCH --job-name=test_job
+[ECMWF-INFO -sbatch] - #SBATCH --output=./slurm_scripts/output_slurm/hello-%J.out
+[ECMWF-INFO -sbatch] - #SBATCH --error=./slurm_scripts/output_slurm/hello-%J.out
+[ECMWF-INFO -sbatch] - #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
+[ECMWF-INFO -sbatch] - #SBATCH --qos=ng
+[ECMWF-INFO -sbatch] - #SBATCH --time=01:00:00
+[ECMWF-INFO -sbatch] - #SBATCH --partition=gpu
+[ECMWF-INFO -sbatch] - #SBATCH --gres=gpu:1
+[ECMWF-INFO -sbatch] - #SBATCH --mem=60G
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - --- POST-PROCESSED OPTIONS ---
+[ECMWF-INFO -sbatch] - ARG --positional=['./test_warm_up.sh']
+[ECMWF-INFO -sbatch] - ARG --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
+[ECMWF-INFO -sbatch] - ARG --error=./slurm_scripts/output_slurm/hello-%J.out
+[ECMWF-INFO -sbatch] - ARG --gres=gpu:1
+[ECMWF-INFO -sbatch] - ARG --job_name=test_job
+[ECMWF-INFO -sbatch] - ARG --output=./slurm_scripts/output_slurm/hello-%J.out
+[ECMWF-INFO -sbatch] - ARG --partition=gpu
+[ECMWF-INFO -sbatch] - ARG --qos=ng
+[ECMWF-INFO -sbatch] - ARG --time=01:00:00
+[ECMWF-INFO -sbatch] - ARG --mem=60G
+[ECMWF-INFO -sbatch] - ------------------------------
+[ECMWF-INFO -sbatch] - jobtag: nld4584-test_job-1x2-/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/./slurm_scripts/output_slurm/hello-_.out
+[ECMWF-INFO -sbatch] - ['/usr/bin/sbatch', '--chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment', '--error=./slurm_scripts/output_slurm/hello-%J.out', '--gres=gpu:1', '--job-name=test_job', '--output=./slurm_scripts/output_slurm/hello-%J.out', '--partition=gpu', '--qos=ng', '--time=01:00:00', '--mem=60G', '--licenses=h2resw01', '--export=EC_user_time_limit=01:00:00', '/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/test_warm_up.sh']
+[ECMWF-INFO -sbatch] - sbatch executed on ac
+[ECMWF-INFO -sbatch] - Job queued on ac using method local
+[ECMWF-INFO -sbatch] - Submitted batch job 36910671
+[ECMWF-INFO -ecprofile] /usr/bin/bash NON_INTERACTIVE on ac6-314 at 20251210_143210.713, PID: 3398926, JOBID: 36910671
+[ECMWF-INFO -ecprofile] $SCRATCH=/ec/res4/scratch/nld4584
+[ECMWF-INFO -ecprofile] $PERM=/perm/nld4584
+[ECMWF-INFO -ecprofile] $HPCPERM=/ec/res4/hpcperm/nld4584
+[ECMWF-INFO -ecprofile] $TMPDIR=/dev/shm/_tmpdir_.nld4584.36910671
+[ECMWF-INFO -ecprofile] $SCRATCHDIR=/ec/res4/scratchdir/nld4584/7/36910671
+2025-12-10 14:42:03 INFO Running anemoi training command with overrides: ['--config-name=test_warm_up.yaml']
+2025-12-10 14:43:56 INFO Prepending Anemoi Config Env (/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Training) to the search path.
+2025-12-10 14:43:56 INFO Prepending current user directory (/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment) to the search path.
+2025-12-10 14:43:56 INFO Search path is now: [provider=anemoi-cwd-searchpath-plugin, path=/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment, provider=anemoi-env-searchpath-plugin, path=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Training, provider=hydra, path=pkg://hydra.conf, provider=main, path=pkg://anemoi.training/config]
+[2025-12-10 14:44:02,058][anemoi.training.train.train][INFO] - Skipping config validation.
+[2025-12-10 14:44:02,059][anemoi.training.train.train][INFO] - Starting from checkpoint: False
+[2025-12-10 14:44:02,059][anemoi.training.train.train][INFO] - Run id: fdc4cf41-3ee2-43d0-946c-b63fbb17cb9c
+[2025-12-10 14:44:02,060][anemoi.training.train.train][INFO] - Checkpoints path: output_training/checkpoint/fdc4cf41-3ee2-43d0-946c-b63fbb17cb9c
+[2025-12-10 14:44:02,060][anemoi.training.train.train][INFO] - Plots path: output_training/plots/fdc4cf41-3ee2-43d0-946c-b63fbb17cb9c
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-utils/src/anemoi/utils/config.py:207: UserWarning: Mofifying and instance of DotDict(). This class is intended to be immutable.
+  warnings.warn("Mofifying and instance of DotDict(). This class is intended to be immutable.")

@@ -59,6 +59,10 @@ training:
     iterations: 300000
     min: 3e-7 #Not scaled by #GPU
 
+system:
+  input:
+    warm_start: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_mariana/louca/last.ckpt
+
 
   # Define available scalers
 #  scalers:

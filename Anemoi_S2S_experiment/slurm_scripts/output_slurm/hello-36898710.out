@@ -1,0 +1,208 @@
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] -  This is the ECMWF jobfilter
+[ECMWF-INFO -sbatch] -  +++ Please report issues using the Support portal +++
+[ECMWF-INFO -sbatch] -  +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -sbatch] -  /usr/local/bin/ecsbatch: size: 53801, mtime: Tue Nov 25 12:31:30 2025
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] - Time at submit: Wed Dec 10 13:53:30 2025 (1765374810.4414957) on ac6-102.bullx:/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts
+[ECMWF-INFO -sbatch] - --- SLURM VARIABLES ---
+[ECMWF-INFO -sbatch] - EC_CLUSTER=ac
+[ECMWF-INFO -sbatch] - SLURM_EXPORT_ENV=ALL
+[ECMWF-INFO -sbatch] - SBATCH_EXPORT=NONE
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - jobscript: /lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/test_slurm.sh
+[ECMWF-INFO -sbatch] - --- SCRIPT OPTIONS ---
+[ECMWF-INFO -sbatch] - #SBATCH --job-name=test_job
+[ECMWF-INFO -sbatch] - #SBATCH --output=./slurm_scripts/output_slurm/hello-%J.out
+[ECMWF-INFO -sbatch] - #SBATCH --error=./slurm_scripts/output_slurm/hello-%J.out
+[ECMWF-INFO -sbatch] - #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
+[ECMWF-INFO -sbatch] - #SBATCH --qos=ng
+[ECMWF-INFO -sbatch] - #SBATCH --time=01:00:00
+[ECMWF-INFO -sbatch] - #SBATCH --partition=gpu
+[ECMWF-INFO -sbatch] - #SBATCH --gres=gpu:1
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - --- POST-PROCESSED OPTIONS ---
+[ECMWF-INFO -sbatch] - ARG --positional=['./test_slurm.sh']
+[ECMWF-INFO -sbatch] - ARG --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
+[ECMWF-INFO -sbatch] - ARG --error=./slurm_scripts/output_slurm/hello-%J.out
+[ECMWF-INFO -sbatch] - ARG --gres=gpu:1
+[ECMWF-INFO -sbatch] - ARG --job_name=test_job
+[ECMWF-INFO -sbatch] - ARG --output=./slurm_scripts/output_slurm/hello-%J.out
+[ECMWF-INFO -sbatch] - ARG --partition=gpu
+[ECMWF-INFO -sbatch] - ARG --qos=ng
+[ECMWF-INFO -sbatch] - ARG --time=01:00:00
+[ECMWF-INFO -sbatch] - ------------------------------
+[ECMWF-INFO -sbatch] - jobtag: nld4584-test_job-1x2-/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/./slurm_scripts/output_slurm/hello-_.out
+[ECMWF-INFO -sbatch] - ['/usr/bin/sbatch', '--chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment', '--error=./slurm_scripts/output_slurm/hello-%J.out', '--gres=gpu:1', '--job-name=test_job', '--output=./slurm_scripts/output_slurm/hello-%J.out', '--partition=gpu', '--qos=ng', '--time=01:00:00', '--licenses=h2resw01', '--export=EC_user_time_limit=01:00:00', '/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/test_slurm.sh']
+[ECMWF-INFO -sbatch] - sbatch executed on ac
+[ECMWF-INFO -sbatch] - Job queued on ac using method local
+[ECMWF-INFO -sbatch] - Submitted batch job 36898710
+[ECMWF-INFO -ecprofile] /usr/bin/bash NON_INTERACTIVE on ac6-308 at 20251210_135339.082, PID: 1477497, JOBID: 36898710
+[ECMWF-INFO -ecprofile] $SCRATCH=/ec/res4/scratch/nld4584
+[ECMWF-INFO -ecprofile] $PERM=/perm/nld4584
+[ECMWF-INFO -ecprofile] $HPCPERM=/ec/res4/hpcperm/nld4584
+[ECMWF-INFO -ecprofile] $TMPDIR=/dev/shm/_tmpdir_.nld4584.36898710
+[ECMWF-INFO -ecprofile] $SCRATCHDIR=/ec/res4/scratchdir/nld4584/6/36898710
+2025-12-10 14:04:45 INFO Running anemoi training command with overrides: ['--config-name=test_training.yaml']
+2025-12-10 14:06:45 INFO Prepending Anemoi Config Env (/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Training) to the search path.
+2025-12-10 14:06:45 INFO Prepending current user directory (/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment) to the search path.
+2025-12-10 14:06:45 INFO Search path is now: [provider=anemoi-cwd-searchpath-plugin, path=/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment, provider=anemoi-env-searchpath-plugin, path=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Training, provider=hydra, path=pkg://hydra.conf, provider=main, path=pkg://anemoi.training/config]
+[2025-12-10 14:06:47,841][anemoi.training.train.train][INFO] - Skipping config validation.
+[2025-12-10 14:06:47,842][anemoi.training.train.train][INFO] - Starting from checkpoint: False
+[2025-12-10 14:06:47,843][anemoi.training.train.train][INFO] - Run id: 99feec0f-fa0c-48ec-9c4f-afaf67aca1fa
+[2025-12-10 14:06:47,843][anemoi.training.train.train][INFO] - Checkpoints path: output_training/checkpoint/99feec0f-fa0c-48ec-9c4f-afaf67aca1fa
+[2025-12-10 14:06:47,843][anemoi.training.train.train][INFO] - Plots path: output_training/plots/99feec0f-fa0c-48ec-9c4f-afaf67aca1fa
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-utils/src/anemoi/utils/config.py:207: UserWarning: Mofifying and instance of DotDict(). This class is intended to be immutable.
+  warnings.warn("Mofifying and instance of DotDict(). This class is intended to be immutable.")
+[2025-12-10 14:08:10,720][anemoi.graphs.nodes.builders.from_file][INFO] - Reading the dataset from /home/mlx/ai-ml/datasets//aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr.
+[2025-12-10 14:08:21,931][anemoi.utils.config][INFO] - Using environment variable ANEMOI_CONFIG_PATH to override the anemoi config key 'path.'
+[2025-12-10 14:08:31,993][anemoi.graphs.edges.builders.cutoff][INFO] - Using CutOff-Edges (with radius = 144.6 km) between data and hidden.
+[2025-12-10 14:08:33,047][anemoi.graphs.edges.builders.base][WARNING] - The 'torch-cluster' library is not installed. Installing 'torch-cluster' can significantly improve performance for graph creation. You can install it using 'pip install torch-cluster'.
+[2025-12-10 14:08:44,544][anemoi.graphs.edges.builders.knn][INFO] - Using KNN-Edges (with 3 nearest neighbours) between hidden and data.
+[2025-12-10 14:08:44,545][anemoi.graphs.edges.builders.base][WARNING] - The 'torch-cluster' library is not installed. Installing 'torch-cluster' can significantly improve performance for graph creation. You can install it using 'pip install torch-cluster'.
+[2025-12-10 14:08:44,612][anemoi.graphs.create][INFO] - Cleaning graph.
+[2025-12-10 14:08:44,612][anemoi.graphs.create][INFO] - _grid_reference_distance deleted from graph.
+[2025-12-10 14:08:44,613][anemoi.graphs.create][INFO] - _dataset deleted from graph.
+[2025-12-10 14:08:44,613][anemoi.graphs.create][INFO] - _grid_reference_distance deleted from graph.
+[2025-12-10 14:08:44,931][anemoi.graphs.create][INFO] - Graph saved at graphs/graph.pkl.
+[2025-12-10 14:08:47,061][anemoi.training.data.datamodule.singledatamodule][WARNING] - Falling back rollout to: 1
+[2025-12-10 14:08:47,062][anemoi.training.data.datamodule.singledatamodule][INFO] - Timeincrement set to 1 for data with frequency, 21600, and timestep, 21600
+[2025-12-10 14:08:47,064][anemoi.training.train.train][INFO] - Number of data variables: 101
+[2025-12-10 14:08:47,065][anemoi.training.train.train][INFO] - Training limits: max_epochs=2, max_steps=300. Training will stop when either limit is reached first. Learning rate scheduler will run for 300000 steps.
+[2025-12-10 14:10:29,218][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-10 14:10:29,220][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-10 14:10:29,298][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-10 14:10:29,298][anemoi.training.diagnostics.callbacks.plot][INFO] - Using defined accumulation colormap for fields: ['tp', 'cp']
+[2025-12-10 14:10:29,300][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-10 14:10:29,302][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-10 14:10:29,302][anemoi.training.diagnostics.callbacks.plot][INFO] - Using precip histogram plotting method for fields: ['tp', 'cp'].
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/lightning_fabric/plugins/environments/slurm.py:204: The `srun` command is available on your system but is not used. HINT: If your intention is to run Lightning on SLURM, prepend your python command with `srun` like so: srun python3 /lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_1 ...
+Using 16bit Automatic Mixed Precision (AMP)
+GPU available: True (cuda), used: True
+TPU available: False, using: 0 TPU cores
+HPU available: False, using: 0 HPUs
+[rank: 0] Seed set to 36898710
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-utils/src/anemoi/utils/provenance.py:143: UserWarning: The '__version__' attribute is deprecated and will be removed in MarkupSafe 3.1. Use feature detection, or `importlib.metadata.version("markupsafe")`, instead.
+  versions[name] = str(module.__version__)
+[2025-12-10 14:17:21,073][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: cos_julian_day is not normalized.
+[2025-12-10 14:17:21,073][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: cos_latitude is not normalized.
+[2025-12-10 14:17:21,073][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: cos_local_time is not normalized.
+[2025-12-10 14:17:21,073][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: cos_longitude is not normalized.
+[2025-12-10 14:17:21,074][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: insolation is not normalized.
+[2025-12-10 14:17:21,074][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: lsm is not normalized.
+[2025-12-10 14:17:21,074][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: sin_julian_day is not normalized.
+[2025-12-10 14:17:21,074][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: sin_latitude is not normalized.
+[2025-12-10 14:17:21,074][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: sin_local_time is not normalized.
+[2025-12-10 14:17:21,074][anemoi.models.preprocessing.normalizer][INFO] - Normalizing: sin_longitude is not normalized.
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-utils/src/anemoi/utils/config.py:207: UserWarning: Mofifying and instance of DotDict(). This class is intended to be immutable.
+  warnings.warn("Mofifying and instance of DotDict(). This class is intended to be immutable.")
+[2025-12-10 14:17:22,020][anemoi.models.layers.utils][INFO] - Linear kernel: torch.nn.Linear.
+[2025-12-10 14:17:22,020][anemoi.models.layers.utils][INFO] - LayerNorm kernel: torch.nn.LayerNorm.
+[2025-12-10 14:17:22,021][anemoi.models.layers.utils][INFO] - Activation kernel: torch.nn.GELU.
+[2025-12-10 14:17:22,107][anemoi.models.layers.utils][INFO] - QueryNorm kernel: anemoi.models.layers.normalization.AutocastLayerNorm.
+[2025-12-10 14:17:22,108][anemoi.models.layers.utils][INFO] - KeyNorm kernel: anemoi.models.layers.normalization.AutocastLayerNorm.
+[2025-12-10 14:17:22,446][anemoi.models.layers.utils][INFO] - Linear kernel: torch.nn.Linear.
+[2025-12-10 14:17:22,447][anemoi.models.layers.utils][INFO] - LayerNorm kernel: torch.nn.LayerNorm.
+[2025-12-10 14:17:22,447][anemoi.models.layers.utils][INFO] - Activation kernel: torch.nn.GELU.
+[2025-12-10 14:17:22,448][anemoi.models.layers.utils][INFO] - QueryNorm kernel: anemoi.models.layers.normalization.AutocastLayerNorm.
+[2025-12-10 14:17:22,449][anemoi.models.layers.utils][INFO] - KeyNorm kernel: anemoi.models.layers.normalization.AutocastLayerNorm.
+[2025-12-10 14:17:22,449][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,053][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,123][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,192][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,262][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,332][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,402][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,474][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,545][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,615][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,686][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,756][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,825][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,895][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:24,966][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:25,035][anemoi.models.layers.attention][INFO] - Using flash_attention
+[2025-12-10 14:17:25,110][anemoi.models.layers.utils][INFO] - Linear kernel: torch.nn.Linear.
+[2025-12-10 14:17:25,111][anemoi.models.layers.utils][INFO] - LayerNorm kernel: torch.nn.LayerNorm.
+[2025-12-10 14:17:25,112][anemoi.models.layers.utils][INFO] - Activation kernel: torch.nn.GELU.
+[2025-12-10 14:17:25,112][anemoi.models.layers.utils][INFO] - QueryNorm kernel: anemoi.models.layers.normalization.AutocastLayerNorm.
+[2025-12-10 14:17:25,113][anemoi.models.layers.utils][INFO] - KeyNorm kernel: anemoi.models.layers.normalization.AutocastLayerNorm.
+[2025-12-10 14:17:25,673][anemoi.training.losses.scalers.variable_level][INFO] - Variable Level Scaling: Applying ReluVariableLevelScaler scaling to pl variables ({'param': ['q', 't', 'u', 'v', 'w', 'z']})
+[2025-12-10 14:17:25,673][anemoi.training.losses.scalers.variable_level][INFO] - with slope = 0.001 and y-intercept/minimum = 0.2.
+[2025-12-10 14:17:26,141][anemoi.training.train.train][INFO] - The following submodules will NOT be trained: []
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/lightning_fabric/plugins/environments/slurm.py:204: The `srun` command is available on your system but is not used. HINT: If your intention is to run Lightning on SLURM, prepend your python command with `srun` like so: srun python3 /lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_1 ...
+Initializing distributed: GLOBAL_RANK: 0, MEMBER: 1/1
+----------------------------------------------------------------------------------------------------
+distributed_backend=nccl
+All distributed processes registered. Starting with 1 processes
+----------------------------------------------------------------------------------------------------
+
+LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
+[rank: 0] Seed set to 36898710
+
+  | Name    | Type                 | Params | Mode 
+---------------------------------------------------------
+0 | model   | AnemoiModelInterface | 231 M  | train
+1 | loss    | MSELoss              | 0      | train
+2 | metrics | ModuleDict           | 0      | train
+---------------------------------------------------------
+231 M     Trainable params
+0         Non-trainable params
+231 M     Total params
+924.556   Total estimated model params size (MB)
+278       Modules in train mode
+0         Modules in eval mode
+
+Sanity Checking: |          | 0/? [00:00<?, ?it/s][2025-12-10 14:18:21,894][anemoi.training.data.datamodule.singledatamodule][WARNING] - Falling back rollout to: 1
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/torch/utils/data/dataloader.py:624: UserWarning: This DataLoader will create 8 worker processes in total. Our suggested max number of worker in current system is 2, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  warnings.warn(
+[2025-12-10 14:18:22,586][anemoi.models.data_indices.collection][INFO] - The order of the variables in the model matches the order in the data.
+[2025-12-10 14:18:22,698][anemoi.training.data.dataset.singledataset][INFO] - Worker 3 (pid 1528803, global_rank 0, model comm group 0)  has low/high range 546 / 728
+[2025-12-10 14:18:22,699][anemoi.training.data.dataset.singledataset][INFO] - Worker 4 (pid 1528805, global_rank 0, model comm group 0)  has low/high range 728 / 910
+[2025-12-10 14:18:22,700][anemoi.training.data.dataset.singledataset][INFO] - Worker 2 (pid 1528801, global_rank 0, model comm group 0)  has low/high range 364 / 546
+[2025-12-10 14:18:22,700][anemoi.training.data.dataset.singledataset][INFO] - Worker 6 (pid 1528809, global_rank 0, model comm group 0)  has low/high range 1092 / 1274
+[2025-12-10 14:18:22,702][anemoi.training.data.dataset.singledataset][INFO] - Worker 5 (pid 1528807, global_rank 0, model comm group 0)  has low/high range 910 / 1092
+[2025-12-10 14:18:22,702][anemoi.training.data.dataset.singledataset][INFO] - Worker 0 (pid 1528797, global_rank 0, model comm group 0)  has low/high range 0 / 182
+[2025-12-10 14:18:22,703][anemoi.training.data.dataset.singledataset][INFO] - Worker 7 (pid 1528811, global_rank 0, model comm group 0)  has low/high range 1274 / 1456
+[2025-12-10 14:18:22,703][anemoi.training.data.dataset.singledataset][INFO] - Worker 1 (pid 1528798, global_rank 0, model comm group 0)  has low/high range 182 / 364
+[2025-12-10 14:18:22,723][anemoi.training.data.dataset.singledataset][INFO] - Worker 7 (validation, pid 1528811, glob. rank 0, model comm group 0, group_rank 0, seed group id 0, base_seed 36898710, sanity rnd 0.891581)
+[2025-12-10 14:18:22,723][anemoi.training.data.dataset.singledataset][INFO] - Worker 1 (validation, pid 1528798, glob. rank 0, model comm group 0, group_rank 0, seed group id 0, base_seed 36898710, sanity rnd 0.891581)
+[2025-12-10 14:18:22,724][anemoi.training.data.dataset.singledataset][INFO] - Worker 0 (validation, pid 1528797, glob. rank 0, model comm group 0, group_rank 0, seed group id 0, base_seed 36898710, sanity rnd 0.891581)
+[2025-12-10 14:18:22,724][anemoi.training.data.dataset.singledataset][INFO] - Worker 6 (validation, pid 1528809, glob. rank 0, model comm group 0, group_rank 0, seed group id 0, base_seed 36898710, sanity rnd 0.891581)
+[2025-12-10 14:18:22,725][anemoi.training.data.dataset.singledataset][INFO] - Worker 5 (validation, pid 1528807, glob. rank 0, model comm group 0, group_rank 0, seed group id 0, base_seed 36898710, sanity rnd 0.891581)
+[2025-12-10 14:18:22,725][anemoi.training.data.dataset.singledataset][INFO] - Worker 3 (validation, pid 1528803, glob. rank 0, model comm group 0, group_rank 0, seed group id 0, base_seed 36898710, sanity rnd 0.891581)
+[2025-12-10 14:18:22,726][anemoi.training.data.dataset.singledataset][INFO] - Worker 2 (validation, pid 1528801, glob. rank 0, model comm group 0, group_rank 0, seed group id 0, base_seed 36898710, sanity rnd 0.891581)
+[2025-12-10 14:18:22,727][anemoi.training.data.dataset.singledataset][INFO] - Worker 4 (validation, pid 1528805, glob. rank 0, model comm group 0, group_rank 0, seed group id 0, base_seed 36898710, sanity rnd 0.891581)
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/pytorch_lightning/trainer/connectors/data_connector.py:369: You have overridden `on_after_batch_transfer` in `LightningModule` but have passed in a `LightningDataModule`. It will use the implementation from `LightningModule` instance.
+
+Sanity Checking:   0%|          | 0/6 [00:00<?, ?it/s]
+Sanity Checking DataLoader 0:   0%|          | 0/6 [00:00<?, ?it/s]
+Sanity Checking DataLoader 0:  17%|█▋        | 1/6 [00:18<01:32,  0.05it/s]/var/spool/slurmd/job36898710/slurm_script: line 15: 1477558 Killed                  anemoi-training train --config-name=test_training.yaml
+slurmstepd: error: Detected 1 oom_kill event in StepId=36898710.batch. Some of the step tasks have been OOM Killed.
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] This is the ECMWF job Epilogue
+[ECMWF-INFO -ecepilog] +++ Please report issues using the Support portal +++
+[ECMWF-INFO -ecepilog] +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] Run at 2025-12-10T14:19:00 on ac
+[ECMWF-INFO -ecepilog] JobName                   : test_job
+[ECMWF-INFO -ecepilog] JobID                     : 36898710
+[ECMWF-INFO -ecepilog] Submit                    : 2025-12-10T13:53:30
+[ECMWF-INFO -ecepilog] Start                     : 2025-12-10T13:53:35
+[ECMWF-INFO -ecepilog] End                       : 2025-12-10T14:19:00
+[ECMWF-INFO -ecepilog] QueuedTime                : 5.0
+[ECMWF-INFO -ecepilog] ElapsedRaw                : 1525
+[ECMWF-INFO -ecepilog] ExitCode                  : 0:125
+[ECMWF-INFO -ecepilog] DerivedExitCode           : 0:0
+[ECMWF-INFO -ecepilog] State                     : OUT_OF_MEMORY
+[ECMWF-INFO -ecepilog] Account                   : nlcko
+[ECMWF-INFO -ecepilog] QOS                       : ng
+[ECMWF-INFO -ecepilog] User                      : nld4584
+[ECMWF-INFO -ecepilog] StdOut                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/hello-36898710.out
+[ECMWF-INFO -ecepilog] StdErr                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/hello-36898710.out
+[ECMWF-INFO -ecepilog] NNodes                    : 1
+[ECMWF-INFO -ecepilog] NCPUS                     : 2
+[ECMWF-INFO -ecepilog] SBU                       : 7.228
+[ECMWF-INFO -ecepilog] jobtag                    : nld4584-test_job-1x2-/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/hello-_JOBID_.out
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+
