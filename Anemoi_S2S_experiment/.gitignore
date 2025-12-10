@@ -1,3 +1,8 @@
 venv_postprocessing/
 output_inference/
 output_training/
+checkpoints_mariana/
+checkpoints_mariana/*
+outputs/
+outputs/*
+
