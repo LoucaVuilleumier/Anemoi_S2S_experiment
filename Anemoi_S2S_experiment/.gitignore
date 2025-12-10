@@ -5,4 +5,6 @@ checkpoints_mariana/
 checkpoints_mariana/*
 outputs/
 outputs/*
+graphs/
+graphs/*
 
