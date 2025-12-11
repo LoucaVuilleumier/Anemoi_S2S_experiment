@@ -46,6 +46,11 @@ hardware:
 
 model:
   num_channels: 1024
+
+data:
+  normalizer:
+    default: "mean-std"
+
 dataloader:
   limit_batches:
     training: null
@@ -59,4 +64,13 @@ training:
     iterations: 300000
     min: 3e-7 #Not scaled by #GPU
 
+  training_loss:
+    _target_: anemoi.training.losses.PINNmse.PINNMSELoss
+    physics_weight: 1.0
+    alpha: 0.5
+    dataset_path: "/home/mlx/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr"
+    scalers: ['pressure_level', 'general_variable', 'nan_mask_weights', 'node_weights']
 
+system:
+  input:
+    warm_start: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_mariana/louca/last.ckpt

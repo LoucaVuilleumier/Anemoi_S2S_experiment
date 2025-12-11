@@ -3,7 +3,8 @@ output_inference/
 output_training/
 checkpoints_mariana/
 checkpoints_mariana/*
-/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/outputs/
+outputs/
+outputs/*
 
 graphs/
 graphs/*

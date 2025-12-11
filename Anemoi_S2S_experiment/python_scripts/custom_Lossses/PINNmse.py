@@ -28,6 +28,7 @@ import torch
 
 from anemoi.training.losses.base import FunctionalLoss
 
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -40,7 +41,7 @@ class PINNMSELoss(FunctionalLoss):
 
     name: str = "pinn_mse"
 
-    def __init__(self, ignore_nans: bool = False, *, physics_weight: float = 0.0, alpha: float = 0.0) -> None:
+    def __init__(self, ignore_nans: bool = False, *, physics_weight: float = 0.0, alpha: float = 0.0, dataset_path: str = None) -> None:
         super().__init__(ignore_nans=ignore_nans)
         self.physics_weight = float(physics_weight)
         # Blending factor between data loss and physics loss: final_loss =
@@ -51,11 +52,17 @@ class PINNMSELoss(FunctionalLoss):
         self._idx_2t = None
         self._idx_sp = None
         self._idx_2d = None
+        # Will store denormalization parameters
+        self._norm_mul = None
+        self._norm_add = None
+        self._dataset_path = dataset_path
 
     def set_data_indices(self, data_indices) -> None:
-        """Set variable indices from IndexCollection.
+        """Set variable indices from IndexCollection and load statistics for denormalization.
         
         Looks for common name variants for 2m temperature, 2m dewpoint, and surface pressure.
+        
+        Called during get_loss_function() when loss is instantiated (I think).
         """
         # Access the name_to_index dictionary from model output
         name_to_index = data_indices.model.output.name_to_index
@@ -81,13 +88,33 @@ class PINNMSELoss(FunctionalLoss):
                 LOGGER.info(f"PINNMSELoss: found surface pressure at index {self._idx_sp} via '{name}'")
                 break
         
-        if self._idx_2t is None or self._idx_2d is None or self._idx_sp is None:
-            LOGGER.warning(
-                f"PINNMSELoss: could not find all required indices. "
-                f"2t={self._idx_2t}, 2d={self._idx_2d}, sp={self._idx_sp}. "
-                f"Physics penalty will be disabled."
-            )
-
+        # Load statistics from dataset
+        if self._dataset_path is not None:
+            try:
+                import xarray as xr
+                import numpy as np
+                ds = xr.open_zarr(self._dataset_path)
+                
+                statistics = ds.attrs.get('statistics', {})
+                if isinstance(statistics, dict):
+                    mean = np.array(statistics['mean'])
+                    stdev = np.array(statistics['stdev'])
+                else:
+                    # Fallback if stored differently
+                    mean = ds.statistics_mean.values if hasattr(ds, 'statistics_mean') else None
+                    stdev = ds.statistics_stdev.values if hasattr(ds, 'statistics_stdev') else None
+                
+                if mean is not None and stdev is not None:
+                    self.register_buffer("_norm_mul", torch.from_numpy(stdev).float(), persistent=False)
+                    self.register_buffer("_norm_add", torch.from_numpy(mean).float(), persistent=False)
+                    LOGGER.info("PINNMSELoss: loaded statistics from dataset")
+                else:
+                    LOGGER.error("PINNMSELoss: could not find statistics in dataset")
+            except Exception as e:
+                LOGGER.error(f"PINNMSELoss: failed to load statistics: {e}")
+            
+        
+        
     def set_indices_manually(self, idx_2t: int, idx_2d: int, idx_sp: int) -> None:
         """Manually set variable indices for testing without IndexCollection.
         
@@ -106,7 +133,9 @@ class PINNMSELoss(FunctionalLoss):
         LOGGER.info(
             f"PINNMSELoss: manually set indices - 2t={self._idx_2t}, 2d={self._idx_2d}, sp={self._idx_sp}"
         )
+        
 
+        
     @staticmethod
     def _compute_r_sur(t2m: torch.Tensor, dp2m: torch.Tensor, sp: torch.Tensor) -> torch.Tensor:
         """Compute water-vapour mixing ratio at the surface (g/kg) with PyTorch.
@@ -194,18 +223,24 @@ class PINNMSELoss(FunctionalLoss):
         if self._idx_2t is None or self._idx_sp is None or self._idx_2d is None:
             LOGGER.debug("PINNMSELoss: missing indices, skipping physics penalty")
             return data_loss
+        
+        if self._norm_mul is None or self._norm_add is None:
+            LOGGER.warning("PINNMSELoss: statistics not loaded, cannot compute physics loss")
+            return data_loss
 
         dtype = pred.dtype
         device = pred.device
-
-        # Extract variables (in Kelvin and Pascal from Anemoi)
-        t2m_pred_K = pred[..., self._idx_2t].to(dtype=dtype)
-        dp2m_pred_K = pred[..., self._idx_2d].to(dtype=dtype)
-        sp_pred_Pa = pred[..., self._idx_sp].to(dtype=dtype)
-
-        t2m_tgt_K = target[..., self._idx_2t].to(dtype=dtype)
-        dp2m_tgt_K = target[..., self._idx_2d].to(dtype=dtype)
-        sp_tgt_Pa = target[..., self._idx_sp].to(dtype=dtype)
+        
+        
+        
+        #Extract and Denormalize pred and target
+        t2m_pred_K = pred[..., self._idx_2t] * self._norm_mul[self._idx_2t] + self._norm_add[self._idx_2t]
+        dp2m_pred_K = pred[..., self._idx_2d] * self._norm_mul[self._idx_2d] + self._norm_add[self._idx_2d]
+        sp_pred_Pa = pred[..., self._idx_sp] * self._norm_mul[self._idx_sp] + self._norm_add[self._idx_sp]
+        
+        t2m_tgt_K = target[..., self._idx_2t] * self._norm_mul[self._idx_2t] + self._norm_add[self._idx_2t]
+        dp2m_tgt_K = target[..., self._idx_2d] * self._norm_mul[self._idx_2d] + self._norm_add[self._idx_2d]
+        sp_tgt_Pa = target[..., self._idx_sp] * self._norm_mul[self._idx_sp] + self._norm_add[self._idx_sp]
 
         # Convert to units expected by physics functions (Celsius and hPa)
         t2m_pred = t2m_pred_K - 273.15
@@ -239,7 +274,7 @@ class PINNMSELoss(FunctionalLoss):
         physics_per_point = (self.physics_weight * physics_per_point).to(device=device, dtype=dtype)
 
         # Apply area weighting (grid dimension) and reduce
-        physics_scaled = self.scale(physics_per_point, grid_shard_slice=grid_shard_slice, without_scalers=["variable"])
+        physics_scaled = self.scale(physics_per_point, grid_shard_slice=grid_shard_slice, without_scalers=['pressure_level', 'general_variable', 'nan_mask_weights'])
         # Squash=True will average over the last dimension (the 2 physics variables)
         physics_loss = self.reduce(physics_scaled, squash=True, group=group if is_sharded else None)
 

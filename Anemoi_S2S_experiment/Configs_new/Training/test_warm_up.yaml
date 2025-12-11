@@ -64,20 +64,3 @@ system:
     warm_start: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_mariana/louca/last.ckpt
 
 
-  # Define available scalers
-#  scalers:
-#    # For inverse variance scaling, use VarTendencyScaler
-#    variable:
-#      _target_: anemoi.training.losses.scalers.VarTendencyScaler
-#      # It automatically computes 1/var from statistics_tendencies
-#      
-#    # For area/grid weighting
-#    grid_weights:
-#      _target_: anemoi.training.losses.scalers.GraphNodeAttributeScaler
-#      attribute_name: area_weight  # or whatever attribute exists in your graph_data
-#  
-#  training_loss:
-#    _target_: anemoi.training.losses.PINNmse.PINNMSELoss
-#    physics_weight: 1.0
-#    alpha: 0.1
-#    scalers: ["variable", "grid_weights"]
