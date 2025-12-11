@@ -1,0 +1,29 @@
+[2025-12-09 14:53:17,925][anemoi.training.train.train][INFO] - Skipping config validation.
+[2025-12-09 14:53:17,927][anemoi.training.train.train][INFO] - Starting from checkpoint: False
+[2025-12-09 14:53:17,927][anemoi.training.train.train][INFO] - Run id: 2ff350da-1b87-4043-b2ea-4542191b8620
+[2025-12-09 14:53:17,928][anemoi.training.train.train][INFO] - Checkpoints path: output_training/checkpoint/2ff350da-1b87-4043-b2ea-4542191b8620
+[2025-12-09 14:53:17,928][anemoi.training.train.train][INFO] - Plots path: output_training/plots/2ff350da-1b87-4043-b2ea-4542191b8620
+[2025-12-09 14:54:35,438][anemoi.graphs.nodes.builders.from_file][INFO] - Reading the dataset from /home/mlx/ai-ml/datasets//aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr.
+[2025-12-09 14:54:43,486][anemoi.utils.config][INFO] - Using environment variable ANEMOI_CONFIG_PATH to override the anemoi config key 'path.'
+[2025-12-09 14:54:52,050][anemoi.utils.config][INFO] - Using environment variable ANEMOI_CONFIG_PATH to override the anemoi config key 'path.'
+[2025-12-09 14:54:52,050][anemoi.utils.grids][WARNING] - Downloading grids from https://get.ecmwf.int/repository/anemoi/grids/grid-o48.npz
+[2025-12-09 14:54:52,689][anemoi.graphs.edges.builders.cutoff][INFO] - Using CutOff-Edges (with radius = 144.6 km) between data and hidden.
+[2025-12-09 14:54:52,691][anemoi.graphs.edges.builders.base][WARNING] - The 'torch-cluster' library is not installed. Installing 'torch-cluster' can significantly improve performance for graph creation. You can install it using 'pip install torch-cluster'.
+[2025-12-09 14:54:56,976][anemoi.graphs.edges.builders.knn][INFO] - Using KNN-Edges (with 3 nearest neighbours) between hidden and data.
+[2025-12-09 14:54:56,979][anemoi.graphs.edges.builders.base][WARNING] - The 'torch-cluster' library is not installed. Installing 'torch-cluster' can significantly improve performance for graph creation. You can install it using 'pip install torch-cluster'.
+[2025-12-09 14:54:57,199][anemoi.graphs.create][INFO] - Cleaning graph.
+[2025-12-09 14:54:57,199][anemoi.graphs.create][INFO] - _grid_reference_distance deleted from graph.
+[2025-12-09 14:54:57,199][anemoi.graphs.create][INFO] - _dataset deleted from graph.
+[2025-12-09 14:54:57,199][anemoi.graphs.create][INFO] - _grid_reference_distance deleted from graph.
+[2025-12-09 14:54:57,647][anemoi.graphs.create][INFO] - Graph saved at graphs/graph.pkl.
+[2025-12-09 14:54:59,320][anemoi.training.data.datamodule.singledatamodule][WARNING] - Falling back rollout to: 1
+[2025-12-09 14:54:59,321][anemoi.training.data.datamodule.singledatamodule][INFO] - Timeincrement set to 1 for data with frequency, 21600, and timestep, 21600
+[2025-12-09 14:54:59,324][anemoi.training.train.train][INFO] - Number of data variables: 101
+[2025-12-09 14:54:59,324][anemoi.training.train.train][INFO] - Training limits: max_epochs=2, max_steps=300. Training will stop when either limit is reached first. Learning rate scheduler will run for 300000 steps.
+[2025-12-09 14:56:38,491][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-09 14:56:38,494][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-09 14:56:38,542][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-09 14:56:38,542][anemoi.training.diagnostics.callbacks.plot][INFO] - Using defined accumulation colormap for fields: ['tp', 'cp']
+[2025-12-09 14:56:38,544][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-09 14:56:38,546][anemoi.training.diagnostics.callbacks.plot][INFO] - Setting up asynchronous plotting ...
+[2025-12-09 14:56:38,546][anemoi.training.diagnostics.callbacks.plot][INFO] - Using precip histogram plotting method for fields: ['tp', 'cp'].
