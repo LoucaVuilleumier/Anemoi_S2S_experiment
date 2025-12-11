@@ -1,6 +1,0 @@
-[2025-12-09 13:12:43,734][anemoi.training.train.train][INFO] - Skipping config validation.
-[2025-12-09 13:12:43,736][anemoi.training.train.train][INFO] - Starting from checkpoint: False
-[2025-12-09 13:12:43,736][anemoi.training.diagnostics.logger][INFO] - AnemoiMLFlow logging to dummy_uri
-[2025-12-09 13:12:43,739][anemoi.training.diagnostics.logger][INFO] - Maximum number of params allowed to be logged is: 2000
-[2025-12-09 13:12:43,745][anemoi.utils.config][INFO] - Using environment variable ANEMOI_CONFIG_PATH to override the anemoi config key 'path.'
-[2025-12-09 13:12:44,338][anemoi.training.diagnostics.mlflow.logger][INFO] - MLflow token authentication disabled for dummy_uri
