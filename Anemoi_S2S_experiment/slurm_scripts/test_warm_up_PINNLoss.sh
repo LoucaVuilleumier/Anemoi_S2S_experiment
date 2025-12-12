@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=test_warmup_PINNLoss
-#SBATCH --output=./slurm_scripts/output_slurm/test_warmup_PINNLoss-%J.out
-#SBATCH --error=./slurm_scripts/output_slurm/test_warmup_PINNLoss-%J.out
+#SBATCH --output=./slurm_scripts/output_slurm/test_warmup_PINNLoss2-%J.out
+#SBATCH --error=./slurm_scripts/output_slurm/test_warmup_PINNLoss2-%J.out
 #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
 #SBATCH --qos=ng
 #SBATCH --time=01:00:00

@@ -39,9 +39,11 @@ hardware:
     data: "/home/mlx/ai-ml/datasets/"
     output: "./output_training/"
     graph: "./graphs/"
+    warm_start: "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_mariana/louca/"
   files:
     dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr
     graph: graph.pkl
+    warm_start: last.ckpt
   
 
 model:
@@ -57,7 +59,7 @@ dataloader:
     validation: 100
 
 training:
-  max_epochs: 2
+  max_epochs: 50
   max_steps: 300
   lr:
     rate: 6.25e-5 # tests
@@ -71,6 +73,4 @@ training:
     dataset_path: "/home/mlx/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr"
     scalers: ['pressure_level', 'general_variable', 'nan_mask_weights', 'node_weights']
 
-system:
-  input:
-    warm_start: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_mariana/louca/last.ckpt
+

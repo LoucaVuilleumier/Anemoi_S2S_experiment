@@ -56,6 +56,7 @@ class PINNMSELoss(FunctionalLoss):
         self._norm_mul = None
         self._norm_add = None
         self._dataset_path = dataset_path
+        self._stats_loaded = False  # Flag to track if statistics have been loaded
 
     def set_data_indices(self, data_indices) -> None:
         """Set variable indices from IndexCollection and load statistics for denormalization.
@@ -88,25 +89,30 @@ class PINNMSELoss(FunctionalLoss):
                 LOGGER.info(f"PINNMSELoss: found surface pressure at index {self._idx_sp} via '{name}'")
                 break
         
-        # Load statistics from dataset
-        if self._dataset_path is not None:
+        # Load statistics from dataset (only if not already loaded)
+        if self._dataset_path is not None and not self._stats_loaded:
             try:
                 import xarray as xr
                 import numpy as np
-                ds = xr.open_zarr(self._dataset_path)
+                ds = xr.open_zarr(self._dataset_path, consolidated=False)
                 
-                statistics = ds.attrs.get('statistics', {})
-                if isinstance(statistics, dict):
-                    mean = np.array(statistics['mean'])
-                    stdev = np.array(statistics['stdev'])
+                # Statistics are stored as dataset variables, not in attrs
+                if 'mean' in ds and 'stdev' in ds:
+                    mean = ds['mean'].values
+                    stdev = ds['stdev'].values
+                    LOGGER.info("PINNMSELoss: found 'mean' and 'stdev' variables in dataset for statistics")
                 else:
-                    # Fallback if stored differently
-                    mean = ds.statistics_mean.values if hasattr(ds, 'statistics_mean') else None
-                    stdev = ds.statistics_stdev.values if hasattr(ds, 'statistics_stdev') else None
+                    mean = None
+                    stdev = None
+                    LOGGER.warning("PINNMSELoss: 'mean' and 'stdev' variables not found in dataset")
                 
                 if mean is not None and stdev is not None:
-                    self.register_buffer("_norm_mul", torch.from_numpy(stdev).float(), persistent=False)
-                    self.register_buffer("_norm_add", torch.from_numpy(mean).float(), persistent=False)
+                    #self.register_buffer("_norm_mul", torch.from_numpy(stdev).float(), persistent=False)
+                    #self.register_buffer("_norm_add", torch.from_numpy(mean).float(), persistent=False)
+                    #self._stats_loaded = True
+                    self._norm_mul = torch.from_numpy(stdev).float()
+                    self._norm_add = torch.from_numpy(mean).float()
+                    self._stats_loaded = True
                     LOGGER.info("PINNMSELoss: loaded statistics from dataset")
                 else:
                     LOGGER.error("PINNMSELoss: could not find statistics in dataset")
