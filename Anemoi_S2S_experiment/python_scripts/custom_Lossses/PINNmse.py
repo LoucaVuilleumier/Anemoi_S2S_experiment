@@ -148,17 +148,23 @@ class PINNMSELoss(FunctionalLoss):
 
         Inputs/outputs are elementwise and preserve tensor shape. Expected
         units: temperatures in degC, pressure in hPa.
+        a, b, c from August–Roche–Magnus approximation.
+        d derived from the ideal gas law for dry air and water vapor
         """
+        a_pos, b_pos, c_pos = 17.368, 238.83, 6.107
+        a_neg, b_neg, c_neg = 17.856, 245.52, 6.108
+        d = 0.622  # 622 g/kg
+        
         e = torch.where(
             t2m >= 0.0,
-            6.107 * torch.exp((17.368 * dp2m) / (dp2m + 238.83)),
-            6.108 * torch.exp((17.856 * dp2m) / (dp2m + 245.52)),
+            c_pos * torch.exp((a_pos * dp2m) / (dp2m + b_pos)),
+            c_neg * torch.exp((a_neg * dp2m) / (dp2m + b_neg)),
         )
         e = torch.clamp(e, min=0.0)
         sp_safe = torch.clamp(sp, min=1e-6)
         denom = sp_safe - e
         denom = torch.where(denom > 0.0, denom, torch.tensor(float('nan'), device=denom.device, dtype=denom.dtype))
-        r_sur = 622.0 * (e / denom)
+        r_sur = d * (e / denom)
         return r_sur
 
     @staticmethod
@@ -167,16 +173,22 @@ class PINNMSELoss(FunctionalLoss):
 
         If `clip_for_plot` True, clip to [0,100] for visualization; for loss
         computation use `clip_for_plot=False` to preserve raw residuals.
+        
+        a, b, c from August–Roche–Magnus approximation.
         """
+        a_pos, b_pos, c_pos = 17.368, 238.83, 6.107
+        a_neg, b_neg, c_neg = 17.856, 245.52, 6.108
+
+        
         e = torch.where(
             t2m >= 0.0,
-            6.107 * torch.exp((17.368 * dp2m) / (dp2m + 238.83)),
-            6.108 * torch.exp((17.856 * dp2m) / (dp2m + 245.52)),
+            c_pos * torch.exp((a_pos * dp2m) / (dp2m + b_pos)),
+            c_neg * torch.exp((a_neg * dp2m) / (dp2m + b_neg)),
         )
         e_sat = torch.where(
             t2m >= 0.0,
-            6.107 * torch.exp((17.368 * t2m) / (t2m + 238.83)),
-            6.108 * torch.exp((17.856 * t2m) / (t2m + 245.52)),
+            c_pos * torch.exp((a_pos * t2m) / (t2m + b_pos)),
+            c_neg * torch.exp((a_neg * t2m) / (t2m + b_neg)),
         )
         e = torch.clamp(e, min=0.0)
         e_sat = torch.clamp(e_sat, min=1e-12)
