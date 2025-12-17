@@ -5,6 +5,7 @@ from scipy.spatial import cKDTree
 import earthkit.data as ekd 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+import sys
 sys.path.append('/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts')
 from utils import plotting_functions as pf
 from utils.physics_functions import compute_r_sur, compute_rh_sur

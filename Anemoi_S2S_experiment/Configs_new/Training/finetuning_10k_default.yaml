@@ -29,7 +29,7 @@ diagnostics:
       enabled: True
       offline: True
       authentication: True
-      experiment_name: 'Louca_finetuning'
+      experiment_name: 'Louca_Vuilleumier_KNMI_S2S_experiment'
       project_name: 'Anemoi'
       log_model: False
       tracking_uri: 'https://mlflow.ecmwf.int'
@@ -63,11 +63,11 @@ dataloader:
     validation: 100
 
 training:
-  max_steps: 100000
+  max_steps: 320001  # Checkpoint is at 310001 steps (Mariana checkpoint) + 10000 additional steps
   max_epochs: null
   lr:
-    warmup: 1000
-    rate: 5.0e-4 #6.25e-5 * 8 (scaled for 8 GPUs)
+    #warmup: 1000
+    rate: 2.5e-4 #6.25e-5 * 4 (scaled for 4 GPUs)
     iterations: ${training.max_steps}
-    min: 2.0e-6 #3e-7 scaled for 8 GPUs
+    min: 1.2e-6 #3e-7 * 4 (scaled for 4 GPUs)
 

@@ -1,0 +1,10 @@
+Simply experimentation for the most efficient ratio ressource/speed for the finetuning
+
+Attempt 1 (Start time = 16:20 2024-17-12):
+#SBATCH --qos=ng
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=4
+#SBATCH --cpus-per-task=32
+#SBATCH --gpus-per-node=4
+#SBATCH --mem=120G
+#SBATCH --time=12:00:00
