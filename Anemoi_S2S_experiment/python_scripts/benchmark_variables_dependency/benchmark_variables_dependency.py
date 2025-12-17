@@ -5,14 +5,16 @@ from scipy.spatial import cKDTree
 import earthkit.data as ekd 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
-import plotting_functions as pf
-from physics_functions import compute_r_sur, compute_rh_sur
-from anemoi.training.losses.mse import MSELoss
-from anemoi.training.losses.PINNmse import PINNMSELoss
-import torch
-import metrics_function as mf
+sys.path.append('/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts')
+from utils import plotting_functions as pf
+from utils.physics_functions import compute_r_sur, compute_rh_sur
+from utils import metrics_function as mf
+from collections import defaultdict
 from collections import defaultdict
 import importlib
+import torch
+from anemoi.training.losses.mse import MSELoss
+from anemoi.training.losses.PINNmse import PINNMSELoss
 importlib.reload(pf)
 
 

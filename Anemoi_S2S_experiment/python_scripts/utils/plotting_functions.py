@@ -98,3 +98,68 @@ def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", sav
    
     
     
+def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", figsize_per_subplot=(2.2, 5)):
+    """
+    Parameters
+    ----------
+    data_dict : dict
+        {subplot_name: {box_label: array_like}}
+    colors : dict
+        {box_label: color}
+    ylabel : str
+        Shared y-axis label
+    figsize_per_subplot : tuple
+        Size per subplot (width, height)
+    show : bool
+        Whether to call plt.show()
+    """
+
+    n_subplots = len(data_dict)
+    fig_width = figsize_per_subplot[0] * n_subplots
+    fig_height = figsize_per_subplot[1]
+
+    fig, axes = plt.subplots(
+        1, n_subplots,
+        figsize=(fig_width, fig_height),
+        sharey=True
+    )
+
+    # Make axes iterable if only one subplot
+    if n_subplots == 1:
+        axes = [axes]
+
+    for ax, (subplot_name, box_data) in zip(axes, data_dict.items()):
+        labels = list(box_data.keys())
+        values = [box_data[label] for label in labels]
+
+        positions = np.arange(len(labels)) + 1
+
+        bp = ax.boxplot(
+            values,
+            positions=positions,
+            widths=0.6,
+            patch_artist=True,
+            showfliers=False
+        )
+
+        # Color boxes
+        for patch, label in zip(bp["boxes"], labels):
+            patch.set_facecolor(colors.get(label, "gray"))
+            patch.set_edgecolor("black")
+
+        # Median styling
+        for median in bp["medians"]:
+            median.set_color("black")
+            median.set_linewidth(1.5)
+
+        ax.set_xticks([])
+        ax.set_xlabel(subplot_name, fontsize=12)
+        ax.grid(axis="y", alpha=0.3)
+
+    axes[0].set_ylabel(ylabel, fontsize=12)
+
+    plt.tight_layout()
+    plt.savefig(f"./images/{savename}", dpi=150)
+    plt.close()
+
+    

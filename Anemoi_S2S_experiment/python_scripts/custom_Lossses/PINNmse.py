@@ -96,7 +96,6 @@ class PINNMSELoss(FunctionalLoss):
                 import numpy as np
                 ds = xr.open_zarr(self._dataset_path, consolidated=False)
                 
-                # Statistics are stored as dataset variables, not in attrs
                 if 'mean' in ds and 'stdev' in ds:
                     mean = ds['mean'].values
                     stdev = ds['stdev'].values
@@ -107,9 +106,6 @@ class PINNMSELoss(FunctionalLoss):
                     LOGGER.warning("PINNMSELoss: 'mean' and 'stdev' variables not found in dataset")
                 
                 if mean is not None and stdev is not None:
-                    #self.register_buffer("_norm_mul", torch.from_numpy(stdev).float(), persistent=False)
-                    #self.register_buffer("_norm_add", torch.from_numpy(mean).float(), persistent=False)
-                    #self._stats_loaded = True
                     self._norm_mul = torch.from_numpy(stdev).float()
                     self._norm_add = torch.from_numpy(mean).float()
                     self._stats_loaded = True
@@ -292,7 +288,8 @@ class PINNMSELoss(FunctionalLoss):
         physics_per_point = (self.physics_weight * physics_per_point).to(device=device, dtype=dtype)
 
         # Apply area weighting (grid dimension) and reduce
-        physics_scaled = self.scale(physics_per_point, grid_shard_slice=grid_shard_slice, without_scalers=['pressure_level', 'general_variable', 'nan_mask_weights'])
+        physics_scaled = self.scale(physics_per_point, grid_shard_slice=grid_shard_slice,
+                                    without_scalers=['pressure_level', 'general_variable', 'nan_mask_weights'])
         # Squash=True will average over the last dimension (the 2 physics variables)
         physics_loss = self.reduce(physics_scaled, squash=True, group=group if is_sharded else None)
 
