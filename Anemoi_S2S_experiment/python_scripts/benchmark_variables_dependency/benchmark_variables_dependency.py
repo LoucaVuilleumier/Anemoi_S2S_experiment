@@ -63,9 +63,7 @@ ds_dataset_6h = xr.Dataset({var: get_var_dataset(ds_dataset_sliced, var) for var
 ds_dataset_daily_avg = xr.Dataset({var: get_var_dataset(ds_dataset_daily_avg, var) for var in var_list})
 ds_dataset_weekly_avg = xr.Dataset({var: get_var_dataset(ds_dataset_weekly_avg, var) for var in var_list})
 
-#t2m_dataset = ds_dataset_6h["2t"]
-#dp2m_dataset = ds_dataset_6h["2d"]
-#sp_dataset = ds_dataset_6h["sp"]
+
 
 
 #get the variables of interest for the inference ouput
@@ -73,11 +71,7 @@ ds_dataset_weekly_avg = xr.Dataset({var: get_var_dataset(ds_dataset_weekly_avg, 
 #dp2m_inference = ds_inference["2d"]
 #sp_inference = ds_inference["sp"]
 
-# Convert temperature from Kelvin to Celsius
-#t2m_dataset_C = t2m_dataset - 273.15
-#dp2m_dataset_C = dp2m_dataset - 273.15
-#t2m_inference_C = t2m_inference - 273.15
-#dp2m_inference_C = dp2m_inference - 273.15
+
 
 #Conversion to use physics equations
 list_datasets = [ds_dataset_6h, ds_dataset_daily_avg, ds_dataset_weekly_avg]

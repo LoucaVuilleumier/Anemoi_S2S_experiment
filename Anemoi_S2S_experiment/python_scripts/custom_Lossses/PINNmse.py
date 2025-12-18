@@ -41,12 +41,14 @@ class PINNMSELoss(FunctionalLoss):
 
     name: str = "pinn_mse"
 
-    def __init__(self, ignore_nans: bool = False, *, physics_weight: float = 0.0, alpha: float = 0.0, dataset_path: str = None) -> None:
+    def __init__(self, ignore_nans: bool = False, *, physics_weight: float = 0.0, beta: float = 0.0,
+                 dataset_path: str = None, r_var: float = 0.0, rh_var: float = 0.0) -> None:
         super().__init__(ignore_nans=ignore_nans)
         self.physics_weight = float(physics_weight)
-        # Blending factor between data loss and physics loss: final_loss =
-        # (1 - alpha) * data_loss + alpha * physics_loss
-        self.alpha = float(alpha)
+        # Independent weight for physics loss: final_loss = data_loss + beta * physics_loss
+        # To match weight of 1 data variable: beta = 2 / N_variables (since both losses are averaged)
+        # Example: N=50 vars → beta=0.04; N=100 vars → beta=0.02
+        self.beta = float(beta)
 
         # Variable indices (set via set_data_indices)
         self._idx_2t = None
@@ -56,6 +58,8 @@ class PINNMSELoss(FunctionalLoss):
         self._norm_mul = None
         self._norm_add = None
         self._dataset_path = dataset_path
+        self._r_var = float(r_var)
+        self._rh_var = float(rh_var)
         self._stats_loaded = False  # Flag to track if statistics have been loaded
 
     def set_data_indices(self, data_indices) -> None:
@@ -230,8 +234,8 @@ class PINNMSELoss(FunctionalLoss):
             group=group if is_sharded else None,
         )
 
-        # If blending not requested, or missing indices, return data_loss
-        if not (self.alpha > 0.0 and self.physics_weight > 0.0):
+        # If physics loss not requested, or missing indices, return data_loss
+        if not (self.beta > 0.0 and self.physics_weight > 0.0):
             return data_loss
 
         if self._idx_2t is None or self._idx_sp is None or self._idx_2d is None:
@@ -272,13 +276,10 @@ class PINNMSELoss(FunctionalLoss):
         r_pred = self._compute_r_sur(t2m_pred, dp2m_pred, sp_pred)
         r_tgt = self._compute_r_sur(t2m_tgt, dp2m_tgt, sp_tgt)
 
-        # Normalize residuals by physical units (RH in %, r in g/kg)
-        rh_variance = torch.var(rh_tgt)
-        r_variance = torch.var(r_tgt)
 
         # Compute normalized squared errors per point
-        rh_normed = torch.square(rh_pred - rh_tgt) / rh_variance
-        r_normed = torch.square(r_pred - r_tgt) / r_variance
+        rh_normed = torch.square(rh_pred - rh_tgt) / self._rh_var
+        r_normed = torch.square(r_pred - r_tgt) / self._r_var
         
         # Stack as separate "variables" along last dimension: [..., 2]
         # This allows proper squashing (averaging) over the physics variables
@@ -293,8 +294,8 @@ class PINNMSELoss(FunctionalLoss):
         # Squash=True will average over the last dimension (the 2 physics variables)
         physics_loss = self.reduce(physics_scaled, squash=True, group=group if is_sharded else None)
 
-        # Blend losses
-        combined = (1.0 - self.alpha) * data_loss + self.alpha * physics_loss
+        # Combine losses with independent weighting
+        combined = data_loss + self.beta * physics_loss
         return combined
 
 
