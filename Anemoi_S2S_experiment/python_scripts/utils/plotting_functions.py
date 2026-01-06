@@ -98,7 +98,7 @@ def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", sav
    
     
     
-def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", figsize_per_subplot=(2.2, 5)):
+def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", figsize_per_subplot=(2.2, 5), sharey = True):
     """
     Parameters
     ----------
@@ -121,12 +121,16 @@ def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", fig
     fig, axes = plt.subplots(
         1, n_subplots,
         figsize=(fig_width, fig_height),
-        sharey=True
+        sharey=sharey
     )
 
     # Make axes iterable if only one subplot
     if n_subplots == 1:
         axes = [axes]
+
+    # Track legend handles
+    legend_handles = []
+    legend_labels = []
 
     for ax, (subplot_name, box_data) in zip(axes, data_dict.items()):
         labels = list(box_data.keys())
@@ -142,10 +146,15 @@ def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", fig
             showfliers=False
         )
 
-        # Color boxes
+        # Color boxes and create legend entries (only for first subplot)
         for patch, label in zip(bp["boxes"], labels):
             patch.set_facecolor(colors.get(label, "gray"))
             patch.set_edgecolor("black")
+            
+            # Add to legend only once
+            if len(legend_handles) < len(labels):
+                legend_handles.append(patch)
+                legend_labels.append(label)
 
         # Median styling
         for median in bp["medians"]:
@@ -157,6 +166,11 @@ def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", fig
         ax.grid(axis="y", alpha=0.3)
 
     axes[0].set_ylabel(ylabel, fontsize=12)
+    
+    # Add legend to the figure
+    fig.legend(legend_handles, legend_labels, loc='upper center', 
+               bbox_to_anchor=(0.5, 1.02), ncol=len(legend_labels), 
+               frameon=True, fontsize=11)
 
     plt.tight_layout()
     plt.savefig(f"./images/{savename}", dpi=150)

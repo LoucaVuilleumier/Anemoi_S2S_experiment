@@ -7,8 +7,8 @@
 #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
 
 # Set the error and output files
-#SBATCH --output=./slurm_scripts/output_slurm/finetuning_10k_default-%J.out
-#SBATCH --error=./slurm_scripts/output_slurm/finetuning_10k_default-%J.out
+#SBATCH --output=./slurm_scripts/output_slurm/finetuning_10k_PINNLoss-%J.out
+#SBATCH --error=./slurm_scripts/output_slurm/finetuning_10k_PINNLoss-%J.out
 
 #SBATCH --qos=ng
 #SBATCH --nodes=1
