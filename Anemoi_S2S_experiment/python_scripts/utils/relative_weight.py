@@ -104,8 +104,3 @@ print(f"  Pressure scaler: {w_2t_pressure}")
 print(f"  Combined weight: {w_2t_combined}")
 print(f"  Relative weight: {w_2t_combined / W_total:.6f}")
 
-print(f"\nTo match weight of one variable with combined weight=1:")
-print(f"  beta = 2 / W_total = 2 / {W_total:.4f} = {2/W_total:.6f}")
-
-print(f"\nTo match weight of 2t specifically:")
-print(f"  beta = 2 * w_2t_combined / W_total = 2 * {w_2t_combined} / {W_total:.4f} = {2*w_2t_combined/W_total:.6f}")

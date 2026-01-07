@@ -19,7 +19,7 @@ def compute_relative_mse(sur_field_dataset, sur_field_inference):
     # Return time series (xarray DataArray)
     return mse / var
 
-def compute_mae_from_dataset(ds_dataset, ds_inference, variable, squash = False):
+def compute_mae_from_dataset(ds_dataset, ds_inference, variable, squash = False, keep_time = False):
     """
     Compute MAE between dataset and inference for a given variable. variable can be a list of variables.
     If squash is True and variable is a list, the MAE is computed on the squashed variables (divided by their standard deviation).
@@ -63,15 +63,21 @@ def compute_mae_from_dataset(ds_dataset, ds_inference, variable, squash = False)
             mae.append(mae_var)
         mae = np.mean(mae)
     elif isinstance(variable, list) and squash == False:
-        mae = np.mean(np.abs(variable_dataset - variable_inference))
+        if keep_time ==False:
+            mae = np.mean(np.abs(variable_dataset - variable_inference))
+        elif keep_time == True:
+            mae = np.mean(np.abs(variable_dataset - variable_inference), axis = 1)  #keep time dimension
         
     else:
-        mae = np.mean(np.abs(variable_dataset - variable_inference)).values.item()
+        if keep_time ==False:
+            mae = (np.abs(variable_dataset - variable_inference)).mean().values.item()
+        elif keep_time == True:
+            mae = (np.abs(variable_dataset - variable_inference)).mean(dim="values").values  #keep time dimension
         
     return mae
 
 
-def compute_msss(ds_dataset, ds_inference, ds_inference_finetuned, variable, squash = False):
+def compute_msss(ds_dataset, ds_inference, ds_inference_finetuned, variable, squash = False, keep_time = False):
     """
     Compute MSSS as 1-(MSE model finetuned / MSE model). variable can be a list of variables.
     If squash is True and variable is a list, the MSSS is computed on the squashed variables 
@@ -103,9 +109,14 @@ def compute_msss(ds_dataset, ds_inference, ds_inference_finetuned, variable, squ
     
     #compute msss
     if isinstance(variable, list) and squash == False:
-        mse_ref = np.mean(np.square(variable_dataset - variable_inference))
-        mse_finetuned = np.mean(np.square(variable_dataset - variable_inference_finetuned))
-        msss = 1 - (mse_finetuned / mse_ref)
+        if keep_time ==False:
+            mse_ref = np.mean(np.square(variable_dataset - variable_inference))
+            mse_finetuned = np.mean(np.square(variable_dataset - variable_inference_finetuned))
+            msss = 1 - (mse_finetuned / mse_ref)
+        elif keep_time == True:
+            mse_ref = np.square(variable_dataset - variable_inference).mean(dim="values")  #keep time dimension
+            mse_finetuned = np.square(variable_dataset - variable_inference_finetuned).mean(dim="values")  #keep time dimension
+            msss = 1 - (mse_finetuned / mse_ref)
         
     elif isinstance(variable, list) and squash == True:
         msss_list = []
@@ -121,9 +132,14 @@ def compute_msss(ds_dataset, ds_inference, ds_inference_finetuned, variable, squ
         msss = float(np.mean(msss_list))
         
     else:
-        mse_ref = np.mean(np.square(variable_dataset - variable_inference))
-        mse_finetuned = np.mean(np.square(variable_dataset - variable_inference_finetuned))
-        msss = 1 - (mse_finetuned / mse_ref).values.item()
+        if keep_time == False:
+            mse_ref = np.mean(np.square(variable_dataset - variable_inference))
+            mse_finetuned = np.mean(np.square(variable_dataset - variable_inference_finetuned))
+            msss = 1 - (mse_finetuned / mse_ref).values.item()
+        elif keep_time == True:
+            mse_ref = np.square(variable_dataset - variable_inference).mean(dim="values")  #keep time dimension
+            mse_finetuned = np.square(variable_dataset - variable_inference_finetuned).mean(dim="values")  #keep time dimension
+            msss = 1 - (mse_finetuned / mse_ref)
 
     return msss
     
