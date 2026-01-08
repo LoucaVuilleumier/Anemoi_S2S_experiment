@@ -64,9 +64,9 @@ def compute_mae_from_dataset(ds_dataset, ds_inference, variable, squash = False,
         mae = np.mean(mae)
     elif isinstance(variable, list) and squash == False:
         if keep_time ==False:
-            mae = np.mean(np.abs(variable_dataset - variable_inference))
+            mae = (np.abs(variable_dataset - variable_inference)).mean()
         elif keep_time == True:
-            mae = np.mean(np.abs(variable_dataset - variable_inference), axis = 1)  #keep time dimension
+            mae = (np.abs(variable_dataset - variable_inference)).mean(dim="values")  #keep time dimension
         
     else:
         if keep_time ==False:
@@ -110,8 +110,8 @@ def compute_msss(ds_dataset, ds_inference, ds_inference_finetuned, variable, squ
     #compute msss
     if isinstance(variable, list) and squash == False:
         if keep_time ==False:
-            mse_ref = np.mean(np.square(variable_dataset - variable_inference))
-            mse_finetuned = np.mean(np.square(variable_dataset - variable_inference_finetuned))
+            mse_ref = (np.square(variable_dataset - variable_inference)).mean()
+            mse_finetuned = (np.square(variable_dataset - variable_inference_finetuned)).mean()
             msss = 1 - (mse_finetuned / mse_ref)
         elif keep_time == True:
             mse_ref = np.square(variable_dataset - variable_inference).mean(dim="values")  #keep time dimension

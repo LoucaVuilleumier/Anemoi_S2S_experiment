@@ -143,7 +143,8 @@ def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", fig
             positions=positions,
             widths=0.6,
             patch_artist=True,
-            showfliers=False
+            showfliers=False,
+            manage_ticks=False  # Faster rendering
         )
 
         # Color boxes and create legend entries (only for first subplot)

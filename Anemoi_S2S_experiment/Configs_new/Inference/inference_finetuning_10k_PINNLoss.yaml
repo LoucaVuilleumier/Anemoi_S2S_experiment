@@ -1,7 +1,6 @@
-checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_training/checkpoint/bdaca663ae1142cbaf04d8ea85091dd7/inference-last.ckpt
-
+checkpoint: 
 date: 2022-07-01T00:00
-lead_time: 720h
+lead_time: 1008h
 output:
   netcdf:
-    path: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_10k_PINNLoss.nc
+    path: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_10k_PINNLoss_6weeksjuly2022.nc

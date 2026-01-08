@@ -20,7 +20,7 @@
 
 
 
-# export ANEMOI_BASE_SEED=16014075
+export ANEMOI_BASE_SEED=42
 export HYDRA_FULL_ERROR=1
 source /ec/res4/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/bin/activate
 
