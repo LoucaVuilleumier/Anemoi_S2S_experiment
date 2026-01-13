@@ -16,9 +16,9 @@ importlib.reload(mf)
 
 #paths
 
-inference_nofinetuning_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_benchmark_july2022.nc"
-inference_default_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_10k_default.nc"
-inference_PINNLoss_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_10k_PINNLoss.nc"
+inference_nofinetuning_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_refmodel_6weeksjuly2022.nc"
+inference_default_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_10k_default_6weeksjuly2022.nc"
+inference_PINNLoss_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_10k_PINNLoss_6weeksjuly2022.nc"
 dataset_path = "/home/mlx/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8.zarr"
 
 #open inference datasets
@@ -61,7 +61,7 @@ times = ds_whole_dataset.dates.values
 var_names = ds_whole_dataset.attrs["variables"]
 init_time = np.datetime64("2022-07-01T00:00")
 t0 = np.where(times == init_time)[0][0]
-ds_dataset = ds_whole_dataset.isel(time = slice(t0, t0 + n_steps))
+ds_dataset_sliced = ds_whole_dataset.isel(time = slice(t0, t0 + n_steps))
 
 var_list = ['2t', '2d', 'sp'] 
 def get_var_dataset(dataset, variable):
@@ -70,7 +70,7 @@ def get_var_dataset(dataset, variable):
 
 
 #create dataset with only required variables
-ds_dataset = xr.Dataset({var: get_var_dataset(ds_dataset, var) for var in var_list})
+ds_dataset = xr.Dataset({var: get_var_dataset(ds_dataset_sliced, var) for var in var_list})
 #daily average dataset
 ds_dataset_daily_avg = ds_dataset.coarsen(time=4, boundary='trim').mean()
 #weekly average dataset
@@ -142,7 +142,7 @@ for time_res in time_resolutions:
     print(mae_df.to_string())
 
 # Save to CSV
-mae_df.to_csv('images/mae_results.csv')
+mae_df.to_csv('/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/mae_results.csv')
 
 #plot MAE time series for each variable
 units = ["K", "K", "Pa", "kg/kg", "%"]
@@ -189,7 +189,7 @@ for time_res in time_resolutions:
     msss_df = pd.DataFrame(msss_data).T
     print(f"\nMSSS Results for {time_res}:")
     print(msss_df.to_string())
-    msss_df.to_csv(f'images/msss_results_{time_res}.csv')
+    msss_df.to_csv(f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/msss_results_{time_res}.csv')
 
 #Plot MSSS time series for each variable
 msss_time_res = {}
@@ -207,18 +207,20 @@ for time_res in time_resolutions:
             xlabel=f'Time Step ({time_res})',
             ylabel='MSSS Score',
             title=f'MSSS Time Series for {var}',
-            savename=f"msss_time_series_{var}_{time_res}.png",
+            savename=f"/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/msss_time_series_{var}_{time_res}.png",
             linestyle="-"
         )
 
 
-
+print("MAE and MSSS computation completed.")
 
 ##################################################################################################
-
+#Statistical analysis over random regions for regional MSSS boxplots
+##################################################################################################
 # Create sub-datasets with random lat/lon regions for regional MSSS analysis
 n_regions = 100  # Number of random regions to sample
 region_size = 5000  # Number of grid points per region
+#reset ds_dataset t
 
 # Get all available grid points
 n_total_points = ds_dataset.dims['values']
@@ -250,10 +252,10 @@ mae_time_nofinetuning_regional = {var: [] for var in var_list_metrics}
 
 for i, indices in enumerate(region_indices):
     # Select sub-region for all datasets
-    ds_dataset_region = ds_dataset.isel(values=indices)
-    ds_inference_nofinetuning_region = ds_inference_nofinetuning.isel(values=indices)
-    ds_inference_default_region = ds_inference_default.isel(values=indices)
-    ds_inference_PINNLoss_region = ds_inference_PINNLoss.isel(values=indices)
+    ds_dataset_region = dict_dataset["6h"].isel(values=indices)
+    ds_inference_nofinetuning_region = dict_inference["No Finetuning"]["6h"].isel(values=indices)
+    ds_inference_default_region = dict_inference["Default Finetuning"]["6h"].isel(values=indices)
+    ds_inference_PINNLoss_region = dict_inference["PINNLoss Finetuning"]["6h"].isel(values=indices)
     
     # Compute MSSS for this region (returns dict with variable as keys)
     msss_PINN = mf.compute_msss(
@@ -325,7 +327,7 @@ colors = {
 pf.plot_boxplots(
     data_dict=boxplot_msss,
     colors=colors,
-    savename='msss_regional_boxplot.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/msss_regional_boxplot.png',
     ylabel='MSSS Score'
 )
 
@@ -333,7 +335,7 @@ pf.plot_boxplots(
 pf.plot_boxplots(
     data_dict=boxplot_msss_last_time,
     colors=colors,
-    savename='msss_regional_boxplot_last_time.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/msss_regional_boxplot_last_time.png',
     ylabel='MSSS Score (Last Time Step)'
 )
 
@@ -368,15 +370,18 @@ colors_mae = {
 pf.plot_boxplots(
     data_dict=boxplot_mae,
     colors=colors_mae,
-    savename='mae_regional_boxplot.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/mae_regional_boxplot.png',
     ylabel='Mean Absolute Error',
     sharey = False
 )
 
+#Same for last timestep
 pf.plot_boxplots(
     data_dict=boxplot_mae_time_last,
     colors=colors_mae,
-    savename='mae_regional_boxplot_last_time.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/mae_regional_boxplot_last_time.png',
     ylabel='Mean Absolute Error (Last Time Step)',
     sharey = False
 )
+
+print("Metrics computation and plotting completed.")

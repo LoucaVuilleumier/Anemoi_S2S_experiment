@@ -1,4 +1,4 @@
-checkpoint: 
+checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_training/checkpoint/33504017a6a74827a5674a95364491c7/inference-last.ckpt
 date: 2022-07-01T00:00
 lead_time: 1008h
 output:

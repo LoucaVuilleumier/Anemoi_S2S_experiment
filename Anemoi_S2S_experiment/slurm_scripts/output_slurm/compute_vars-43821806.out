@@ -1,0 +1,27 @@
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] This is the ECMWF job Epilogue
+[ECMWF-INFO -ecepilog] +++ Please report issues using the Support portal +++
+[ECMWF-INFO -ecepilog] +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] Run at 2026-01-09T11:34:35 on ad
+[ECMWF-INFO -ecepilog] JobName                   : compute_vars
+[ECMWF-INFO -ecepilog] JobID                     : 43821806
+[ECMWF-INFO -ecepilog] Submit                    : 2026-01-09T10:55:38
+[ECMWF-INFO -ecepilog] Start                     : 2026-01-09T10:55:50
+[ECMWF-INFO -ecepilog] End                       : 2026-01-09T11:34:35
+[ECMWF-INFO -ecepilog] QueuedTime                : 12.0
+[ECMWF-INFO -ecepilog] ElapsedRaw                : 2325
+[ECMWF-INFO -ecepilog] ExitCode                  : 0:0
+[ECMWF-INFO -ecepilog] DerivedExitCode           : 0:0
+[ECMWF-INFO -ecepilog] State                     : COMPLETED
+[ECMWF-INFO -ecepilog] Account                   : nlcko
+[ECMWF-INFO -ecepilog] QOS                       : np
+[ECMWF-INFO -ecepilog] User                      : nld4584
+[ECMWF-INFO -ecepilog] StdOut                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/compute_vars-43821806.out
+[ECMWF-INFO -ecepilog] StdErr                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/compute_vars-43821806.out
+[ECMWF-INFO -ecepilog] NNodes                    : 1
+[ECMWF-INFO -ecepilog] NCPUS                     : 256
+[ECMWF-INFO -ecepilog] SBU                       : 1410.597
+[ECMWF-INFO -ecepilog] jobtag                    : nld4584-compute_vars-1x256-/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/compute_vars-_JOBID_.out
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+

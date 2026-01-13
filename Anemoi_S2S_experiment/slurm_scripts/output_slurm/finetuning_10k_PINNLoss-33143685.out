@@ -1,0 +1,27 @@
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] This is the ECMWF job Epilogue
+[ECMWF-INFO -ecepilog] +++ Please report issues using the Support portal +++
+[ECMWF-INFO -ecepilog] +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] Run at 2026-01-13T12:50:04 on ac
+[ECMWF-INFO -ecepilog] JobName                   : finetuning_10k_PINNLoss
+[ECMWF-INFO -ecepilog] JobID                     : 33143685
+[ECMWF-INFO -ecepilog] Submit                    : 2026-01-13T08:56:59
+[ECMWF-INFO -ecepilog] Start                     : 2026-01-13T08:57:13
+[ECMWF-INFO -ecepilog] End                       : 2026-01-13T12:50:04
+[ECMWF-INFO -ecepilog] QueuedTime                : 14.0
+[ECMWF-INFO -ecepilog] ElapsedRaw                : 13971
+[ECMWF-INFO -ecepilog] ExitCode                  : 0:0
+[ECMWF-INFO -ecepilog] DerivedExitCode           : 0:0
+[ECMWF-INFO -ecepilog] State                     : COMPLETED
+[ECMWF-INFO -ecepilog] Account                   : nlcko
+[ECMWF-INFO -ecepilog] QOS                       : ng
+[ECMWF-INFO -ecepilog] User                      : nld4584
+[ECMWF-INFO -ecepilog] StdOut                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/finetuning_10k_PINNLoss-33143685.out
+[ECMWF-INFO -ecepilog] StdErr                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/finetuning_10k_PINNLoss-33143685.out
+[ECMWF-INFO -ecepilog] NNodes                    : 1
+[ECMWF-INFO -ecepilog] NCPUS                     : 128
+[ECMWF-INFO -ecepilog] SBU                       : 4238.160
+[ECMWF-INFO -ecepilog] jobtag                    : nld4584-finetuning_k_PINNLoss-1x128-/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/finetuning_10k_PINNLoss-_JOBID_.out
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+

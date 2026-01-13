@@ -93,7 +93,7 @@ def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", sav
     plt.title(title)
     plt.legend()
     plt.tight_layout()
-    plt.savefig(f"images/{savename}", dpi =150)
+    plt.savefig(f"{savename}", dpi =150)
     plt.close()
    
     
@@ -174,7 +174,7 @@ def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", fig
                frameon=True, fontsize=11)
 
     plt.tight_layout()
-    plt.savefig(f"./images/{savename}", dpi=150)
+    plt.savefig(f"{savename}", dpi=150)
     plt.close()
 
     

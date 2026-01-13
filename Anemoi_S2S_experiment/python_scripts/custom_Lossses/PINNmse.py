@@ -46,8 +46,8 @@ class PINNMSELoss(FunctionalLoss):
         super().__init__(ignore_nans=ignore_nans)
         self.physics_weight = float(physics_weight)
         # Independent weight for physics loss: final_loss = data_loss + beta * physics_loss
-        # To match weight of 1 data variable: beta = 2 / N_variables (since both losses are averaged)
-        # Example: N=50 vars → beta=0.04; N=100 vars → beta=0.02
+        
+        
         self.beta = float(beta)
 
         # Variable indices (set via set_data_indices)
@@ -110,6 +110,7 @@ class PINNMSELoss(FunctionalLoss):
                     LOGGER.warning("PINNMSELoss: 'mean' and 'stdev' variables not found in dataset")
                 
                 if mean is not None and stdev is not None:
+                    # Store as CPU tensors initially - will be moved to device in forward()
                     self._norm_mul = torch.from_numpy(stdev).float()
                     self._norm_add = torch.from_numpy(mean).float()
                     self._stats_loaded = True
@@ -163,8 +164,13 @@ class PINNMSELoss(FunctionalLoss):
         e = torch.clamp(e, min=0.0)
         sp_safe = torch.clamp(sp, min=1e-6)
         denom = sp_safe - e
-        denom = torch.where(denom > 0.0, denom, torch.tensor(float('nan'), device=denom.device, dtype=denom.dtype))
+        # Clamp denominator to prevent division by very small/negative numbers
+        denom = torch.clamp(denom, min=1e-6)
         r_sur = d * (e / denom)
+        
+        # Always clamp to reasonable physical range to prevent extreme values in loss
+        r_sur = torch.clamp(r_sur, 0.0, 30.0)  # 0-30 g/kg (reasonable atmospheric range)
+        
         return r_sur
 
     @staticmethod
@@ -193,6 +199,10 @@ class PINNMSELoss(FunctionalLoss):
         e = torch.clamp(e, min=0.0)
         e_sat = torch.clamp(e_sat, min=1e-12)
         rh = 100.0 * e / e_sat
+        
+        # Always clamp to reasonable physical range to prevent extreme values in loss
+        rh = torch.clamp(rh, 0.0, 150.0)  # 0-150% RH (allows some supersaturation)
+        
         if clip_for_plot:
             rh = torch.clamp(rh, 0.0, 100.0)
         return rh
@@ -239,7 +249,7 @@ class PINNMSELoss(FunctionalLoss):
             return data_loss
 
         if self._idx_2t is None or self._idx_sp is None or self._idx_2d is None:
-            LOGGER.debug("PINNMSELoss: missing indices, skipping physics penalty")
+            LOGGER.warning("PINNMSELoss: missing indices, skipping physics penalty")
             return data_loss
         
         if self._norm_mul is None or self._norm_add is None:
@@ -249,16 +259,18 @@ class PINNMSELoss(FunctionalLoss):
         dtype = pred.dtype
         device = pred.device
         
-        
+        # Move normalization tensors to the same device as pred/target
+        norm_mul = self._norm_mul.to(device=device, dtype=dtype)
+        norm_add = self._norm_add.to(device=device, dtype=dtype)
         
         #Extract and Denormalize pred and target
-        t2m_pred_K = pred[..., self._idx_2t] * self._norm_mul[self._idx_2t] + self._norm_add[self._idx_2t]
-        dp2m_pred_K = pred[..., self._idx_2d] * self._norm_mul[self._idx_2d] + self._norm_add[self._idx_2d]
-        sp_pred_Pa = pred[..., self._idx_sp] * self._norm_mul[self._idx_sp] + self._norm_add[self._idx_sp]
+        t2m_pred_K = pred[..., self._idx_2t] * norm_mul[self._idx_2t] + norm_add[self._idx_2t]
+        dp2m_pred_K = pred[..., self._idx_2d] * norm_mul[self._idx_2d] + norm_add[self._idx_2d]
+        sp_pred_Pa = pred[..., self._idx_sp] * norm_mul[self._idx_sp] + norm_add[self._idx_sp]
         
-        t2m_tgt_K = target[..., self._idx_2t] * self._norm_mul[self._idx_2t] + self._norm_add[self._idx_2t]
-        dp2m_tgt_K = target[..., self._idx_2d] * self._norm_mul[self._idx_2d] + self._norm_add[self._idx_2d]
-        sp_tgt_Pa = target[..., self._idx_sp] * self._norm_mul[self._idx_sp] + self._norm_add[self._idx_sp]
+        t2m_tgt_K = target[..., self._idx_2t] * norm_mul[self._idx_2t] + norm_add[self._idx_2t]
+        dp2m_tgt_K = target[..., self._idx_2d] * norm_mul[self._idx_2d] + norm_add[self._idx_2d]
+        sp_tgt_Pa = target[..., self._idx_sp] * norm_mul[self._idx_sp] + norm_add[self._idx_sp]
 
         # Convert to units expected by physics functions (Celsius and hPa)
         t2m_pred = t2m_pred_K - 273.15
@@ -276,10 +288,30 @@ class PINNMSELoss(FunctionalLoss):
         r_pred = self._compute_r_sur(t2m_pred, dp2m_pred, sp_pred)
         r_tgt = self._compute_r_sur(t2m_tgt, dp2m_tgt, sp_tgt)
 
+        # Debug: Log physics value ranges
+        LOGGER.info(f"PINNMSELoss DEBUG: rh_pred range [{rh_pred.min():.2f}, {rh_pred.max():.2f}], rh_tgt range [{rh_tgt.min():.2f}, {rh_tgt.max():.2f}]")
+        LOGGER.info(f"PINNMSELoss DEBUG: r_pred range [{r_pred.min():.2f}, {r_pred.max():.2f}], r_tgt range [{r_tgt.min():.2f}, {r_tgt.max():.2f}]")
+
+        # Check for NaN/infinite values and log warnings
+        if torch.isnan(rh_pred).any() or torch.isinf(rh_pred).any():
+            LOGGER.warning(f"PINNMSELoss: NaN/Inf in rh_pred. t2m range: [{t2m_pred.min():.2f}, {t2m_pred.max():.2f}], dp2m range: [{dp2m_pred.min():.2f}, {dp2m_pred.max():.2f}]")
+        if torch.isnan(r_pred).any() or torch.isinf(r_pred).any():
+            LOGGER.warning(f"PINNMSELoss: NaN/Inf in r_pred. t2m range: [{t2m_pred.min():.2f}, {t2m_pred.max():.2f}], sp range: [{sp_pred.min():.2f}, {sp_pred.max():.2f}]")
+        if torch.isnan(rh_tgt).any() or torch.isinf(rh_tgt).any():
+            LOGGER.warning(f"PINNMSELoss: NaN/Inf in rh_tgt. t2m range: [{t2m_tgt.min():.2f}, {t2m_tgt.max():.2f}], dp2m range: [{dp2m_tgt.min():.2f}, {dp2m_tgt.max():.2f}]")
+        if torch.isnan(r_tgt).any() or torch.isinf(r_tgt).any():
+            LOGGER.warning(f"PINNMSELoss: NaN/Inf in r_tgt. t2m range: [{t2m_tgt.min():.2f}, {t2m_tgt.max():.2f}], sp range: [{sp_tgt.min():.2f}, {sp_tgt.max():.2f}]")
 
         # Compute normalized squared errors per point
-        rh_normed = torch.square(rh_pred - rh_tgt) / self._rh_var
-        r_normed = torch.square(r_pred - r_tgt) / self._r_var
+        # Add small epsilon to prevent division by zero
+        rh_var_safe = max(self._rh_var, 1e-12)
+        r_var_safe = max(self._r_var, 1e-12)
+        rh_normed = torch.square(rh_pred - rh_tgt) / rh_var_safe
+        r_normed = torch.square(r_pred - r_tgt) / r_var_safe
+        
+        # Final NaN check before stacking
+        if torch.isnan(rh_normed).any() or torch.isnan(r_normed).any():
+            LOGGER.warning(f"PINNMSELoss: NaN in normalized physics errors. rh_var={self._rh_var:.2f}, r_var={self._r_var:.2f}")
         
         # Stack as separate "variables" along last dimension: [..., 2]
         # This allows proper squashing (averaging) over the physics variables
@@ -293,6 +325,18 @@ class PINNMSELoss(FunctionalLoss):
                                     without_scalers=['pressure_level', 'general_variable', 'nan_mask_weights'])
         # Squash=True will average over the last dimension (the 2 physics variables)
         physics_loss = self.reduce(physics_scaled, squash=True, group=group if is_sharded else None)
+        
+        # Safe logging for distributed training (tensors may not be scalar)
+        try:
+            # Detach from computation graph and move to CPU before getting scalar values
+            data_loss_detached = data_loss.detach().cpu()
+            physics_loss_detached = physics_loss.detach().cpu()
+            
+            data_loss_val = data_loss_detached.item() if data_loss_detached.numel() == 1 else data_loss_detached.mean().item()
+            physics_loss_val = physics_loss_detached.item() if physics_loss_detached.numel() == 1 else physics_loss_detached.mean().item()
+            LOGGER.info(f"PINNMSELoss: data_loss={data_loss_val:.6f}, physics_loss={physics_loss_val:.6f}")
+        except Exception as e:
+            LOGGER.warning(f"PINNMSELoss: Could not log loss values: {e}")
 
         # Combine losses with independent weighting
         combined = data_loss + self.beta * physics_loss
