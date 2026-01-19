@@ -141,8 +141,8 @@ for time_res in time_resolutions:
     print("\nMAE Results:")
     print(mae_df.to_string())
 
-# Save to CSV
-mae_df.to_csv('/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/mae_results.csv')
+    # Save to CSV
+    mae_df.to_csv(f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/mae_results_{time_res}.csv')
 
 #plot MAE time series for each variable
 units = ["K", "K", "Pa", "kg/kg", "%"]
@@ -163,7 +163,7 @@ for time_res in time_resolutions:
             xlabel=f'Time Step {time_res}',
             ylabel=f'Mean Absolute Error ({unit})',
             title=f'MAE Time Series for {var}',
-            savename=f"mae_time_series_{var}_{time_res}.png",
+            savename=f"/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/metrics/images/mae_time_series_{var}_{time_res}.png",
             linestyle="-"
         )
 

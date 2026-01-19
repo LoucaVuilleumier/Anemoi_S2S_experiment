@@ -112,3 +112,38 @@ def compute_rh_sur(t2m, dp2m, clip_for_plot=False):
         return rh_sur
     else:
         return rh_sur_np
+    
+def virtual_temperature(T, q):
+    """
+    T : temperature [K]
+    q : specific humidity [kg/kg]
+    """
+    return T * (1.0 + 0.61 * q)
+
+
+def compute_T_hydro(p, zg, q):
+    """
+    Compute temperature profile from geopotential height profile
+    using hydrostatic balance.
+
+    Parameters
+    ----------
+    p : array (nlev,)         pressure levels [Pa], descending (surface -> top)
+    zg : array (..., nlev)    geopotential height [m/s²] (unit from era5)
+    q : array (..., nlev)     specific humidity [kg/kg]
+
+    Returns
+    -------
+    T_hydro : array (..., nlev)
+        Temperature profile [K] computed from hydrostatic balance.
+    """
+    Rd = 287.05      # J kg-1 K-1
+    g = 9.80665      # m s-2
+    T_hydro = np.zeros_like(zg)
+
+    for k in range(1, len(p)-1):
+        dp = p[k+1] - p[k-1]
+        dzg = zg[..., k+1] - zg[..., k-1]
+        denom = Rd * (1.0 + 0.61 * q[..., k])
+        T_hydro[..., k] = - (p[k] / denom) * (dzg / dp)
+    return T_hydro

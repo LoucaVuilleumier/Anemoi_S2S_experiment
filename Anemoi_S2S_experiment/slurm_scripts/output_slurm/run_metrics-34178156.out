@@ -1,0 +1,119 @@
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] -  This is the ECMWF jobfilter
+[ECMWF-INFO -sbatch] -  +++ Please report issues using the Support portal +++
+[ECMWF-INFO -sbatch] -  +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -sbatch] -  /usr/local/bin/ecsbatch: size: 53801, mtime: Tue Nov 25 12:31:30 2025
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] - Time at submit: Thu Jan 15 12:11:19 2026 (1768479079.077646) on ac6-303.bullx:/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts
+[ECMWF-INFO -sbatch] - --- SLURM VARIABLES ---
+[ECMWF-INFO -sbatch] - EC_CLUSTER=ac
+[ECMWF-INFO -sbatch] - SLURM_EXPORT_ENV=ALL
+[ECMWF-INFO -sbatch] - SLURM_JOB_ID=34172448
+[ECMWF-INFO -sbatch] - SBATCH_EXPORT=NONE
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - jobscript: /lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/run_metrics.sh
+[ECMWF-INFO -sbatch] - --- SCRIPT OPTIONS ---
+[ECMWF-INFO -sbatch] - #SBATCH --job-name=compute_vars
+[ECMWF-INFO -sbatch] - #SBATCH --output=./slurm_scripts/output_slurm/run_metrics-%J.out
+[ECMWF-INFO -sbatch] - #SBATCH --error=./slurm_scripts/output_slurm/run_metrics-%J.out
+[ECMWF-INFO -sbatch] - #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
+[ECMWF-INFO -sbatch] - #SBATCH --qos=np
+[ECMWF-INFO -sbatch] - #SBATCH --time=01:00:00
+[ECMWF-INFO -sbatch] - #SBATCH --mem=160G
+[ECMWF-INFO -sbatch] - #SBATCH --ntasks=1
+[ECMWF-INFO -sbatch] - #SBATCH --cpus-per-task=4
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - --- POST-PROCESSED OPTIONS ---
+[ECMWF-INFO -sbatch] - ARG --positional=['run_metrics.sh']
+[ECMWF-INFO -sbatch] - ARG --cpus_per_task=4
+[ECMWF-INFO -sbatch] - ARG --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
+[ECMWF-INFO -sbatch] - ARG --error=./slurm_scripts/output_slurm/run_metrics-%J.out
+[ECMWF-INFO -sbatch] - ARG --job_name=compute_vars
+[ECMWF-INFO -sbatch] - ARG --ntasks=1
+[ECMWF-INFO -sbatch] - ARG --output=./slurm_scripts/output_slurm/run_metrics-%J.out
+[ECMWF-INFO -sbatch] - ARG --qos=np
+[ECMWF-INFO -sbatch] - ARG --time=01:00:00
+[ECMWF-INFO -sbatch] - ARG --mem=160G
+[ECMWF-INFO -sbatch] - ------------------------------
+[ECMWF-INFO -sbatch] - jobtag: nld4584-compute_vars-1x256-/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/./slurm_scripts/output_slurm/run_metrics-_.out
+[ECMWF-INFO -sbatch] - ['/usr/bin/sbatch', '--cpus-per-task=4', '--chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment', '--error=./slurm_scripts/output_slurm/run_metrics-%J.out', '--job-name=compute_vars', '--ntasks=1', '--output=./slurm_scripts/output_slurm/run_metrics-%J.out', '--qos=np', '--time=01:00:00', '--mem=160G', '--licenses=h2resw01', '--export=EC_user_time_limit=01:00:00', '/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/run_metrics.sh']
+[ECMWF-INFO -sbatch] - sbatch executed on ac
+[ECMWF-INFO -sbatch] - Job queued on ac using method local
+[ECMWF-INFO -sbatch] - Submitted batch job 34178156
+[ECMWF-INFO -ecprofile] /usr/bin/bash NON_INTERACTIVE on ac1-2079 at 20260115_121136.434, PID: 3147783, JOBID: 34178156
+[ECMWF-INFO -ecprofile] $SCRATCH=/ec/res4/scratch/nld4584
+[ECMWF-INFO -ecprofile] $PERM=/perm/nld4584
+[ECMWF-INFO -ecprofile] $HPCPERM=/ec/res4/hpcperm/nld4584
+[ECMWF-INFO -ecprofile] $TMPDIR=/dev/shm/_tmpdir_.nld4584.34178156
+[ECMWF-INFO -ecprofile] $SCRATCHDIR=/ec/res4/scratchdir/nld4584/4/34178156
+/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/./python_scripts/metrics/variables_dependency_metrics.py:59: RuntimeWarning: Failed to open Zarr store with consolidated metadata, but successfully read with non-consolidated metadata. This is typically much slower for opening a dataset. To silence this warning, consider:
+1. Consolidating metadata in this existing store with zarr.consolidate_metadata().
+2. Explicitly setting consolidated=False, to avoid trying to read consolidate metadata, or
+3. Explicitly setting consolidated=True, to raise an error in this case instead of falling back to try reading non-consolidated metadata.
+  ds_whole_dataset = xr.open_zarr(dataset_path)
+/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/dask/_task_spec.py:759: RuntimeWarning: invalid value encountered in divide
+  return self.func(*new_argspec)
+/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/./python_scripts/metrics/variables_dependency_metrics.py:226: FutureWarning: The return type of `Dataset.dims` will be changed to return a set of dimension names in future, in order to be more consistent with `DataArray.dims`. To access a mapping from dimension names to lengths, please use `Dataset.sizes`.
+  n_total_points = ds_dataset.dims['values']
+
+MAE Results:
+                           2t        2d          sp     r_sur    rh_sur
+No Finetuning        1.698016  2.225200  433.956970  1.132290  7.295403
+Default Finetuning   1.650261  2.227720  450.410522  1.132733  7.488897
+PINNLoss Finetuning  1.687970  2.271713  452.199554  1.155054  7.564141
+
+MAE Results:
+                           2t        2d          sp     r_sur    rh_sur
+No Finetuning        1.546436  2.028672  415.367523  1.027204  6.363593
+Default Finetuning   1.482726  2.014600  431.165070  1.015427  6.464285
+PINNLoss Finetuning  1.519776  2.056792  432.245392  1.037743  6.550729
+
+MAE Results:
+                           2t        2d          sp     r_sur    rh_sur
+No Finetuning        1.163381  1.361750  276.188599  0.706680  3.905809
+Default Finetuning   1.039363  1.321561  293.912445  0.661347  3.999164
+PINNLoss Finetuning  1.057787  1.337483  290.453094  0.678518  4.048481
+
+MSSS Results for 6h:
+                           2t        2d        sp     r_sur    rh_sur
+Default Finetuning  -0.026964 -0.029634 -0.125129 -0.032637 -0.034471
+PINNLoss Finetuning -0.105991 -0.080892 -0.092768 -0.074192 -0.058629
+
+MSSS Results for daily_avg:
+                           2t        2d        sp     r_sur    rh_sur
+Default Finetuning  -0.018635 -0.021238 -0.127164 -0.015273 -0.012017
+PINNLoss Finetuning -0.107574 -0.079277 -0.093086 -0.063674 -0.044392
+
+MSSS Results for weekly_avg:
+                           2t        2d        sp     r_sur    rh_sur
+Default Finetuning   0.019599 -0.032432 -0.298877  0.042516 -0.039809
+PINNLoss Finetuning -0.083381 -0.102733 -0.193377 -0.025880 -0.091303
+MAE and MSSS computation completed.
+Metrics computation and plotting completed.
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] This is the ECMWF job Epilogue
+[ECMWF-INFO -ecepilog] +++ Please report issues using the Support portal +++
+[ECMWF-INFO -ecepilog] +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] Run at 2026-01-15T12:49:47 on ac
+[ECMWF-INFO -ecepilog] JobName                   : compute_vars
+[ECMWF-INFO -ecepilog] JobID                     : 34178156
+[ECMWF-INFO -ecepilog] Submit                    : 2026-01-15T12:11:19
+[ECMWF-INFO -ecepilog] Start                     : 2026-01-15T12:11:32
+[ECMWF-INFO -ecepilog] End                       : 2026-01-15T12:49:47
+[ECMWF-INFO -ecepilog] QueuedTime                : 13.0
+[ECMWF-INFO -ecepilog] ElapsedRaw                : 2295
+[ECMWF-INFO -ecepilog] ExitCode                  : 0:0
+[ECMWF-INFO -ecepilog] DerivedExitCode           : 0:0
+[ECMWF-INFO -ecepilog] State                     : COMPLETED
+[ECMWF-INFO -ecepilog] Account                   : nlcko
+[ECMWF-INFO -ecepilog] QOS                       : np
+[ECMWF-INFO -ecepilog] User                      : nld4584
+[ECMWF-INFO -ecepilog] StdOut                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/run_metrics-34178156.out
+[ECMWF-INFO -ecepilog] StdErr                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/run_metrics-34178156.out
+[ECMWF-INFO -ecepilog] NNodes                    : 1
+[ECMWF-INFO -ecepilog] NCPUS                     : 256
+[ECMWF-INFO -ecepilog] SBU                       : 1392.395
+[ECMWF-INFO -ecepilog] jobtag                    : nld4584-compute_vars-1x256-/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/./slurm_scripts/output_slurm/run_metrics-_JOBID_.out
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+

@@ -62,11 +62,11 @@ def plot_surface_field(ds_dataset, sur_field, timestep, title, unit, savename, c
     cbar = plt.colorbar(cf, ax=ax, pad=0.05)
     cbar.set_label(f"({unit})", fontsize=12)
     plt.tight_layout()
-    plt.savefig(f"images/{savename}", dpi =150)
+    plt.savefig(f"{savename}", dpi =150)
     plt.close()
     
     
-def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", savename=None, linestyle="--"):
+def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", savename=None, linestyle="--", transpose=False, flip_y= False):
     """
     series_dict: dict where keys are labels and values are 1D arrays.
     x: optional x-array. If None, use index of values.
@@ -86,13 +86,19 @@ def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", sav
         if x is None:
             plt.plot(y, label=label, linestyle=ls)
         else:
-            plt.plot(x, y, label=label, linestyle=ls)
+            if transpose==False:
+                plt.plot(x, y, label=label, linestyle=ls)
+            elif transpose==True:
+                plt.plot(y, x, label=label, linestyle=ls)
+                if flip_y==True:
+                    plt.gca().invert_yaxis()
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
     plt.legend()
     plt.tight_layout()
+        
     plt.savefig(f"{savename}", dpi =150)
     plt.close()
    

@@ -22,7 +22,10 @@ Usage:
     not found the physics penalty is skipped.
 """
 
+import csv
 import logging
+import os
+import time
 
 import torch
 
@@ -115,6 +118,33 @@ class PINNMSELoss(FunctionalLoss):
                     self._norm_add = torch.from_numpy(mean).float()
                     self._stats_loaded = True
                     LOGGER.info("PINNMSELoss: loaded statistics from dataset")
+                    # Determine correct indices in statistics arrays
+                    if hasattr(ds, 'attrs') and 'variables' in ds.attrs:
+                        stat_var_names = ds.attrs['variables']
+                        if len(stat_var_names) == len(self._norm_add):
+                            # Find correct indices in statistics array
+                            try:
+                                self._stat_idx_2t = stat_var_names.index('2t')
+                                self._stat_idx_2d = stat_var_names.index('2d') 
+                                self._stat_idx_sp = stat_var_names.index('sp')
+                                LOGGER.info(f"PINNMSELoss: found correct statistics indices")
+                            except ValueError as e:
+                                LOGGER.error(f"PINNMSELoss DEBUG: Could not find variable in statistics: {e}")
+                                self._stat_idx_2t = self._idx_2t
+                                self._stat_idx_2d = self._idx_2d
+                                self._stat_idx_sp = self._idx_sp
+                        else:
+                            LOGGER.warning(f"PINNMSELoss DEBUG: Mismatch - stats has {len(stat_var_names)} names but {len(self._norm_add)} values")
+                            # Fallback to model indices
+                            self._stat_idx_2t = self._idx_2t
+                            self._stat_idx_2d = self._idx_2d
+                            self._stat_idx_sp = self._idx_sp
+                    else:
+                        LOGGER.warning(f"PINNMSELoss DEBUG: No 'variables' attribute found in dataset statistics")
+                        # Fallback to model indices
+                        self._stat_idx_2t = self._idx_2t
+                        self._stat_idx_2d = self._idx_2d
+                        self._stat_idx_sp = self._idx_sp
                 else:
                     LOGGER.error("PINNMSELoss: could not find statistics in dataset")
             except Exception as e:
@@ -154,7 +184,7 @@ class PINNMSELoss(FunctionalLoss):
         """
         a_pos, b_pos, c_pos = 17.368, 238.83, 6.107
         a_neg, b_neg, c_neg = 17.856, 245.52, 6.108
-        d = 0.622  # 622 g/kg
+        d = 622.0  # Direct result in g/kg (not 0.622 which gives kg/kg)
         
         e = torch.where(
             t2m >= 0.0,
@@ -263,14 +293,14 @@ class PINNMSELoss(FunctionalLoss):
         norm_mul = self._norm_mul.to(device=device, dtype=dtype)
         norm_add = self._norm_add.to(device=device, dtype=dtype)
         
-        #Extract and Denormalize pred and target
-        t2m_pred_K = pred[..., self._idx_2t] * norm_mul[self._idx_2t] + norm_add[self._idx_2t]
-        dp2m_pred_K = pred[..., self._idx_2d] * norm_mul[self._idx_2d] + norm_add[self._idx_2d]
-        sp_pred_Pa = pred[..., self._idx_sp] * norm_mul[self._idx_sp] + norm_add[self._idx_sp]
+        #Extract from model output and Denormalize using CORRECT statistics indices
+        t2m_pred_K = pred[..., self._idx_2t] * norm_mul[self._stat_idx_2t] + norm_add[self._stat_idx_2t]
+        dp2m_pred_K = pred[..., self._idx_2d] * norm_mul[self._stat_idx_2d] + norm_add[self._stat_idx_2d]
+        sp_pred_Pa = pred[..., self._idx_sp] * norm_mul[self._stat_idx_sp] + norm_add[self._stat_idx_sp]
         
-        t2m_tgt_K = target[..., self._idx_2t] * norm_mul[self._idx_2t] + norm_add[self._idx_2t]
-        dp2m_tgt_K = target[..., self._idx_2d] * norm_mul[self._idx_2d] + norm_add[self._idx_2d]
-        sp_tgt_Pa = target[..., self._idx_sp] * norm_mul[self._idx_sp] + norm_add[self._idx_sp]
+        t2m_tgt_K = target[..., self._idx_2t] * norm_mul[self._stat_idx_2t] + norm_add[self._stat_idx_2t]
+        dp2m_tgt_K = target[..., self._idx_2d] * norm_mul[self._stat_idx_2d] + norm_add[self._stat_idx_2d]
+        sp_tgt_Pa = target[..., self._idx_sp] * norm_mul[self._stat_idx_sp] + norm_add[self._stat_idx_sp]
 
         # Convert to units expected by physics functions (Celsius and hPa)
         t2m_pred = t2m_pred_K - 273.15
@@ -280,7 +310,7 @@ class PINNMSELoss(FunctionalLoss):
         t2m_tgt = t2m_tgt_K - 273.15
         dp2m_tgt = dp2m_tgt_K - 273.15
         sp_tgt = sp_tgt_Pa / 100.0
-
+        
         # Compute diagnostics with converted units
         rh_pred = self._compute_rh_sur(t2m_pred, dp2m_pred, clip_for_plot=False)
         rh_tgt = self._compute_rh_sur(t2m_tgt, dp2m_tgt, clip_for_plot=False)
@@ -288,31 +318,13 @@ class PINNMSELoss(FunctionalLoss):
         r_pred = self._compute_r_sur(t2m_pred, dp2m_pred, sp_pred)
         r_tgt = self._compute_r_sur(t2m_tgt, dp2m_tgt, sp_tgt)
 
-        # Debug: Log physics value ranges
-        LOGGER.info(f"PINNMSELoss DEBUG: rh_pred range [{rh_pred.min():.2f}, {rh_pred.max():.2f}], rh_tgt range [{rh_tgt.min():.2f}, {rh_tgt.max():.2f}]")
-        LOGGER.info(f"PINNMSELoss DEBUG: r_pred range [{r_pred.min():.2f}, {r_pred.max():.2f}], r_tgt range [{r_tgt.min():.2f}, {r_tgt.max():.2f}]")
-
-        # Check for NaN/infinite values and log warnings
-        if torch.isnan(rh_pred).any() or torch.isinf(rh_pred).any():
-            LOGGER.warning(f"PINNMSELoss: NaN/Inf in rh_pred. t2m range: [{t2m_pred.min():.2f}, {t2m_pred.max():.2f}], dp2m range: [{dp2m_pred.min():.2f}, {dp2m_pred.max():.2f}]")
-        if torch.isnan(r_pred).any() or torch.isinf(r_pred).any():
-            LOGGER.warning(f"PINNMSELoss: NaN/Inf in r_pred. t2m range: [{t2m_pred.min():.2f}, {t2m_pred.max():.2f}], sp range: [{sp_pred.min():.2f}, {sp_pred.max():.2f}]")
-        if torch.isnan(rh_tgt).any() or torch.isinf(rh_tgt).any():
-            LOGGER.warning(f"PINNMSELoss: NaN/Inf in rh_tgt. t2m range: [{t2m_tgt.min():.2f}, {t2m_tgt.max():.2f}], dp2m range: [{dp2m_tgt.min():.2f}, {dp2m_tgt.max():.2f}]")
-        if torch.isnan(r_tgt).any() or torch.isinf(r_tgt).any():
-            LOGGER.warning(f"PINNMSELoss: NaN/Inf in r_tgt. t2m range: [{t2m_tgt.min():.2f}, {t2m_tgt.max():.2f}], sp range: [{sp_tgt.min():.2f}, {sp_tgt.max():.2f}]")
-
         # Compute normalized squared errors per point
         # Add small epsilon to prevent division by zero
         rh_var_safe = max(self._rh_var, 1e-12)
         r_var_safe = max(self._r_var, 1e-12)
         rh_normed = torch.square(rh_pred - rh_tgt) / rh_var_safe
         r_normed = torch.square(r_pred - r_tgt) / r_var_safe
-        
-        # Final NaN check before stacking
-        if torch.isnan(rh_normed).any() or torch.isnan(r_normed).any():
-            LOGGER.warning(f"PINNMSELoss: NaN in normalized physics errors. rh_var={self._rh_var:.2f}, r_var={self._r_var:.2f}")
-        
+         
         # Stack as separate "variables" along last dimension: [..., 2]
         # This allows proper squashing (averaging) over the physics variables
         physics_per_point = torch.stack([rh_normed, r_normed], dim=-1)  # shape: [..., 2]
@@ -326,7 +338,7 @@ class PINNMSELoss(FunctionalLoss):
         # Squash=True will average over the last dimension (the 2 physics variables)
         physics_loss = self.reduce(physics_scaled, squash=True, group=group if is_sharded else None)
         
-        # Safe logging for distributed training (tensors may not be scalar)
+        # Save loss values to CSV file for analysis
         try:
             # Detach from computation graph and move to CPU before getting scalar values
             data_loss_detached = data_loss.detach().cpu()
@@ -334,9 +346,28 @@ class PINNMSELoss(FunctionalLoss):
             
             data_loss_val = data_loss_detached.item() if data_loss_detached.numel() == 1 else data_loss_detached.mean().item()
             physics_loss_val = physics_loss_detached.item() if physics_loss_detached.numel() == 1 else physics_loss_detached.mean().item()
-            LOGGER.info(f"PINNMSELoss: data_loss={data_loss_val:.6f}, physics_loss={physics_loss_val:.6f}")
+            
+            # Write to CSV file in same directory as this script
+            csv_path = os.path.join(os.path.dirname(__file__), "pinn_loss_values.csv")
+            file_exists = os.path.exists(csv_path)
+            
+            with open(csv_path, 'a', newline='') as csvfile:
+                fieldnames = ['timestamp', 'data_loss', 'physics_loss']
+                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                
+                # Write header if file is new
+                if not file_exists:
+                    writer.writeheader()
+                
+                # Write loss values with timestamp
+                writer.writerow({
+                    'timestamp': time.time(),
+                    'data_loss': f"{data_loss_val:.6f}",
+                    'physics_loss': f"{physics_loss_val:.6f}"
+                })
+                
         except Exception as e:
-            LOGGER.warning(f"PINNMSELoss: Could not log loss values: {e}")
+            LOGGER.warning(f"PINNMSELoss: Could not save loss values to CSV: {e}")
 
         # Combine losses with independent weighting
         combined = data_loss + self.beta * physics_loss
