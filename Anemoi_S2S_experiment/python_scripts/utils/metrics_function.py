@@ -144,3 +144,17 @@ def compute_msss(ds_dataset, ds_inference, ds_inference_finetuned, variable, squ
     return msss
     
     
+def compute_acc(anomaly_dataset, anomaly_inference):
+    """
+    Compute Anomaly Correlation Coefficient (ACC) between dataset and inference anomalies.
+    """
+    
+    # Compute numerator and denominators
+    numerator = (anomaly_dataset * anomaly_inference).mean(dim="values")
+    denominator = np.sqrt((anomaly_dataset ** 2).mean(dim="values") * (anomaly_inference ** 2).mean(dim="values"))
+    
+    # Compute ACC
+    acc = numerator / denominator
+    
+    return acc
+    

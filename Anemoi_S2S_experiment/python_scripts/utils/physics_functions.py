@@ -129,18 +129,19 @@ def compute_T_hydro(p, zg, q):
     Parameters
     ----------
     p : array (nlev,)         pressure levels [Pa], descending (surface -> top)
-    zg : array (..., nlev)    geopotential height [m/s²] (unit from era5)
+    zg : array (..., nlev)    geopotential [m²/s²] (ERA5 standard)
     q : array (..., nlev)     specific humidity [kg/kg]
 
     Returns
     -------
     T_hydro : array (..., nlev)
         Temperature profile [K] computed from hydrostatic balance.
+        NaN for boundary levels (first and last) where centered difference cannot be computed.
     """
     Rd = 287.05      # J kg-1 K-1
-    g = 9.80665      # m s-2
     T_hydro = np.zeros_like(zg)
 
+    # Centered differences for interior points
     for k in range(1, len(p)-1):
         dp = p[k+1] - p[k-1]
         dzg = zg[..., k+1] - zg[..., k-1]

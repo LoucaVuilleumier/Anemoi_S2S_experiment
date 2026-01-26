@@ -10,4 +10,8 @@ graphs/
 graphs/*
 logs/
 logs/*
+slurm_scripts/output_slurm/
+slurm_scripts/output_slurm/*
+output_metrics/
+output_metrics/*
 

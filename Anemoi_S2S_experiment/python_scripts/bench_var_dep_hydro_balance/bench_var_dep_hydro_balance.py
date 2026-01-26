@@ -38,6 +38,11 @@ init_time = np.datetime64("2022-07-01T00:00")
 t0 = np.where(times == init_time)[0][0]
 ds_dataset_sliced = ds_dataset.isel(time = slice(t0, t0 + n_steps))
 
+def get_var_dataset(dataset, variable):
+    idx_variable = var_names.index(variable)
+    return dataset["data"].isel(variable = idx_variable).squeeze(dim="ensemble").rename({"cell": "values"})
+
+
 def hydrostatic_residual(z_pred, z_hydro):
     return z_pred - z_hydro
 
@@ -58,6 +63,7 @@ p = np.array([1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100, 50]) 
 
 variables = ["z", "t", "q"]
 dict_var = {}
+dict_var_era5 = {}
 for var in variables:
     
     #var : array (..., nlev)     specific humidity [kg/kg]
@@ -65,11 +71,15 @@ for var in variables:
     vars_p_level_sorted = sorted(vars_p_level, key=lambda x: int(x.split("_")[1]), reverse=True)
     print(vars_p_level_sorted)
     dict_var[var] = np.transpose(np.array([ds_inference[v].values for v in vars_p_level_sorted]), (1,2,0))
+    dict_var_era5[var] = np.transpose(np.array([get_var_dataset(ds_dataset_sliced, v).values for v in vars_p_level_sorted]), (1,2,0))
 
 
 
 T_hydro = phfun.compute_T_hydro(p, dict_var["z"], dict_var["q"])
+T_hydro_era5 = phfun.compute_T_hydro(p, dict_var_era5["z"], dict_var_era5["q"])
+
 T_residuals = T_hydrostatic_residual(dict_var["t"], T_hydro)
+T_residuals_era5 = T_hydrostatic_residual(dict_var_era5["t"], T_hydro_era5)
 
 # Get Antarctic indices for analysis
 antarctica_indices = get_antarctica_indices(ds_dataset, lat_threshold=-80.0)
@@ -116,6 +126,7 @@ pf.plot_multiple_lines(
     {
         "Original (all points)": np.abs(T_residuals).mean(axis=(1,2)),
         "Masked (excluding Antarctic artifacts)": np.nanmean(np.abs(T_residuals_masked), axis=(1,2)),
+        "Era5 (all points)": np.abs(T_residuals_era5).mean(axis=(1,2)),
     },
     xlabel="Time step",
     ylabel="Mean Absolute Temperature Residual (K)",
@@ -129,6 +140,7 @@ pf.plot_multiple_lines(
     {
         "Original (all points)": np.abs(T_residuals).mean(axis=(0,1)),
         "Masked (excluding Antarctic artifacts)": np.nanmean(np.abs(T_residuals_masked), axis=(0,1)),
+        "Era5 (all points)": np.abs(T_residuals_era5).mean(axis=(0,1)),
     },
     x = p[1:-1]/100,  # hPa
     xlabel="Mean Absolute Temperature Residual (K)",
@@ -137,13 +149,17 @@ pf.plot_multiple_lines(
     savename="/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_var_dep_hydro_balance/images/mean_absolute_temperature_residuals_per_pressure_level.png",
     linestyle= "-",
     transpose=True,
-    flip_y= True
+    flip_y=True
+    
 )
 
-# Original surface field plots
-pf.plot_surface_field(ds_dataset, np.clip(T_residuals[:,:, np.where(p==50000)], -12, 12),120, "Temperature Residual (K) at 500hPa (Original)", "K", "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_var_dep_hydro_balance/images/temperature_residual_500hPa_original.png")
 
-pf.plot_surface_field(ds_dataset, np.clip(T_residuals[:,:, np.where(p==85000)], -100, 100),120, "Temperature Residual (K) at 850hPa (Original)", "K", "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_var_dep_hydro_balance/images/temperature_residual_850hPa_original.png")
+
+# Original surface field plots
+pf.plot_surface_field(ds_dataset, T_residuals[:,:, np.where(p==50000)] ,120, "Temperature Residual (K) at 500hPa (Original)", "K", "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_var_dep_hydro_balance/images/temperature_residual_500hPa_original.png")
+pf.plot_surface_field(ds_dataset, T_residuals_era5[:,:, np.where(p==50000)] ,120, "Temperature Residual (K) at 500hPa (ERA5)", "K", "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_var_dep_hydro_balance/images/temperature_residual_500hPa_era5.png")
+
+pf.plot_surface_field(ds_dataset, T_residuals[:,:, np.where(p==85000)] ,120, "Temperature Residual (K) at 850hPa (Original)", "K", "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_var_dep_hydro_balance/images/temperature_residual_850hPa_original.png")
 
 # Masked surface field plots
 pf.plot_surface_field(ds_dataset, np.clip(T_residuals_masked[:,:, np.where(p==50000)], -100, 100),120, "Temperature Residual (K) at 500hPa (Masked)", "K", "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_var_dep_hydro_balance/images/temperature_residual_500hPa_masked.png")

@@ -90,8 +90,10 @@ def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", sav
                 plt.plot(x, y, label=label, linestyle=ls)
             elif transpose==True:
                 plt.plot(y, x, label=label, linestyle=ls)
-                if flip_y==True:
-                    plt.gca().invert_yaxis()
+
+    # Apply y-axis inversion ONCE after all series are plotted
+    if transpose and flip_y:
+        plt.gca().invert_yaxis()
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

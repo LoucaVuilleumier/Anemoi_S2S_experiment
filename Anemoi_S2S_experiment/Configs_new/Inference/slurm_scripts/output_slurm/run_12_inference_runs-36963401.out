@@ -1,0 +1,414 @@
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] -  This is the ECMWF jobfilter
+[ECMWF-INFO -sbatch] -  +++ Please report issues using the Support portal +++
+[ECMWF-INFO -sbatch] -  +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -sbatch] -  /usr/local/bin/ecsbatch: size: 53801, mtime: Tue Nov 25 12:31:30 2025
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] - Time at submit: Thu Jan 22 09:32:47 2026 (1769074367.1205263) on ac6-100.bullx:/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts
+[ECMWF-INFO -sbatch] - --- SLURM VARIABLES ---
+[ECMWF-INFO -sbatch] - EC_CLUSTER=ac
+[ECMWF-INFO -sbatch] - SLURM_EXPORT_ENV=ALL
+[ECMWF-INFO -sbatch] - SBATCH_EXPORT=NONE
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - jobscript: /lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/run_12_inference_runs_refmodel.sh
+[ECMWF-INFO -sbatch] - --- SCRIPT OPTIONS ---
+[ECMWF-INFO -sbatch] - #SBATCH --job-name=run_12_inference_runs
+[ECMWF-INFO -sbatch] - #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Inference
+[ECMWF-INFO -sbatch] - #SBATCH --output=./slurm_scripts/output_slurm/run_12_inference_runs-%J.out
+[ECMWF-INFO -sbatch] - #SBATCH --error=./slurm_scripts/output_slurm/run_12_inference_runs-%J.out
+[ECMWF-INFO -sbatch] - #SBATCH --qos=ng
+[ECMWF-INFO -sbatch] - #SBATCH --nodes=1
+[ECMWF-INFO -sbatch] - #SBATCH --ntasks-per-node=4
+[ECMWF-INFO -sbatch] - #SBATCH --cpus-per-task=32
+[ECMWF-INFO -sbatch] - #SBATCH --gpus-per-node=1
+[ECMWF-INFO -sbatch] - #SBATCH --mem=32G
+[ECMWF-INFO -sbatch] - #SBATCH --time=12:00:00
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - --- POST-PROCESSED OPTIONS ---
+[ECMWF-INFO -sbatch] - ARG --positional=['run_12_inference_runs_refmodel.sh']
+[ECMWF-INFO -sbatch] - ARG --cpus_per_task=32
+[ECMWF-INFO -sbatch] - ARG --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Inference
+[ECMWF-INFO -sbatch] - ARG --error=./slurm_scripts/output_slurm/run_12_inference_runs-%J.out
+[ECMWF-INFO -sbatch] - ARG --job_name=run_12_inference_runs
+[ECMWF-INFO -sbatch] - ARG --ntasks_per_node=4
+[ECMWF-INFO -sbatch] - ARG --nodes=1
+[ECMWF-INFO -sbatch] - ARG --output=./slurm_scripts/output_slurm/run_12_inference_runs-%J.out
+[ECMWF-INFO -sbatch] - ARG --qos=ng
+[ECMWF-INFO -sbatch] - ARG --time=12:00:00
+[ECMWF-INFO -sbatch] - ARG --mem=32G
+[ECMWF-INFO -sbatch] - ARG --gpus_per_node=1
+[ECMWF-INFO -sbatch] - ------------------------------
+[ECMWF-INFO -sbatch] - jobtag: nld4584-run_12_inf_rence_runs-1x128-/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/./slurm_scripts/output_slurm/run_12_inference_runs-_.out
+[ECMWF-INFO -sbatch] - ['/usr/bin/sbatch', '--cpus-per-task=32', '--chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Inference', '--error=./slurm_scripts/output_slurm/run_12_inference_runs-%J.out', '--job-name=run_12_inference_runs', '--ntasks-per-node=4', '--nodes=1', '--output=./slurm_scripts/output_slurm/run_12_inference_runs-%J.out', '--qos=ng', '--time=12:00:00', '--mem=32G', '--gpus-per-node=1', '--licenses=h2resw01', '--export=EC_user_time_limit=12:00:00', '/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/run_12_inference_runs_refmodel.sh']
+[ECMWF-INFO -sbatch] - sbatch executed on ac
+[ECMWF-INFO -sbatch] - Job queued on ac using method local
+[ECMWF-INFO -sbatch] - Submitted batch job 36963401
+[ECMWF-INFO -ecprofile] /usr/bin/bash NON_INTERACTIVE on ac6-311 at 20260122_093304.084, PID: 100242, JOBID: 36963401
+[ECMWF-INFO -ecprofile] $SCRATCH=/ec/res4/scratch/nld4584
+[ECMWF-INFO -ecprofile] $PERM=/perm/nld4584
+[ECMWF-INFO -ecprofile] $HPCPERM=/ec/res4/hpcperm/nld4584
+[ECMWF-INFO -ecprofile] $TMPDIR=/dev/shm/_tmpdir_.nld4584.36963401
+[ECMWF-INFO -ecprofile] $SCRATCHDIR=/ec/res4/scratchdir/nld4584/1/36963401
+========================================
+Starting inference run 1/12
+Date: 2022-05-16T00:00
+Output: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_refmodel_8weeks_run00_2022-05-16.nc
+========================================
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-utils/src/anemoi/utils/cli.py", line 233, in cli_main
+    cmd.run(args)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-inference/src/anemoi/inference/commands/run.py", line 53, in run
+    config = RunConfiguration.load(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-inference/src/anemoi/inference/config/__init__.py", line 107, in load
+    resolved_config = OmegaConf.to_container(oc_config, resolve=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/omegaconf.py", line 573, in to_container
+    return BaseContainer._to_content(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 292, in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 244, in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 231, in _format_and_raise
+    format_and_raise(
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-utils/src/anemoi/utils/cli.py", line 233, in cli_main
+    cmd.run(args)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-inference/src/anemoi/inference/commands/run.py", line 53, in run
+    config = RunConfiguration.load(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-inference/src/anemoi/inference/config/__init__.py", line 107, in load
+    resolved_config = OmegaConf.to_container(oc_config, resolve=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/omegaconf.py", line 573, in to_container
+    return BaseContainer._to_content(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 292, in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 244, in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 231, in _format_and_raise
+    format_and_raise(
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/_utils.py", line 899, in format_and_raise
+    _raise(ex, cause)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/_utils.py", line 797, in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 242, in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 246, in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 277, in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 584, in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 764, in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 206, in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 101, in visitConfigValue
+    return self.visit(ctx.getChild(0))
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/_utils.py", line 899, in format_and_raise
+    _raise(ex, cause)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/_utils.py", line 797, in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 242, in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 246, in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 277, in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 584, in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 764, in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 206, in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 101, in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 342, in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 298, in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 125, in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 921, in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-utils/src/anemoi/utils/cli.py", line 233, in cli_main
+    cmd.run(args)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-inference/src/anemoi/inference/commands/run.py", line 53, in run
+    config = RunConfiguration.load(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-inference/src/anemoi/inference/config/__init__.py", line 107, in load
+    resolved_config = OmegaConf.to_container(oc_config, resolve=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/omegaconf.py", line 573, in to_container
+    return BaseContainer._to_content(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 292, in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 244, in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 231, in _format_and_raise
+    format_and_raise(
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/_utils.py", line 899, in format_and_raise
+    _raise(ex, cause)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/_utils.py", line 797, in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 242, in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 246, in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 277, in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 584, in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 342, in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 298, in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 125, in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 921, in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 158, in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 745, in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 676, in _resolve_node_interpolation
+    raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+omegaconf.errors.InterpolationKeyError: Interpolation key 'INFERENCE_DATE' not found
+    full_key: date
+    object_type=dict
+2026-01-22 09:34:10 ERROR 
+💣 Interpolation key 'INFERENCE_DATE' not found
+    full_key: date
+    object_type=dict
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 158, in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 745, in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 676, in _resolve_node_interpolation
+    raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+omegaconf.errors.InterpolationKeyError: Interpolation key 'INFERENCE_DATE' not found
+    full_key: date
+    object_type=dict
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 764, in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 206, in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 101, in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 342, in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 298, in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 125, in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 921, in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 158, in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 745, in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 676, in _resolve_node_interpolation
+    raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+omegaconf.errors.InterpolationKeyError: Interpolation key 'INFERENCE_DATE' not found
+    full_key: date
+    object_type=dict
+2026-01-22 09:34:10 ERROR 💣 Exiting
+2026-01-22 09:34:10 ERROR 
+💣 Interpolation key 'INFERENCE_DATE' not found
+    full_key: date
+    object_type=dict
+2026-01-22 09:34:10 ERROR 💣 Exiting
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-utils/src/anemoi/utils/cli.py", line 233, in cli_main
+    cmd.run(args)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-inference/src/anemoi/inference/commands/run.py", line 53, in run
+    config = RunConfiguration.load(
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/anemoi-inference/src/anemoi/inference/config/__init__.py", line 107, in load
+    resolved_config = OmegaConf.to_container(oc_config, resolve=True)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/omegaconf.py", line 573, in to_container
+    return BaseContainer._to_content(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 292, in _to_content
+    value = get_node_value(key)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 244, in get_node_value
+    conf._format_and_raise(key=key, value=None, cause=e)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 231, in _format_and_raise
+    format_and_raise(
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/_utils.py", line 899, in format_and_raise
+    _raise(ex, cause)
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/_utils.py", line 797, in _raise
+    raise ex.with_traceback(sys.exc_info()[2])  # set env var OC_CAUSE=1 for full trace
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/basecontainer.py", line 242, in get_node_value
+    node = node._dereference_node()
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 246, in _dereference_node
+    node = self._dereference_node_impl(throw_on_resolution_failure=True)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 277, in _dereference_node_impl
+    return parent._resolve_interpolation_from_parse_tree(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 584, in _resolve_interpolation_from_parse_tree
+    resolved = self.resolve_parse_tree(
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 764, in resolve_parse_tree
+    return visitor.visit(parse_tree)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 206, in accept
+    return visitor.visitConfigValue(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-22 09:34:10 ERROR 
+💣 Interpolation key 'INFERENCE_DATE' not found
+    full_key: date
+    object_type=dict
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 101, in visitConfigValue
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 342, in accept
+    return visitor.visitText(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 298, in visitText
+    return self.visitInterpolation(c)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 125, in visitInterpolation
+    return self.visit(ctx.getChild(0))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/antlr4/tree/Tree.py", line 34, in visit
+    return tree.accept(self)
+           ^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar/gen/OmegaConfGrammarParser.py", line 921, in accept
+    return visitor.visitInterpolationNode(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-22 09:34:10 ERROR 💣 Exiting
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/grammar_visitor.py", line 158, in visitInterpolationNode
+    return self.node_interpolation_callback(inter_key, self.memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 745, in node_interpolation_callback
+    return self._resolve_node_interpolation(inter_key=inter_key, memo=memo)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/lus/h2resw01/hpcperm/nld4584/anemoi_core_2025_17_11/venv_anemoi_core_2025_17_11/lib/python3.11/site-packages/omegaconf/base.py", line 676, in _resolve_node_interpolation
+    raise InterpolationKeyError(f"Interpolation key '{inter_key}' not found")
+omegaconf.errors.InterpolationKeyError: Interpolation key 'INFERENCE_DATE' not found
+    full_key: date
+    object_type=dict
+2026-01-22 09:34:10 ERROR 
+💣 Interpolation key 'INFERENCE_DATE' not found
+    full_key: date
+    object_type=dict
+2026-01-22 09:34:10 ERROR 💣 Exiting
+srun: error: ac6-311: tasks 0-3: Exited with exit code 1
+srun: Terminating StepId=36963401.0
+ERROR: Run 1/12 failed!
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] This is the ECMWF job Epilogue
+[ECMWF-INFO -ecepilog] +++ Please report issues using the Support portal +++
+[ECMWF-INFO -ecepilog] +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] Run at 2026-01-22T09:34:11 on ac
+[ECMWF-INFO -ecepilog] JobName                   : run_12_inference_runs
+[ECMWF-INFO -ecepilog] JobID                     : 36963401
+[ECMWF-INFO -ecepilog] Submit                    : 2026-01-22T09:32:47
+[ECMWF-INFO -ecepilog] Start                     : 2026-01-22T09:33:01
+[ECMWF-INFO -ecepilog] End                       : 2026-01-22T09:34:11
+[ECMWF-INFO -ecepilog] QueuedTime                : 14.0
+[ECMWF-INFO -ecepilog] ElapsedRaw                : 70
+[ECMWF-INFO -ecepilog] ExitCode                  : 1:0
+[ECMWF-INFO -ecepilog] DerivedExitCode           : 1:0
+[ECMWF-INFO -ecepilog] State                     : FAILED
+[ECMWF-INFO -ecepilog] Account                   : nlcko
+[ECMWF-INFO -ecepilog] QOS                       : ng
+[ECMWF-INFO -ecepilog] User                      : nld4584
+[ECMWF-INFO -ecepilog] StdOut                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Inference/./slurm_scripts/output_slurm/run_12_inference_runs-36963401.out
+[ECMWF-INFO -ecepilog] StdErr                    : /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Inference/./slurm_scripts/output_slurm/run_12_inference_runs-36963401.out
+[ECMWF-INFO -ecepilog] NNodes                    : 1
+[ECMWF-INFO -ecepilog] NCPUS                     : 128
+[ECMWF-INFO -ecepilog] SBU                       : 21.235
+[ECMWF-INFO -ecepilog] jobtag                    : nld4584-run_12_inf_rence_runs-1x128-/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new/Inference/./slurm_scripts/output_slurm/run_12_inference_runs-_JOBID_.out
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+
