@@ -106,7 +106,7 @@ def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", sav
    
     
     
-def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", figsize_per_subplot=(2.2, 5), sharey = True):
+def plot_boxplots(data_dict, title, colors, savename, ylabel="Mean absolute error", figsize_per_subplot=(2.2, 5), sharey = True):
     """
     Parameters
     ----------
@@ -176,13 +176,16 @@ def plot_boxplots(data_dict, colors, savename, ylabel="Mean absolute error", fig
 
     axes[0].set_ylabel(ylabel, fontsize=12)
     
-    # Add legend to the figure
+    # Add title
+    fig.suptitle(title, fontsize=16, y=1.08)
+    
+    # Add legend below the title
     fig.legend(legend_handles, legend_labels, loc='upper center', 
                bbox_to_anchor=(0.5, 1.02), ncol=len(legend_labels), 
                frameon=True, fontsize=11)
-
+    
     plt.tight_layout()
-    plt.savefig(f"{savename}", dpi=150)
+    plt.savefig(f"{savename}", dpi=150, bbox_inches='tight')
     plt.close()
 
     

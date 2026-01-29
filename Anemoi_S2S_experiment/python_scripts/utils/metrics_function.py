@@ -144,17 +144,70 @@ def compute_msss(ds_dataset, ds_inference, ds_inference_finetuned, variable, squ
     return msss
     
     
-def compute_acc(anomaly_dataset, anomaly_inference):
+def compute_acc(anomaly_dataset, anomaly_inference, weights=None):
     """
     Compute Anomaly Correlation Coefficient (ACC) between dataset and inference anomalies.
+    
+    Parameters:
+    -----------
+    anomaly_dataset : xarray.DataArray
+        Dataset anomalies with dimensions 'time' and 'values' (spatial)
+    anomaly_inference : xarray.DataArray
+        Inference anomalies with dimensions 'time' and 'values' (spatial)
+    weights : xarray.DataArray, optional
+        Weights for spatial averaging (e.g., cos(latitude) for area weighting)
+
+        
+    Returns:
+    --------
+    acc_spatial : xarray.DataArray
+        Spatially-averaged ACC with dimension 'time'
+    acc_pointwise : xarray.DataArray
+        Point-wise ACC with dimension 'values' (ACC at each grid point, computed over time)
     """
     
-    # Compute numerator and denominators
-    numerator = (anomaly_dataset * anomaly_inference).mean(dim="values")
-    denominator = np.sqrt((anomaly_dataset ** 2).mean(dim="values") * (anomaly_inference ** 2).mean(dim="values"))
+    # Compute spatially-averaged ACC
+    if weights is not None:
+        numerator_spatial = (anomaly_dataset * anomaly_inference).weighted(weights).mean(dim="values")
+        denominator_spatial = np.sqrt(
+            (anomaly_dataset ** 2).weighted(weights).mean(dim="values") * 
+            (anomaly_inference ** 2).weighted(weights).mean(dim="values")
+        )
+    else:
+        numerator_spatial = (anomaly_dataset * anomaly_inference).mean(dim="values")
+        denominator_spatial = np.sqrt((anomaly_dataset ** 2).mean(dim="values") * (anomaly_inference ** 2).mean(dim="values"))
     
-    # Compute ACC
-    acc = numerator / denominator
+    acc_spatial = numerator_spatial / denominator_spatial
+     
+    return acc_spatial
+
+
+def compute_rt(anomaly_dataset, anomaly_inference):
+    """
+    Compute temporal correlation coefficient (R_t) at each grid point for each lead time.
+    Correlation is computed across runs (temporal dimension).
     
-    return acc
+    Parameters:
+    -----------
+    anomaly_dataset : xarray.DataArray
+        Dataset anomalies with dimensions (run, leadtime, values)
+    anomaly_inference : xarray.DataArray
+        Inference anomalies with dimensions (run, leadtime, values)
+        
+    Returns:
+    --------
+    rt : xarray.DataArray
+        Temporal correlation coefficient with dimensions (leadtime, values)
+        Shows correlation at each grid point for each lead time, computed across runs
+    """
     
+    # Compute R_t: correlation over 'run' dimension for each (leadtime, values) combination
+    numerator = (anomaly_dataset * anomaly_inference).mean(dim="run")
+    denominator = np.sqrt(
+        (anomaly_dataset ** 2).mean(dim="run") * 
+        (anomaly_inference ** 2).mean(dim="run")
+    )
+    
+    rt = numerator / denominator
+    
+    return rt
