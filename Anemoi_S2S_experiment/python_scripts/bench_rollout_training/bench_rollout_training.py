@@ -47,7 +47,9 @@ lat_lon_coords = None
 for run_idx in range(12):
     print(f"Processing run {run_idx}...")
     #select inference dataset for each run
-    inference_path = f"/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_refmodel_8weeks_run{run_idx:02d}*"
+    #inference_path = f"/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_refmodel_8weeks_run{run_idx:02d}*"
+    inference_path = f"/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/output_inference_10k_rollout_8weeks_run{run_idx:02d}*"
+
     ds_inference = xr.open_dataset(glob.glob(inference_path)[0], engine="netcdf4")
     
     #get init date and number of steps
@@ -70,6 +72,10 @@ for run_idx in range(12):
     #compute weekly means
     ds_dataset_sliced_weekly = ds_dataset_sliced_daily.resample(time='7D').mean()
     ds_inference_weekly = ds_inference_daily.resample(time='7D').mean()
+    
+    # Keep only the first 8 weeks (in case a 9th partial week bin was created)
+    ds_dataset_sliced_weekly = ds_dataset_sliced_weekly.isel(time=slice(0, 8))
+    ds_inference_weekly = ds_inference_weekly.isel(time=slice(0, 8))
     
     # Compute latitude weights once (outside variable loop)
     lat_weights = np.cos(np.radians(ds_inference["latitude"].values))
@@ -170,7 +176,8 @@ acc_spatial_ds = xr.Dataset(
 acc_spatial_ds.coords['run'] = np.arange(n_runs)
 acc_spatial_ds.coords['leadtime'] = np.arange(n_leadtimes)
 
-nc_path_spatial = os.path.join(output_dir, "ACC_weekly_anomalies_spatial.nc")
+#nc_path_spatial = os.path.join(output_dir, "ACC_weekly_anomalies_spatial.nc")
+nc_path_spatial = os.path.join(output_dir, "ACC_weekly_anomalies_10k_rollout.nc")
 acc_spatial_ds.to_netcdf(nc_path_spatial)
 print(f"Spatially-averaged ACC saved to: {nc_path_spatial}")
 
@@ -206,7 +213,9 @@ if lat_lon_coords is not None:
     rt_ds.coords['latitude'] = lat_lon_coords['latitude'].isel(time=0).drop_vars('time')
     rt_ds.coords['longitude'] = lat_lon_coords['longitude'].isel(time=0).drop_vars('time')
 
-nc_path_rt = os.path.join(output_dir, "Rt_weekly_anomalies.nc")
+#nc_path_rt = os.path.join(output_dir, "Rt_weekly_anomalies.nc")
+nc_path_rt = os.path.join(output_dir, "Rt_weekly_anomalies_10k_rollout.nc")
+
 rt_ds.to_netcdf(nc_path_rt)
 print(f"R_t (temporal correlation) saved to: {nc_path_rt}")
 
