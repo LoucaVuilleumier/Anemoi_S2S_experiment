@@ -1,0 +1,22 @@
+# Example inference using data from MARS
+# Run inference on ATOS using the following command:
+#   ```
+#   anemoi inference --config-path path-to-config --config-name inference-aifs-subs-pretrain.yaml
+#   ```
+checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_jakob/inference-last.ckpt
+date: 2025-07-01
+lead_time: 1344h
+
+allow_nans: true
+verbosity: 0
+write_initial_state: true
+use_grib_paramid: false
+
+# The input can be of course also from the anemoi-dataset specified in the training config
+input:
+  mars:
+    class: ea
+    stream: oper
+
+output:
+  netcdf: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/AIFS/aifs-subs-pretrain-inference.nc

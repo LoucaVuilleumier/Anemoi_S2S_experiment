@@ -157,76 +157,45 @@ for boxplot_comparison, var in zip(boxplot_comparison_list, var_list):
 Rt_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/Rt_weekly_anomalies.nc"
 Rt_ds = xr.open_dataset(Rt_path)
 
+
 Rt_rollout_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/Rt_weekly_anomalies_10k_rollout.nc"
 Rt_ds_rollout = xr.open_dataset(Rt_rollout_path)
 
 Rt_list = [Rt_ds, Rt_ds_rollout, Rt_package_ds]
 Rt_labels = ['Reference Model', 'Rollout Model', 'Reference Model Package']
 
-for Rt, label in zip(Rt_list, Rt_labels):
-    # Plot R_t maps for weeks 3-6
-    fig = plt.figure(figsize=(20, 16))
+pf.plot_weekly_spatial_maps(Rt_ds, ['2t', 'tp', '10u', '10v'], [0, 2, 4, 6], "Tempoaral CC",
+                            'Temporal Correlation Coefficient of Reference Model across 12 Runs',
+                            '/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_rollout_training/metrics/images/test')
 
-    variables = ['2t', 'tp', '10u', '10v']
-    var_names_full = ['2m Temperature', 'Total Precipitation', '10m U Wind', '10m V Wind']
-    weeks = [0 , 2, 4, 6]  # Weeks 1, 3, 5, 7 (0-indexed)
-
-    proj = ccrs.PlateCarree()
-    norm = TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
-
-    for i, (var, var_name) in enumerate(zip(variables, var_names_full)):
-        for j, week in enumerate(weeks):
-            ax = fig.add_subplot(4, 4, i*4 + j + 1, projection=proj)
-            ax.set_global()
-            
-            # Get R_t data for this variable and week
-            rt_data = Rt[var].isel(leadtime=week).values.ravel()
-            lons = Rt['longitude'].values.ravel()
-            lats = Rt['latitude'].values.ravel()
-            
-            # Handle antimeridian
-            lons = np.where(lons > 180, lons - 360, lons)
-            
-            # Remove NaNs/infs
-            mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(rt_data)
-            lons_plot, lats_plot, rt_plot = lons[mask], lats[mask], rt_data[mask]
-            
-            # Plot using tricontourf
-            im = ax.tricontourf(lons_plot, lats_plot, rt_plot, 40, 
-                            transform=proj, norm=norm, cmap='RdBu_r')
-            
-            # Add coastlines
-            ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
-            
-            # Set title
-            ax.set_title(f'{var_name}\nWeek {week+1}', fontsize=10, fontweight='bold')
-
-    # Add colorbar
-    cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-    cbar = fig.colorbar(im, cax=cbar_ax)
-    cbar.set_label('R_t (Temporal Correlation)', fontsize=12)
-
-    plt.suptitle(f'Temporal Correlation Coefficient of {label} across 12 Runs', 
-                fontsize=16, fontweight='bold', y=0.98)
-    plt.tight_layout(rect=[0, 0, 0.91, 0.97])
-
-    plt.savefig(f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_rollout_training/metrics/images/rt_spatial_maps_{label.replace(" ", "_").lower()}.png', 
-                dpi=300, bbox_inches='tight')
-    print("R_t spatial maps saved!")
 
 
 ############################################################################################################
 #Same with the outputs of the package
-
+#ACC outputs
 acc_package_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/ACC_weekly_anomalies_refmodel_package.nc"
 acc_package_ds = xr.open_dataset(acc_package_path)
-
+#R_t outputs
 Rt_package_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/Rt_weekly_anomalies_refmodel_package.nc"
 Rt_package_ds = xr.open_dataset(Rt_package_path)
 
-#boxplot for package outputs
+#SEDI outputs
+SEDI_weekly_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/SEDI_weekly.nc"
+SEDI_weekly_ds = xr.open_dataset(SEDI_weekly_path)
 
-boxplot_data_package = {
+SEDI_spatial_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/SEDI_spatial_weekly.nc"
+SEDI_spatial_ds = xr.open_dataset(SEDI_spatial_path)
+
+#RMSE outputs
+RMSE_weekly_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/RMSE_weekly.nc"
+RMSE_weekly_ds = xr.open_dataset(RMSE_weekly_path)
+
+RMSE_spatial_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/RMSE_spatial_weekly.nc"
+RMSE_spatial_ds = xr.open_dataset(RMSE_spatial_path)
+
+#boxplot for package outputs
+#Acc
+boxplot_acc_package = {
     "2m Temperature": {
         f"week {i+1}": acc_package_ds["2t"].isel(leadtime=i) for i in range(8)},
     "Total Precipitation": {
@@ -236,13 +205,72 @@ boxplot_data_package = {
     "10m V Wind": {
         f"week {i+1}": acc_package_ds["10v"].isel(leadtime=i) for i in range(8)}
 }
+#RMSE
 
+boxplot_RMSE = {
+    "2m Temperature": {
+        f"week {i+1}": RMSE_weekly_ds["2t"].isel(leadtime=i) for i in range(8)},
+    "Total Precipitation": {
+        f"week {i+1}": RMSE_weekly_ds["tp"].isel(leadtime=i) for i in range(8)},
+    "10m U Wind": {
+        f"week {i+1}": RMSE_weekly_ds["10u"].isel(leadtime=i) for i in range(8)},
+    "10m V Wind": {
+        f"week {i+1}": RMSE_weekly_ds["10v"].isel(leadtime=i) for i in range(8)}
+}
+
+for var in var_list:
+    SEDI_weekly_ds[var].values = SEDI_weekly_ds[var].values * -1
+
+#SEDI
+boxplot_SEDI ={
+    "2m Temperature": {
+        f"week {i+1}": SEDI_weekly_ds["2t"].isel(leadtime=i) for i in range(8)},
+    "Total Precipitation": {
+        f"week {i+1}": SEDI_weekly_ds["tp"].isel(leadtime=i) for i in range(8)},
+    "10m U Wind": {
+        f"week {i+1}": SEDI_weekly_ds["10u"].isel(leadtime=i) for i in range(8)},
+    "10m V Wind": {
+        f"week {i+1}": SEDI_weekly_ds["10v"].isel(leadtime=i) for i in range(8)}
+} 
+
+#Boxplots
+#ACC
 pf.plot_boxplots(
-    data_dict=boxplot_data_package,
+    data_dict=boxplot_acc_package,
     title='ACC for Weekly Forecasts of reference Model over 12 Runs, computed with package',
     colors=color_weeks,
     savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_rollout_training/metrics/images/acc_regional_boxplot_package.png',
     ylabel='Anomaly Correlation Coefficient',
     sharey = True
 )
+
+#RMSE
+pf.plot_boxplots(
+    data_dict=boxplot_RMSE,
+    title="RMSE for Weekly Forecasts of reference Model over 12 Runs",
+    colors=color_weeks,
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_rollout_training/metrics/images/rmse_weekly.png',
+    ylabel='Root Mean Square Error',
+    sharey = False
+)
+
+#SEDI
+pf.plot_boxplots(
+    data_dict=boxplot_SEDI,
+    title="SEDI for Weekly Forecasts of reference Model over 12 Runs",
+    colors=color_weeks,
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_rollout_training/metrics/images/sedi_weekly.png',
+    ylabel='SEDI',
+    sharey = True
+)
+
+
+
+
+SEDI_spatial_ds = SEDI_spatial_ds.assign_coords(
+    latitude=("values", ds_dataset.latitudes.values),
+    longitude=("values", ds_dataset.longitudes.values),)
+
+    
+pf.plot_weekly_spatial_maps(SEDI_spatial_ds , ['2t', 'tp', '10u', '10v'], [0, 2, 4, 6], "SEDI", "Spatial SEDI for Reference Model across 12 Runs", '/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/bench_rollout_training/metrics/images/spatial_sedi_refmodel')
 

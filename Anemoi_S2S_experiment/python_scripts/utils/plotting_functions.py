@@ -188,4 +188,56 @@ def plot_boxplots(data_dict, title, colors, savename, ylabel="Mean absolute erro
     plt.savefig(f"{savename}", dpi=150, bbox_inches='tight')
     plt.close()
 
+
+
+def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitle, savename):
     
+    
+    fig = plt.figure(figsize=(20, 16))
+
+    variables = list_variables
+    #var_names_full = ['2m Temperature', 'Total Precipitation', '10m U Wind', '10m V Wind']
+    weeks = list_weeks  # Weeks 1, 3, 5, 7 (0-indexed)
+
+    proj = ccrs.PlateCarree()
+    norm = TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
+
+    for i, var in enumerate(variables):
+        for j, week in enumerate(weeks):
+            ax = fig.add_subplot(len(list_weeks), len(list_variables), i*len(list_weeks) + j + 1, projection=proj)
+            ax.set_global()
+            
+            # Get data for this variable and week
+            data_week = dataset[var].isel(leadtime=week).values.ravel()
+            lons = dataset['longitude'].values.ravel()
+            lats = dataset['latitude'].values.ravel()
+            
+            # Handle antimeridian
+            lons = np.where(lons > 180, lons - 360, lons)
+            
+            # Remove NaNs/infs
+            mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(data_week)
+            lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
+            
+            # Plot using tricontourf
+            im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40, 
+                            transform=proj, norm=norm, cmap='RdBu_r')
+            
+            # Add coastlines
+            ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
+            
+            # Set title
+            ax.set_title(f'{var}\nWeek {week+1}', fontsize=10, fontweight='bold')
+
+    # Add colorbar
+    cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+    cbar = fig.colorbar(im, cax=cbar_ax)
+    cbar.set_label(f'{label}', fontsize=12)
+
+    plt.suptitle(subtitle, 
+                fontsize=16, fontweight='bold', y=0.98)
+    plt.tight_layout(rect=[0, 0, 0.91, 0.97])
+
+    plt.savefig(f'{savename}.png', 
+                dpi=300, bbox_inches='tight')
+    print("R_t spatial maps saved!")

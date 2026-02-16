@@ -1,0 +1,6 @@
+checkpoint: /ec/res4/hpcperm/ecme5801/louca/inference-last.ckpt
+date: 2022-09-01T00:00
+input:
+  test:
+    use_original_paths: true
+output: printer

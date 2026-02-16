@@ -3,6 +3,8 @@ output_inference/
 output_training/
 checkpoints_mariana/
 checkpoints_mariana/*
+checkpoints_jakob/
+checkpoints_jakob/*
 outputs/
 outputs/*
 

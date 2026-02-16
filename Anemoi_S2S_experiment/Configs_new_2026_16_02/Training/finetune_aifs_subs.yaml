@@ -1,0 +1,1274 @@
+# Yaml to finetune the AIFS-subs pretrained model
+# Your need to:
+# 1. Replace the paths with the actual paths
+# 2. hardware.paths.warm_start should be the path to the last.ckpt
+# 3. In order to use the datasets from anywhere on ATOS without specifying the path explicitly, you need to have the following block in ~/.config/anemoi/settings.toml: 
+#   ``` 
+#   [datasets]
+#   path = [
+#       "/gpfs/scratch/ehpc01/ai-ml/datasets",
+#       "/home/mlx/ai-ml/datasets",
+#       "/leonardo_work/DestE_340_25/ai-ml/datasets",
+#       "s3://ml-datasets",
+#   ]
+#   ```
+# 4. Run finetuning on ATOS using the following command:
+#   ```
+#   anemoi train --config-path path-to-config --config-name finetune-aifs-subs.yaml
+#   ```
+hardware:
+  paths:
+    data: path-to-data 
+    output: path-to-output
+    truncation: /home/ecm/ecm328446/Projects/ai-ml/truncation/
+    logs:
+      base: path-to-logs
+      wandb: path-to-wandb
+      mlflow: path-to-mlflow
+      tensorboard: path-to-tensorboard
+    checkpoints: path-to-checkpoints
+    plots: path-to-plots
+    profiler: path-to-profiler
+    graph: path-to-graph
+    warm_start: path-to-warm-start
+    grids: path-to-grids
+
+  files:
+    dataset: ${dataloader.datasets}
+    graph: graph_anemoi_new_o96.pt
+    truncation: o96-o32-linear.mat.npz
+    truncation_inv: o32-o96-linear.mat.npz
+    checkpoint:
+      every_n_epochs: anemoi-by_epoch-epoch_{epoch:03d}-step_{step:06d}
+      every_n_train_steps: anemoi-by_step-epoch_{epoch:03d}-step_{step:06d}
+      every_n_minutes: anemoi-by_time-epoch_{epoch:03d}-step_{step:06d}
+    warm_start: null
+  accelerator: auto
+  num_gpus_per_node: 4
+  num_nodes: 4
+  num_gpus_per_model: 1
+  num_gpus_per_ensemble: 1
+
+data:
+  format: zarr
+  frequency: 6h
+  timestep: 24h
+  forcing:
+  - cos_latitude
+  - cos_longitude
+  - sin_latitude
+  - sin_longitude
+  - cos_julian_day
+  - cos_local_time
+  - sin_julian_day
+  - sin_local_time
+  - insolation
+  - lsm
+  - sdor
+  - slor
+  - z
+  diagnostic:
+  - tp
+  - cp
+  - sf
+  - tcc
+  - lcc
+  - mcc
+  - ttr
+  - ssrd
+  - strd
+  - w_2
+  - w_5
+  - w_10
+  - w_30
+  - w_50
+  - w_70
+  - w_100
+  - w_150
+  - w_200
+  - w_250
+  - w_300
+  - w_400
+  - w_500
+  - w_600
+  - w_700
+  - w_850
+  - w_925
+  - w_1000
+  remapped: null
+  normalizer:
+    default: mean-std
+    remap:
+      cp: tp
+      sf: tp
+    std:
+    - tp
+    - cp
+    - sf
+    - tcw
+    - q_150
+    - q_200
+    - q_250
+    - q_300
+    - q_400
+    - q_500
+    - q_600
+    - q_700
+    - q_850
+    - q_925
+    - q_1000
+    min-max: null
+    max:
+    - sdor
+    - slor
+    - z
+    none:
+    - cos_latitude
+    - cos_longitude
+    - sin_latitude
+    - sin_longitude
+    - cos_julian_day
+    - cos_local_time
+    - sin_julian_day
+    - sin_local_time
+    - insolation
+    - lsm
+    - tcc
+    - mcc
+    - lcc
+  const_imputer:
+    default: none
+  processors:
+    normalizer:
+      _target_: anemoi.models.preprocessing.normalizer.InputNormalizer
+      config:
+        default: mean-std
+        remap:
+          cp: tp
+          sf: tp
+        std:
+        - tp
+        - cp
+        - sf
+        - tcw
+        - q_150
+        - q_200
+        - q_250
+        - q_300
+        - q_400
+        - q_500
+        - q_600
+        - q_700
+        - q_850
+        - q_925
+        - q_1000
+        min-max: null
+        max:
+        - sdor
+        - slor
+        - z
+        none:
+        - cos_latitude
+        - cos_longitude
+        - sin_latitude
+        - sin_longitude
+        - cos_julian_day
+        - cos_local_time
+        - sin_julian_day
+        - sin_local_time
+        - insolation
+        - lsm
+        - tcc
+        - mcc
+        - lcc
+  num_features: 131
+  resolution: o96
+dataloader:
+  prefetch_factor: 2
+  pin_memory: true
+  read_group_size: 1
+  num_workers:
+    training: 8
+    validation: 8
+    test: 8
+  batch_size:
+    training: 1
+    validation: 1
+    test: 4
+  limit_batches:
+    training: null
+    validation: 256
+    test: 20
+  grid_indices:
+    _target_: anemoi.training.data.grid_indices.FullGrid
+    nodes_name: data
+  dataset:
+    concat:
+    - join:
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
+        start: 1979
+        end: 1999
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
+        start: 1979
+        end: 1999
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
+        start: 1979
+        end: 1999
+      select:
+      - 10u
+      - 10v
+      - 2d
+      - 2t
+      - msl
+      - sp
+      - tcw
+      - lcc
+      - mcc
+      - tcc
+      - skt
+      - cos_julian_day
+      - cos_latitude
+      - cos_local_time
+      - cos_longitude
+      - insolation
+      - lsm
+      - sdor
+      - sin_julian_day
+      - sin_latitude
+      - sin_local_time
+      - sin_longitude
+      - slor
+      - z
+      - q_150
+      - q_200
+      - q_250
+      - q_300
+      - q_400
+      - q_500
+      - q_600
+      - q_700
+      - q_850
+      - q_925
+      - q_1000
+      - t_2
+      - t_5
+      - t_10
+      - t_30
+      - t_70
+      - t_50
+      - t_100
+      - t_150
+      - t_200
+      - t_250
+      - t_300
+      - t_400
+      - t_500
+      - t_600
+      - t_700
+      - t_850
+      - t_925
+      - t_1000
+      - u_2
+      - u_5
+      - u_10
+      - u_30
+      - u_70
+      - u_50
+      - u_100
+      - u_150
+      - u_200
+      - u_250
+      - u_300
+      - u_400
+      - u_500
+      - u_600
+      - u_700
+      - u_850
+      - u_925
+      - u_1000
+      - v_2
+      - v_5
+      - v_10
+      - v_30
+      - v_70
+      - v_50
+      - v_100
+      - v_150
+      - v_200
+      - v_250
+      - v_300
+      - v_400
+      - v_500
+      - v_600
+      - v_700
+      - v_850
+      - v_925
+      - v_1000
+      - w_2
+      - w_5
+      - w_10
+      - w_30
+      - w_70
+      - w_50
+      - w_100
+      - w_150
+      - w_200
+      - w_250
+      - w_300
+      - w_400
+      - w_500
+      - w_600
+      - w_700
+      - w_850
+      - w_925
+      - w_1000
+      - z_2
+      - z_5
+      - z_10
+      - z_30
+      - z_70
+      - z_50
+      - z_100
+      - z_150
+      - z_200
+      - z_250
+      - z_300
+      - z_400
+      - z_500
+      - z_600
+      - z_700
+      - z_850
+      - z_925
+      - z_1000
+      - cp
+      - sf
+      - ssrd
+      - strd
+      - tp
+      - ttr
+    - join:
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
+        start: 2000
+        end: 2006
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
+        start: 2000
+        end: 2006
+      - dataset: aifs-ea-an-oper-0001-mars-o96-2000-2006-6h-v1-ERA51-pl
+        start: 2000
+        end: 2006
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
+        start: 2000
+        end: 2006
+      select:
+      - 10u
+      - 10v
+      - 2d
+      - 2t
+      - msl
+      - sp
+      - tcw
+      - lcc
+      - mcc
+      - tcc
+      - skt
+      - cos_julian_day
+      - cos_latitude
+      - cos_local_time
+      - cos_longitude
+      - insolation
+      - lsm
+      - sdor
+      - sin_julian_day
+      - sin_latitude
+      - sin_local_time
+      - sin_longitude
+      - slor
+      - z
+      - q_150
+      - q_200
+      - q_250
+      - q_300
+      - q_400
+      - q_500
+      - q_600
+      - q_700
+      - q_850
+      - q_925
+      - q_1000
+      - t_2
+      - t_5
+      - t_10
+      - t_30
+      - t_70
+      - t_50
+      - t_100
+      - t_150
+      - t_200
+      - t_250
+      - t_300
+      - t_400
+      - t_500
+      - t_600
+      - t_700
+      - t_850
+      - t_925
+      - t_1000
+      - u_2
+      - u_5
+      - u_10
+      - u_30
+      - u_70
+      - u_50
+      - u_100
+      - u_150
+      - u_200
+      - u_250
+      - u_300
+      - u_400
+      - u_500
+      - u_600
+      - u_700
+      - u_850
+      - u_925
+      - u_1000
+      - v_2
+      - v_5
+      - v_10
+      - v_30
+      - v_70
+      - v_50
+      - v_100
+      - v_150
+      - v_200
+      - v_250
+      - v_300
+      - v_400
+      - v_500
+      - v_600
+      - v_700
+      - v_850
+      - v_925
+      - v_1000
+      - w_2
+      - w_5
+      - w_10
+      - w_30
+      - w_70
+      - w_50
+      - w_100
+      - w_150
+      - w_200
+      - w_250
+      - w_300
+      - w_400
+      - w_500
+      - w_600
+      - w_700
+      - w_850
+      - w_925
+      - w_1000
+      - z_2
+      - z_5
+      - z_10
+      - z_30
+      - z_70
+      - z_50
+      - z_100
+      - z_150
+      - z_200
+      - z_250
+      - z_300
+      - z_400
+      - z_500
+      - z_600
+      - z_700
+      - z_850
+      - z_925
+      - z_1000
+      - cp
+      - sf
+      - ssrd
+      - strd
+      - tp
+      - ttr
+    - join:
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
+        start: 2012
+        end: 2023
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
+        start: 2012
+        end: 2023
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
+        start: 2012
+        end: 2023
+      select:
+      - 10u
+      - 10v
+      - 2d
+      - 2t
+      - msl
+      - sp
+      - tcw
+      - lcc
+      - mcc
+      - tcc
+      - skt
+      - cos_julian_day
+      - cos_latitude
+      - cos_local_time
+      - cos_longitude
+      - insolation
+      - lsm
+      - sdor
+      - sin_julian_day
+      - sin_latitude
+      - sin_local_time
+      - sin_longitude
+      - slor
+      - z
+      - q_150
+      - q_200
+      - q_250
+      - q_300
+      - q_400
+      - q_500
+      - q_600
+      - q_700
+      - q_850
+      - q_925
+      - q_1000
+      - t_2
+      - t_5
+      - t_10
+      - t_30
+      - t_70
+      - t_50
+      - t_100
+      - t_150
+      - t_200
+      - t_250
+      - t_300
+      - t_400
+      - t_500
+      - t_600
+      - t_700
+      - t_850
+      - t_925
+      - t_1000
+      - u_2
+      - u_5
+      - u_10
+      - u_30
+      - u_70
+      - u_50
+      - u_100
+      - u_150
+      - u_200
+      - u_250
+      - u_300
+      - u_400
+      - u_500
+      - u_600
+      - u_700
+      - u_850
+      - u_925
+      - u_1000
+      - v_2
+      - v_5
+      - v_10
+      - v_30
+      - v_70
+      - v_50
+      - v_100
+      - v_150
+      - v_200
+      - v_250
+      - v_300
+      - v_400
+      - v_500
+      - v_600
+      - v_700
+      - v_850
+      - v_925
+      - v_1000
+      - w_2
+      - w_5
+      - w_10
+      - w_30
+      - w_70
+      - w_50
+      - w_100
+      - w_150
+      - w_200
+      - w_250
+      - w_300
+      - w_400
+      - w_500
+      - w_600
+      - w_700
+      - w_850
+      - w_925
+      - w_1000
+      - z_2
+      - z_5
+      - z_10
+      - z_30
+      - z_70
+      - z_50
+      - z_100
+      - z_150
+      - z_200
+      - z_250
+      - z_300
+      - z_400
+      - z_500
+      - z_600
+      - z_700
+      - z_850
+      - z_925
+      - z_1000
+      - cp
+      - sf
+      - ssrd
+      - strd
+      - tp
+      - ttr
+    - join:
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-for-single-v2
+        start: '2024-01-01'
+        end: '2024-12-31'
+      - dataset: aifs-ea-an-oper-0001-mars-o96-2024-2024-6h-v2-s2s-predictors
+        start: '2024-01-01'
+        end: '2024-12-31'
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
+        start: '2024-01-01'
+        end: '2024-12-31'
+      select:
+      - 10u
+      - 10v
+      - 2d
+      - 2t
+      - msl
+      - sp
+      - tcw
+      - lcc
+      - mcc
+      - tcc
+      - skt
+      - cos_julian_day
+      - cos_latitude
+      - cos_local_time
+      - cos_longitude
+      - insolation
+      - lsm
+      - sdor
+      - sin_julian_day
+      - sin_latitude
+      - sin_local_time
+      - sin_longitude
+      - slor
+      - z
+      - q_150
+      - q_200
+      - q_250
+      - q_300
+      - q_400
+      - q_500
+      - q_600
+      - q_700
+      - q_850
+      - q_925
+      - q_1000
+      - t_2
+      - t_5
+      - t_10
+      - t_30
+      - t_70
+      - t_50
+      - t_100
+      - t_150
+      - t_200
+      - t_250
+      - t_300
+      - t_400
+      - t_500
+      - t_600
+      - t_700
+      - t_850
+      - t_925
+      - t_1000
+      - u_2
+      - u_5
+      - u_10
+      - u_30
+      - u_70
+      - u_50
+      - u_100
+      - u_150
+      - u_200
+      - u_250
+      - u_300
+      - u_400
+      - u_500
+      - u_600
+      - u_700
+      - u_850
+      - u_925
+      - u_1000
+      - v_2
+      - v_5
+      - v_10
+      - v_30
+      - v_70
+      - v_50
+      - v_100
+      - v_150
+      - v_200
+      - v_250
+      - v_300
+      - v_400
+      - v_500
+      - v_600
+      - v_700
+      - v_850
+      - v_925
+      - v_1000
+      - w_2
+      - w_5
+      - w_10
+      - w_30
+      - w_70
+      - w_50
+      - w_100
+      - w_150
+      - w_200
+      - w_250
+      - w_300
+      - w_400
+      - w_500
+      - w_600
+      - w_700
+      - w_850
+      - w_925
+      - w_1000
+      - z_2
+      - z_5
+      - z_10
+      - z_30
+      - z_70
+      - z_50
+      - z_100
+      - z_150
+      - z_200
+      - z_250
+      - z_300
+      - z_400
+      - z_500
+      - z_600
+      - z_700
+      - z_850
+      - z_925
+      - z_1000
+      - cp
+      - sf
+      - ssrd
+      - strd
+      - tp
+      - ttr
+    fill_missing_gaps: true
+  training:
+    dataset: ${dataloader.datasets}
+    start: null
+    end: 2024
+    frequency: 6h
+    drop: []
+  validation_rollout: 28
+  validation:
+    dataset: ${dataloader.datasets}
+    start: 2007
+    end: 2011
+    frequency: 6h
+  test:
+    dataset: ${dataloader.datasets}
+    start: 2024
+    end: null
+    frequency: 6h
+    drop: []
+datamodule:
+  _target_: anemoi.training.data.datamodule.AnemoiEnsDatasetsDataModule
+diagnostics:
+  plot:
+    asynchronous: true
+    datashader: true
+    frequency:
+      batch: 256
+      epoch: 10
+    parameters:
+    - 2t
+    - msl
+    - 10u
+    - tp
+    - z_500
+    - t_850
+    sample_idx: 0
+    precip_and_related_fields:
+    - tp
+    - cp
+    colormaps:
+      precip:
+        _target_: anemoi.training.utils.custom_colormaps.MatplotlibColormapClevels
+        clevels:
+        - '#ffffff'
+        - '#04e9e7'
+        - '#019ff4'
+        - '#0300f4'
+        - '#02fd02'
+        - '#01c501'
+        - '#008e00'
+        - '#fdf802'
+        - '#e5bc00'
+        - '#fd9500'
+        - '#fd0000'
+        - '#d40000'
+        - '#bc0000'
+        - '#f800fd'
+        variables:
+        - tp
+        - cp
+    callbacks:
+    - _target_: anemoi.training.diagnostics.callbacks.plot_ens.PlotEnsSample
+      sample_idx: 0
+      per_sample: 2
+      parameters:
+      - 2t
+      - msl
+      - 10u
+      - tp
+      - z_500
+      - t_850
+      every_n_batches: 256
+      accumulation_levels_plot:
+      - 0
+      - 0.05
+      - 0.1
+      - 0.25
+      - 0.5
+      - 1
+      - 1.5
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 100
+    - _target_: anemoi.training.diagnostics.callbacks.plot_ens.PlotLoss
+      parameter_groups:
+        moisture:
+        - tp
+        - cp
+        - tcw
+        sfc_wind:
+        - 10u
+        - 10v
+      every_n_batches: 256
+    - _target_: anemoi.training.diagnostics.callbacks.plot_ens.PlotSpectrum
+      sample_idx: 0
+      parameters:
+      - 2t
+      - msl
+      - 10u
+      - tp
+      - z_500
+      - t_850
+      every_n_batches: 256
+    - _target_: anemoi.training.diagnostics.callbacks.plot_ens.PlotHistogram
+      sample_idx: 0
+      parameters:
+      - 2t
+      - msl
+      - 10u
+      - tp
+      - z_500
+      - t_850
+      every_n_batches: 256
+      precip_and_related_fields:
+      - tp
+      - cp
+  benchmark_profiler:
+    memory:
+      enabled: false
+      steps: 5
+      warmup: 2
+      extra_plots: false
+      trace_rank0_only: false
+    time:
+      enabled: true
+      verbose: false
+    speed:
+      enabled: true
+    system:
+      enabled: false
+    model_summary:
+      enabled: false
+    snapshot:
+      enabled: false
+      steps: 4
+      warmup: 0
+  callbacks:
+  - _target_: anemoi.training.diagnostics.callbacks.evaluation.RolloutEvalEns
+    rollout: 28
+    every_n_batches: 1
+  debug:
+    anomaly_detection: false
+  profiler: false
+  enable_checkpointing: true
+  checkpoint:
+    every_n_minutes:
+      save_frequency: null
+      num_models_saved: 0
+    every_n_epochs:
+      save_frequency: 1
+      num_models_saved: -1
+    every_n_train_steps:
+      save_frequency: null
+      num_models_saved: 0
+  log:
+    wandb:
+      enabled: false
+      offline: false
+      log_model: false
+      project: Anemoi
+      entity: ecmwf
+      gradients: false
+      parameters: false
+    tensorboard:
+      enabled: false
+    mlflow:
+      enabled: true
+      offline: true
+      authentication: true
+      log_model: false
+      tracking_uri: https://mlflow.ecmwf.int
+      experiment_name: aifs-subs
+      project_name: Anemoi
+      system: true
+      terminal: true
+      run_name: aifs-subs-finetuning
+      on_resume_create_child: true
+      expand_hyperparams:
+      - config
+      http_max_retries: 35
+    interval: 100
+  enable_progress_bar: true
+  print_memory_summary: false
+graph:
+  overwrite: true
+  data: data
+  hidden: hidden
+  nodes:
+    data:
+      node_builder:
+        _target_: anemoi.graphs.nodes.AnemoiDatasetNodes
+        dataset: ${dataloader.datasets}
+      attributes:
+        area_weight:
+          _target_: anemoi.graphs.nodes.attributes.SphericalAreaWeights
+          norm: unit-max
+          fill_value: 0
+    hidden:
+      node_builder:
+        _target_: anemoi.graphs.nodes.NPZFileNodes
+        npz_file: /gpfs/projects/ehpc01/jschloer/ai-ml/grids//grid-o48.npz
+        lat_key: latitudes
+        lon_key: longitudes
+  edges:
+  - source_name: data
+    target_name: hidden
+    edge_builders:
+    - _target_: anemoi.graphs.edges.CutOffEdges
+      cutoff_factor: 0.6
+      source_mask_attr_name: null
+      target_mask_attr_name: null
+    attributes:
+      edge_length:
+        _target_: anemoi.graphs.edges.attributes.EdgeLength
+        norm: unit-std
+      edge_dirs:
+        _target_: anemoi.graphs.edges.attributes.EdgeDirection
+        norm: unit-std
+  - source_name: hidden
+    target_name: data
+    edge_builders:
+    - _target_: anemoi.graphs.edges.KNNEdges
+      num_nearest_neighbours: 3
+      source_mask_attr_name: null
+      target_mask_attr_name: null
+    attributes:
+      edge_length:
+        _target_: anemoi.graphs.edges.attributes.EdgeLength
+        norm: unit-std
+      edge_dirs:
+        _target_: anemoi.graphs.edges.attributes.EdgeDirection
+        norm: unit-std
+  attributes:
+    nodes:
+      area_weight:
+        _target_: anemoi.graphs.nodes.attributes.SphericalAreaWeights
+        norm: unit-max
+        fill_value: 0
+    edges:
+      edge_length:
+        _target_: anemoi.graphs.edges.attributes.EdgeLength
+        norm: unit-std
+      edge_dirs:
+        _target_: anemoi.graphs.edges.attributes.EdgeDirection
+        norm: unit-std
+  post_processors: []
+model:
+  num_channels: 1024
+  cpu_offload: false
+  keep_batch_sharded: true
+  model:
+    _target_: anemoi.models.models.AnemoiEnsModelEncProcDec
+  noise_injector:
+    _target_: anemoi.models.layers.ensemble.NoiseConditioning
+    noise_std: 1
+    noise_channels_dim: 4
+    noise_mlp_hidden_dim: 32
+    inject_noise: true
+    layer_kernels:
+      Activation:
+        _target_: torch.nn.GELU
+  layer_kernels:
+    LayerNorm:
+      _target_: torch.nn.LayerNorm
+    Linear:
+      _target_: torch.nn.Linear
+    Activation:
+      _target_: torch.nn.GELU
+    QueryNorm:
+      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+      bias: false
+    KeyNorm:
+      _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+      bias: false
+  processor:
+    _target_: anemoi.models.layers.processor.TransformerProcessor
+    num_layers: 16
+    num_chunks: 2
+    mlp_hidden_ratio: 4
+    num_heads: 8
+    window_size: 608
+    dropout_p: 0.0
+    attention_implementation: flash_attention
+    qk_norm: true
+    softcap: 0.0
+    use_alibi_slopes: false
+    cpu_offload: false
+    layer_kernels:
+      LayerNorm:
+        _target_: anemoi.models.layers.normalization.ConditionalLayerNorm
+        normalized_shape: 1024
+        condition_shape: 4
+        w_one_bias_zero_init: true
+        autocast: false
+      Linear:
+        _target_: torch.nn.Linear
+      Activation:
+        _target_: torch.nn.GELU
+  encoder:
+    _target_: anemoi.models.layers.mapper.GraphTransformerForwardMapper
+    trainable_size: 8
+    sub_graph_edge_attributes:
+    - edge_length
+    - edge_dirs
+    num_chunks: 1
+    mlp_hidden_ratio: 4
+    num_heads: 8
+    qk_norm: false
+    cpu_offload: false
+    layer_kernels:
+      LayerNorm:
+        _target_: torch.nn.LayerNorm
+      Linear:
+        _target_: torch.nn.Linear
+      Activation:
+        _target_: torch.nn.GELU
+      QueryNorm:
+        _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+        bias: false
+      KeyNorm:
+        _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+        bias: false
+    shard_strategy: edges
+  decoder:
+    _target_: anemoi.models.layers.mapper.GraphTransformerBackwardMapper
+    trainable_size: 8
+    sub_graph_edge_attributes:
+    - edge_length
+    - edge_dirs
+    num_chunks: 1
+    mlp_hidden_ratio: 4
+    num_heads: 8
+    initialise_data_extractor_zero: true
+    qk_norm: false
+    cpu_offload: false
+    layer_kernels:
+      LayerNorm:
+        _target_: torch.nn.LayerNorm
+      Linear:
+        _target_: torch.nn.Linear
+      Activation:
+        _target_: torch.nn.GELU
+      QueryNorm:
+        _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+        bias: false
+      KeyNorm:
+        _target_: anemoi.models.layers.normalization.AutocastLayerNorm
+        bias: false
+    shard_strategy: edges
+  output_mask:
+    _target_: anemoi.training.utils.masks.NoOutputMask
+  trainable_parameters:
+    data: 8
+    hidden: 8
+    data2hidden: 8
+    hidden2data: 8
+  attributes:
+    edges:
+    - edge_length
+    - edge_dirs
+    nodes: []
+  bounding: []
+training:
+  scalers:
+    general_variable:
+      _target_: anemoi.training.losses.scalers.GeneralVariableLossScaler
+      weights:
+        default: 1
+        q: 0.6
+        t: 3
+        u: 0.8
+        v: 0.5
+        w: 0.001
+        z: 3
+        sp: 1
+        10u: 0.1
+        10v: 0.1
+        2d: 0.5
+        tp: 0.025
+        cp: 0.0025
+        hcc: 0.1
+        lcc: 0.1
+        mcc: 0.1
+        tcc: 0.1
+        ttr: 0.1
+        ssrd: 0.1
+        strd: 0.1
+    pressure_level:
+      _target_: anemoi.training.losses.scalers.ReluVariableLevelScaler
+      group: pl
+      y_intercept: 0.2
+      slope: 0.001
+    nan_mask_weights:
+      _target_: anemoi.training.losses.scalers.NaNMaskScaler
+    stdev_tendency:
+      _target_: anemoi.training.losses.scalers.StdevTendencyScaler
+    var_tendency:
+      _target_: anemoi.training.losses.scalers.VarTendencyScaler
+    node_weights:
+      _target_: anemoi.training.losses.scalers.GraphNodeAttributeScaler
+      nodes_name: data
+      nodes_attribute_name: area_weight
+      norm: unit-sum
+  run_id: null 
+  fork_run_id: 8ae7f6133b1945ad92316c08d1bdaf79
+  transfer_learning: true
+  load_weights_only: true
+  deterministic: false
+  precision: bf16-mixed
+  multistep_input: 2
+  accum_grad_batches: 1
+  num_sanity_val_steps: 4
+  gradient_clip:
+    val: 32.0
+    algorithm: value
+  weight_averaging:
+    _target_: pytorch_lightning.callbacks.EMAWeightAveraging
+    decay: 0.999
+    update_starting_at_step: 1000
+  optimizer:
+    zero: false
+    kwargs:
+      betas:
+      - 0.9
+      - 0.95
+      weight_decay: 0.1
+      eps: 1.0e-07
+  model_task: anemoi.training.train.tasks.GraphEnsForecaster
+  ensemble_size_per_device: 4
+  strategy:
+    _target_: anemoi.training.distributed.strategy.DDPEnsGroupStrategy
+    num_gpus_per_ensemble: 1
+    num_gpus_per_model: 1
+    read_group_size: 1
+  loss_gradient_scaling: false
+  training_loss:
+    _target_: anemoi.training.losses.kcrps.AlmostFairKernelCRPS
+    scalers:
+    - pressure_level
+    - general_variable
+    - nan_mask_weights
+    - node_weights
+    ignore_nans: false
+    alpha: 1.0
+  validation_metrics:
+    fkcrps:
+      _target_: anemoi.training.losses.kcrps.AlmostFairKernelCRPS
+      scalers:
+      - node_weights
+      ignore_nans: true
+      alpha: 1.0
+    kcrps_mae:
+      _target_: anemoi.training.losses.kcrps.EnsembleMAE
+      scalers:
+      - node_weights
+      fair: true
+      ignore_nans: true
+    kcrps_ensvar:
+      _target_: anemoi.training.losses.kcrps.EnsembleVariance
+      scalers:
+      - node_weights
+      fair: true
+      ignore_nans: true
+  variable_groups:
+    default: sfc
+    pl:
+      param:
+      - q
+      - t
+      - u
+      - v
+      - w
+      - z
+  metrics:
+  - z_500
+  - t_850
+  - u_850
+  - v_850
+  rollout:
+    start: 1
+    epoch_increment: 0
+    max: 1
+  max_epochs: null
+  max_steps: 50000
+  lr:
+    warmup: 100
+    rate: 6.25e-05
+    iterations: 50000
+    min: 5.0e-07
+  submodules_to_freeze: []
+config_validation: false
+
+
