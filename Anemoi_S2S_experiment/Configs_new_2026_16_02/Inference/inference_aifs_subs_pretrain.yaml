@@ -4,7 +4,7 @@
 #   anemoi inference --config-path path-to-config --config-name inference-aifs-subs-pretrain.yaml
 #   ```
 checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_jakob/inference-last.ckpt
-date: 2025-07-01
+date: 2024-07-01
 lead_time: 1344h
 
 allow_nans: true
@@ -14,9 +14,20 @@ use_grib_paramid: false
 
 # The input can be of course also from the anemoi-dataset specified in the training config
 input:
-  mars:
-    class: ea
-    stream: oper
+  dataset:
+    join:
+    - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-for-single-v2
+      start: "2024-01-01"
+      end: "2024-12-31"
+    - dataset: aifs-ea-an-oper-0001-mars-o96-2024-2024-6h-v2-s2s-predictors
+      start: "2024-01-01"
+      end: "2024-12-31"
+    - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
+      start: "2024-01-01"
+      end: "2024-12-31"
+  #mars:
+  #  class: ea
+  #  stream: oper
 
 output:
-  netcdf: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/AIFS/aifs-subs-pretrain-inference.nc
+  netcdf: ${oc.env:INFERENCE_OUTPUT_PATH}
