@@ -3,7 +3,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.colors import TwoSlopeNorm, Normalize
 from scipy.spatial import cKDTree
-import earthkit.data as ekd 
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
@@ -104,7 +103,63 @@ def plot_multiple_lines(series_dict, x=None, xlabel="", ylabel="", title="", sav
     plt.savefig(f"{savename}", dpi =150)
     plt.close()
    
+
+def plot_weekly_lines(data_dict, title, colors, savename, ylabel="Metric", xlabel="Forecast Week", 
+                      figsize=(10, 6), ylim=None, add_markers=True):
+    """
+    Plot line graphs showing metric evolution across forecast weeks.
     
+    Parameters
+    ----------
+    data_dict : dict
+        {variable_name: array_like} where array has length equal to number of weeks
+    title : str
+        Plot title
+    colors : dict
+        {variable_name: color}
+    savename : str
+        Path to save the figure
+    ylabel : str
+        Y-axis label
+    xlabel : str
+        X-axis label (default: "Forecast Week")
+    figsize : tuple
+        Figure size (width, height)
+    ylim : tuple, optional
+        Y-axis limits (ymin, ymax)
+    add_markers : bool
+        Whether to add markers to the lines
+    """
+    
+    fig, ax = plt.subplots(figsize=figsize)
+    
+    # Get number of weeks from first variable
+    n_weeks = len(next(iter(data_dict.values())))
+    weeks = np.arange(1, n_weeks + 1)
+    
+    # Plot each variable
+    for var_name, values in data_dict.items():
+        if add_markers:
+            ax.plot(weeks, values, label=var_name, color=colors.get(var_name, 'gray'), 
+                   marker='o', markersize=6, linewidth=2)
+        else:
+            ax.plot(weeks, values, label=var_name, color=colors.get(var_name, 'gray'), 
+                   linewidth=2)
+    
+    ax.set_xlabel(xlabel, fontsize=12)
+    ax.set_ylabel(ylabel, fontsize=12)
+    ax.set_title(title, fontsize=14)
+    ax.legend(fontsize=11, frameon=True)
+    ax.grid(True, alpha=0.3, linestyle='--')
+    ax.set_xticks(weeks)
+    
+    if ylim is not None:
+        ax.set_ylim(ylim)
+    
+    plt.tight_layout()
+    plt.savefig(savename, dpi=150, bbox_inches='tight')
+    plt.close()
+
     
 def plot_boxplots(data_dict, title, colors, savename, ylabel="Mean absolute error", figsize_per_subplot=(2.2, 5), sharey = True):
     """
@@ -241,3 +296,68 @@ def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitl
     plt.savefig(f'{savename}.png', 
                 dpi=300, bbox_inches='tight')
     print("R_t spatial maps saved!")
+
+
+def plot_single_var_spatial_rmse(dataset, var, weeks, var_label, unit, suptitle, savename, cmap='YlOrRd'):
+    """Plot spatial RMSE maps for a single variable across several weeks.
+
+    Parameters
+    ----------
+    dataset : xr.Dataset
+        Dataset with spatial RMSE values, longitude, latitude, and a leadtime dim.
+    var : str
+        Short variable name (key in *dataset*), e.g. '2t', 'tp'.
+    weeks : list[int]
+        0-based leadtime indices to plot.
+    var_label : str
+        Human-readable variable name for title.
+    unit : str
+        Physical unit string shown on the colour-bar.
+    suptitle : str
+        Figure super-title.
+    savename : str
+        Full path (with extension) where the figure is saved.
+    cmap : str, optional
+        Matplotlib sequential colourmap name (default 'YlOrRd').
+    """
+    proj = ccrs.PlateCarree()
+    n_weeks = len(weeks)
+    fig, axes = plt.subplots(1, n_weeks, figsize=(5.5 * n_weeks, 5),
+                             subplot_kw={"projection": proj})
+    if n_weeks == 1:
+        axes = [axes]
+
+    # Shared colour range across the selected weeks
+    all_data = []
+    for week in weeks:
+        d = dataset[var].isel(leadtime=week).values.ravel()
+        all_data.append(d[np.isfinite(d)])
+    all_data = np.concatenate(all_data)
+    vmin, vmax = 0, np.nanpercentile(all_data, 99)
+    norm = Normalize(vmin=vmin, vmax=vmax)
+
+    lons = dataset['longitude'].values.ravel()
+    lats = dataset['latitude'].values.ravel()
+    lons = np.where(lons > 180, lons - 360, lons)
+
+    for j, week in enumerate(weeks):
+        ax = axes[j]
+        ax.set_global()
+
+        data_week = dataset[var].isel(leadtime=week).values.ravel()
+        mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(data_week)
+        lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
+
+        im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40,
+                            transform=proj, norm=norm, cmap=cmap)
+        ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
+        ax.set_title(f'Week {week + 1}', fontsize=11, fontweight='bold')
+
+    cbar_ax = fig.add_axes([0.92, 0.15, 0.015, 0.7])
+    cbar = fig.colorbar(im, cax=cbar_ax)
+    cbar.set_label(f'RMSE [{unit}]', fontsize=11)
+
+    fig.suptitle(suptitle, fontsize=14, fontweight='bold', y=0.98)
+    plt.tight_layout(rect=[0, 0, 0.91, 0.95])
+    plt.savefig(savename, dpi=300, bbox_inches='tight')
+    print(f"Spatial RMSE map for {var_label} saved!")

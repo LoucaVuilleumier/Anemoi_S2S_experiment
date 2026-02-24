@@ -211,3 +211,76 @@ def compute_rt(anomaly_dataset, anomaly_inference):
     rt = numerator / denominator
     
     return rt
+
+def sedi_ensemble(
+    obs_data,
+    model_data,
+    event_threshold,
+    prob_threshold=0.5,
+    member_dim="member",
+    dim=None,):
+    """
+    Compute SEDI for an ensemble forecast.
+
+    Parameters
+    ----------
+    obs_data : xr.DataArray
+        Observed continuous data.
+    model_data : xr.DataArray
+        Ensemble forecast data with member dimension.
+    event_threshold : float
+        Threshold defining the event (e.g. 90th percentile).
+    prob_threshold : float, default 0.5
+        Probability cutoff to convert ensemble probability into binary forecast.
+    member_dim : str, default "member"
+        Name of ensemble dimension.
+    dim : str or list, optional
+        Dimension(s) over which to compute contingency table (e.g. time).
+
+    Returns
+    -------
+    xr.DataArray
+        SEDI values.
+    """
+
+    #Binary observations
+    obs_binary = (obs_data >= event_threshold).astype(int)
+
+    #Ensemble probability of event  
+    prob = (model_data >= event_threshold).mean(member_dim)
+
+    #Binary probabilistic forecast
+    forecast_binary = (prob >= prob_threshold).astype(int)
+
+    #Confusion matrix components
+    tp = ((forecast_binary == 1) & (obs_binary == 1)).sum(dim)
+    fp = ((forecast_binary == 1) & (obs_binary == 0)).sum(dim)
+    fn = ((forecast_binary == 0) & (obs_binary == 1)).sum(dim)
+    tn = ((forecast_binary == 0) & (obs_binary == 0)).sum(dim)
+
+    #POD and POFD
+    pod = xr.where((tp + fn) == 0, np.nan, tp / (tp + fn))
+    pofd = xr.where((fp + tn) == 0, np.nan, fp / (fp + tn))
+
+    #Numerical stability
+    eps = 1e-10
+    pod_safe = pod.clip(eps, 1 - eps)
+    pofd_safe = pofd.clip(eps, 1 - eps)
+
+    numerator = (
+        np.log(pofd_safe)
+        - np.log(pod_safe)
+        + np.log(1 - pod_safe)
+        - np.log(1 - pofd_safe)
+    )
+
+    denominator = (
+        np.log(pod_safe)
+        + np.log(1 - pofd_safe)
+        + np.log(1 - pod_safe)
+        + np.log(pofd_safe)
+    )
+
+    sedi = xr.where(denominator == 0, np.nan, numerator / denominator)
+
+    return sedi
