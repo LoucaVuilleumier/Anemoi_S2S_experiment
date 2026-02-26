@@ -4,7 +4,7 @@
 #   anemoi inference --config-path path-to-config --config-name inference-aifs-subs-pretrain.yaml
 #   ```
 checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_jakob/inference-last.ckpt
-date: 2024-07-01
+date: ${oc.env:INFERENCE_DATE}
 lead_time: 1344h
 
 allow_nans: true
@@ -16,15 +16,15 @@ use_grib_paramid: false
 input:
   dataset:
     join:
-    - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-for-single-v2
-      start: "2024-01-01"
-      end: "2024-12-31"
-    - dataset: aifs-ea-an-oper-0001-mars-o96-2024-2024-6h-v2-s2s-predictors
-      start: "2024-01-01"
-      end: "2024-12-31"
-    - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
-      start: "2024-01-01"
-      end: "2024-12-31"
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
+        start: 2007
+        end: 2011
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
+        start: 2007
+        end: 2011
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
+        start: 2007
+        end: 2011
   #mars:
   #  class: ea
   #  stream: oper

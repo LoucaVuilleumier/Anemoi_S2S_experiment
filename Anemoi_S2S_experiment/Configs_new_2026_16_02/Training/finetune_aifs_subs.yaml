@@ -777,19 +777,163 @@ dataloader:
       - ttr
     fill_missing_gaps: true
   training:
-    dataset: ${dataloader.dataset}
+    dataset: ${dataloader.datasets}
     start: null
     end: 2024
     frequency: 6h
     drop: []
   validation_rollout: 28
   validation:
-    dataset: ${dataloader.dataset}
+    dataset:
+      join:
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
+        start: 2007
+        end: 2011
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
+        start: 2007
+        end: 2011
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
+        start: 2007
+        end: 2011
+      select:
+      - 10u
+      - 10v
+      - 2d
+      - 2t
+      - msl
+      - sp
+      - tcw
+      - lcc
+      - mcc
+      - tcc
+      - skt
+      - cos_julian_day
+      - cos_latitude
+      - cos_local_time
+      - cos_longitude
+      - insolation
+      - lsm
+      - sdor
+      - sin_julian_day
+      - sin_latitude
+      - sin_local_time
+      - sin_longitude
+      - slor
+      - z
+      - q_150
+      - q_200
+      - q_250
+      - q_300
+      - q_400
+      - q_500
+      - q_600
+      - q_700
+      - q_850
+      - q_925
+      - q_1000
+      - t_2
+      - t_5
+      - t_10
+      - t_30
+      - t_70
+      - t_50
+      - t_100
+      - t_150
+      - t_200
+      - t_250
+      - t_300
+      - t_400
+      - t_500
+      - t_600
+      - t_700
+      - t_850
+      - t_925
+      - t_1000
+      - u_2
+      - u_5
+      - u_10
+      - u_30
+      - u_70
+      - u_50
+      - u_100
+      - u_150
+      - u_200
+      - u_250
+      - u_300
+      - u_400
+      - u_500
+      - u_600
+      - u_700
+      - u_850
+      - u_925
+      - u_1000
+      - v_2
+      - v_5
+      - v_10
+      - v_30
+      - v_70
+      - v_50
+      - v_100
+      - v_150
+      - v_200
+      - v_250
+      - v_300
+      - v_400
+      - v_500
+      - v_600
+      - v_700
+      - v_850
+      - v_925
+      - v_1000
+      - w_2
+      - w_5
+      - w_10
+      - w_30
+      - w_70
+      - w_50
+      - w_100
+      - w_150
+      - w_200
+      - w_250
+      - w_300
+      - w_400
+      - w_500
+      - w_600
+      - w_700
+      - w_850
+      - w_925
+      - w_1000
+      - z_2
+      - z_5
+      - z_10
+      - z_30
+      - z_70
+      - z_50
+      - z_100
+      - z_150
+      - z_200
+      - z_250
+      - z_300
+      - z_400
+      - z_500
+      - z_600
+      - z_700
+      - z_850
+      - z_925
+      - z_1000
+      - cp
+      - sf
+      - ssrd
+      - strd
+      - tp
+      - ttr
     start: 2007
     end: 2011
     frequency: 6h
+  # The test dataset is here within the training because it is not used during training
+  # The test data should be beyond 2025
   test:
-    dataset: ${dataloader.dataset}
+    dataset: ${dataloader.datasets}
     start: 2024
     end: null
     frequency: 6h

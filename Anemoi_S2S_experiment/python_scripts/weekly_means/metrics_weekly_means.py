@@ -1,5 +1,6 @@
 import xarray as xr
 import numpy as np
+import pandas as pd
 import sys
 sys.path.append('/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts')
 from utils import metrics_function as mf
@@ -13,69 +14,25 @@ from utils import metrics_function as mf
 importlib.reload(mf)
 from matplotlib import pyplot as plt
 ############################################################################################################################################################
+
 #loading and preprocessing the data
-
-#load dataset with forecasts
-paths = sorted(glob.glob(
-    "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/AIFS/"
-    "aifs-subs-pretrain-july-2025/aifs-subs-pretrain-july-2025-member-*.nc"
-))
-
-ds_inf_daily = xr.open_mfdataset(
-    paths,
-    combine="nested",
-    concat_dim="member",
-    parallel=False,  # set True if Dask is configured
-    chunks={}        # optional: set chunking if you want
-)
-
-
 #load dataset with observations
 dataset_path = "/home/mlx/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-for-single-v2.zarr"
-ds_obs = xr.open_zarr(dataset_path)
-times = ds_obs.dates.values
+obs = xr.open_zarr(dataset_path)
+obs = obs.isel(variable=var_indices)
+times = obs.dates.values
+obs = obs.assign_coords(time=times).rename({"cell": "values"})
+
+
+
+#select only a substet of variable
+var_names = obs.attrs["variables"]
+var_of_interest = ["2t", "tp", "10u", "10v"]
+var_indices = [var_names.index(var) for var in var_of_interest]
 
 #load weekly climatology
 climatology_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/weekly_climatology_1979-2019.nc"
 ds_climatology_weekly = xr.open_dataset(climatology_path)
-
-
-#create latitudinal weights for the metrics
-lat_lon_coords = {
-            'latitude': ds_obs ['latitudes'],
-            'longitude': ds_obs ['longitudes']
-        }
-lat_weights = np.cos(np.radians(lat_lon_coords["latitude"].values))
-lat_weights = xr.DataArray(lat_weights, dims=["values"])
-
-#init date
-init_date = ds_inf_daily.time.values[0].astype('datetime64[s]')
-t0 = np.where(times == init_date)[0][0]
-
-#last date
-last_date = ds_inf_daily.time.values[-1].astype('datetime64[s]')
-t1 = np.where(times == last_date)[0][0]
-
-#slice observations to match the time range of the forecasts
-ds_obs = ds_obs.isel(time=slice(t0, t1 + 1))
-time_sliced = ds_obs.dates.values
-
-ds_obs = ds_obs.assign_coords(time=time_sliced).rename({"cell": "values"})
-
-#daily average of observations
-ds_obs_daily = ds_obs.resample(time='1D').mean()
-
-
-#select only a substet of variable
-var_names = ds_obs.attrs["variables"]
-var_of_interest = ["2t", "tp", "10u", "10v"]
-var_indices = [var_names.index(var) for var in var_of_interest]
-
-#for the forecast
-ds_inf_daily = ds_inf_daily[var_of_interest]
-
-#for the observations
-ds_obs_daily = ds_obs_daily.isel(variable=var_indices)
 
 #load weekly thresholds per grid cell
 thresholds_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/thresholds_1979-2019.nc"
@@ -84,16 +41,94 @@ thresholds = thresholds["data"].squeeze(dim="ensemble").rename({"cell": "values"
 ds_thresholds = xr.Dataset({var: thresholds.sel(variable=var).drop_vars('variable') for var in var_of_interest})
 
 
-#compute weekly means 
-#for the forecasts
-ds_inf_weekly = ds_inf_daily.resample(time='7D').mean()
+#create latitudinal weights for the metrics
+lat_lon_coords = {
+            'latitude': obs['latitudes'],
+            'longitude': obs['longitudes']
+        }
+lat_weights = np.cos(np.radians(lat_lon_coords["latitude"].values))
+lat_weights = xr.DataArray(lat_weights, dims=["values"])
 
-#for the observations
-ds_obs_weekly = ds_obs_daily.resample(time='7D').mean()
+#paths of the different initialization dates for the forecasts
+paths_init = sorted(glob.glob(
+    "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/AIFS/"
+    "aifs-subs-pretrain-*"
+))
 
-#remove the last incomplete week
-ds_inf_weekly = ds_inf_weekly.isel(time=slice(0, 8))
-ds_obs_weekly = ds_obs_weekly.isel(time=slice(0, 8))
+# Load all reforecasts with an additional init_date dimension
+reforecast_datasets = []
+init_dates = []
+
+for path_init in paths_init:
+    # Get all member paths for this initialization date
+    paths_member = sorted(glob.glob(f"{path_init}/*.nc"))
+    
+    # Load all members for this init date
+    ds_init = xr.open_mfdataset(
+        paths_member,
+        combine="nested",
+        concat_dim="member",
+        parallel=False,  
+        chunks={}        
+    )
+    
+    # Extract initialization date from the dataset
+    init_date = ds_init.time.values[0].astype('datetime64[ns]')
+    init_dates.append(init_date)
+    
+    # Store the absolute time as a non-dimension coordinate
+    ds_init = ds_init.assign_coords(forecast_time=('time', ds_init.time.values))
+    
+    # Replace time dimension with relative lead_time (in days from init)
+    lead_times = (ds_init.time.values - init_date) / np.timedelta64(1, 'D')
+    ds_init = ds_init.assign_coords(time=lead_times).rename({'time': 'lead_time'})
+    
+    reforecast_datasets.append(ds_init)
+
+# Concatenate all reforecasts along a new 'init_date' dimension
+ds_inf_daily = xr.concat(
+    reforecast_datasets, 
+    dim=xr.DataArray(init_dates, dims='init_date', name='init_date')
+)
+
+print(f"Loaded {len(init_dates)} reforecasts")
+print(f"Dataset dimensions: {dict(ds_inf_daily.dims)}")
+
+#select only variables of interest for the forecast
+ds_inf_daily = ds_inf_daily[var_of_interest]
+
+#Create observations dataset with the same structure as the forecasts for easier metrics computation
+ds_obs_multiple_init = []
+
+for init_date in init_dates:
+    t0 = np.where(times == init_date)[0][0]
+    t1 = np.where(times == ds_inf_daily.sel(init_date = init_date).forecast_time[-1].values)[0][0]
+    ds_init = obs.isel(time=slice(t0, t1 + 1))
+    
+    # Store the absolute time as a non-dimension coordinate
+    ds_init = ds_init.assign_coords(forecast_time=('time', ds_init.time.values))
+    
+    #select only forecast at 12:00
+    ds_init_daily = ds_init.sel(time=ds_init.time.dt.hour == 12).squeeze("ensemble")
+    ds_init_daily = ds_init_daily.assign_coords(variable=var_of_interest)
+    
+    # Replace time dimension with relative lead_time (in days from init)
+    lead_times = (ds_init_daily.time.values - init_date) / np.timedelta64(1, 'D')
+    ds_init_daily = ds_init_daily.assign_coords(time=lead_times).rename({'time': 'lead_time'})
+    
+    # Convert from 'data' variable with variable dimension to separate variables
+    xr_ds_init = xr.Dataset({var: ds_init_daily['data'].sel(variable=var).drop_vars('variable') for var in var_of_interest})
+    ds_obs_multiple_init.append(xr_ds_init)
+
+ds_obs_daily = xr.concat(ds_obs_multiple_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
+
+
+#compute weekly means (7 days per week, 1-day timesteps = 7 timesteps per week)
+#for the forecasts: (init_date, member, lead_time, values)
+ds_inf_weekly = ds_inf_daily.coarsen(lead_time=7, boundary='trim').mean()
+
+#for the observations: (init_date, lead_time, var, values)  
+ds_obs_weekly = ds_obs_daily.coarsen(lead_time=7, boundary='trim').mean()
 
 # Reshape ds_obs_weekly to match ds_inf_weekly structure
 # Extract the data variable and squeeze ensemble dimension
@@ -162,15 +197,6 @@ spatial_rmse_results = xr.DataArray(
     }
 )
 
-sedi_results = xr.DataArray(
-    data=np.full(( n_vars, n_leadtime), np.nan),
-    dims=("variable", "time"),
-    coords={
-        "variable": var_of_interest,
-        "time": time_weekly
-    }
-)
-
 # Compute CRPS for all weeks and variables
 crps_results = xr.DataArray(
     data=np.full((n_vars, n_leadtime), np.nan),
@@ -186,9 +212,13 @@ for var in var_of_interest:
     acc_results.loc[var, :] = xr.corr(observed_anomalies[var], predicted_anomalies[var].mean(dim="member"), dim="values", weights = lat_weights).values
 
 
-#rmse computation
+#rmse computation with latitude weighting
 for var in var_of_interest:
-    rmse_results.loc[var, :] =rmse(ds_obs_weekly[var], ds_inf_weekly[var].mean(dim="member"), dim="values").values
+    obs = ds_obs_weekly[var]
+    pred = ds_inf_weekly[var].mean(dim="member")
+    squared_error = (obs - pred) ** 2
+    weighted_mse = (squared_error * lat_weights).sum(dim="values") / lat_weights.sum()
+    rmse_results.loc[var, :] = np.sqrt(weighted_mse).values
 
 for t_idx in range(n_leadtime):  
     for var in var_of_interest:    
@@ -197,10 +227,6 @@ for t_idx in range(n_leadtime):
         pred_mean = pred.mean(dim="member")              # (values,)
         spatial_rmse_results.loc[var, time_weekly[t_idx], :] = np.abs(obs - pred_mean).values
 
-#sedi computation
-for var in var_of_interest:
-    sedi_results.loc[var, :] = mf.sedi_ensemble(ds_obs_weekly[var], ds_inf_weekly[var], ds_thresholds[var], dim = "values").values
-    
 
 #Compute binary dataset for probability of detection and false detection
 binary_obs = xr.where(ds_obs_weekly > ds_thresholds, 1, 0)
@@ -208,7 +234,7 @@ binary_model = xr.where(ds_inf_weekly >  ds_thresholds, 1, 0)
 prob_model = binary_model.mean(dim="member")
 
 # Compute ROC data for all weeks and variables using compact loops
-p_threshold = np.linspace(0, 1, 50)
+p_threshold = np.linspace(0, 1, 8)
 roc_data = {}
 
 for t_idx in range(n_leadtime):
@@ -221,7 +247,7 @@ for t_idx in range(n_leadtime):
             p_threshold
         )
 
-
+#compute crps for the different weeks and variables
 for t_idx in range(n_leadtime):
     for var in var_of_interest:
         crps_results.loc[var, time_weekly[t_idx]] = crps_for_ensemble(
@@ -245,19 +271,19 @@ acc_results_ds.to_netcdf(nc_acc_path)
 
 #rmse
 rmse_results_ds = xr.Dataset({var: rmse_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
-nc_rmse_path = os.path.join(output_dir, "RMSE_weekly_anomalies_AIFS.nc")
+nc_rmse_path = os.path.join(output_dir, "RMSE_weekly_AIFS.nc")
 rmse_results_ds.to_netcdf(nc_rmse_path) 
 
 spatial_rmse_results_ds = xr.Dataset({var: spatial_rmse_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
 spatial_rmse_results_ds = spatial_rmse_results_ds.assign_coords(
     latitude=("values", ds_obs.latitudes.values),
     longitude=("values", ds_obs.longitudes.values),)
-nc_spatial_rmse_path = os.path.join(output_dir, "Spatial_RMSE_weekly_anomalies_AIFS.nc")
+nc_spatial_rmse_path = os.path.join(output_dir, "Spatial_RMSE_weekly_AIFS.nc")
 spatial_rmse_results_ds.to_netcdf(nc_spatial_rmse_path)
 
 #sedi
 sedi_results_ds = xr.Dataset({var: sedi_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
-nc_sedi_path = os.path.join(output_dir, "SEDI_weekly_anomalies_AIFS.nc")
+nc_sedi_path = os.path.join(output_dir, "SEDI_weekly_AIFS.nc")
 sedi_results_ds.to_netcdf(nc_sedi_path)
 
 #roc - save each week separately as they contain different variables and structures
