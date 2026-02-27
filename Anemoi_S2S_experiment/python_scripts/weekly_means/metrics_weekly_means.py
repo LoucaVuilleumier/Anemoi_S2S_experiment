@@ -19,7 +19,6 @@ from matplotlib import pyplot as plt
 #load dataset with observations
 dataset_path = "/home/mlx/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-for-single-v2.zarr"
 obs = xr.open_zarr(dataset_path)
-obs = obs.isel(variable=var_indices)
 times = obs.dates.values
 obs = obs.assign_coords(time=times).rename({"cell": "values"})
 
@@ -29,6 +28,7 @@ obs = obs.assign_coords(time=times).rename({"cell": "values"})
 var_names = obs.attrs["variables"]
 var_of_interest = ["2t", "tp", "10u", "10v"]
 var_indices = [var_names.index(var) for var in var_of_interest]
+obs = obs.isel(variable=var_indices)
 
 #load weekly climatology
 climatology_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/weekly_climatology_1979-2019.nc"
@@ -126,64 +126,78 @@ ds_obs_daily = xr.concat(ds_obs_multiple_init, dim=xr.DataArray(init_dates, dims
 #compute weekly means (7 days per week, 1-day timesteps = 7 timesteps per week)
 #for the forecasts: (init_date, member, lead_time, values)
 ds_inf_weekly = ds_inf_daily.coarsen(lead_time=7, boundary='trim').mean()
+ds_inf_weekly = ds_inf_weekly.rename({"lead_time": "week_lead_time"}).assign_coords(week_lead_time=np.arange(1,9))
 
 #for the observations: (init_date, lead_time, var, values)  
 ds_obs_weekly = ds_obs_daily.coarsen(lead_time=7, boundary='trim').mean()
+ds_obs_weekly = ds_obs_weekly.rename({"lead_time": "week_lead_time"}).assign_coords(week_lead_time=np.arange(1,9))
 
-# Reshape ds_obs_weekly to match ds_inf_weekly structure
-# Extract the data variable and squeeze ensemble dimension
-obs_data = ds_obs_weekly['data'].squeeze('ensemble')  # (time, variable, values)
+ds_clim_multiple__inf_init = []
+ds_clim_multiple_obs_init = []
+#compute climatology per member
+for init_date in ds_inf_weekly.init_date.values:
+    year = pd.to_datetime(init_date).year
+    month = pd.to_datetime(init_date).month
+    day = pd.to_datetime(init_date).day
+    # Select the same calendar month and day across all years for the climatology
+    mask = (ds_inf_weekly.init_date.dt.month == month) & (ds_inf_weekly.init_date.dt.day == day) & (ds_inf_weekly.init_date.dt.year != year)
+    
+    #build climatology per member for inference
+    climatology_weekly_inf = ds_inf_weekly.isel(init_date=mask).mean(dim="init_date")
+    ds_clim_multiple__inf_init.append(climatology_weekly_inf)
+    
+    #build climatology for observations
+    climatology_weekly_obs = ds_obs_weekly.isel(init_date=mask).mean(dim="init_date")
+    ds_clim_multiple_obs_init.append(climatology_weekly_obs)
+    
+ds_climatology_weekly_inf = xr.concat(ds_clim_multiple__inf_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
+ds_climatology_weekly_obs = xr.concat(ds_clim_multiple_obs_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 
-# Split variable dimension into separate data variables
-ds_obs_weekly = xr.Dataset({
-    var_name: obs_data.isel(variable=i)
-    for i, var_name in enumerate(var_of_interest)
-})
 
-time_weekly = ds_obs_weekly.time.values
-
-#compute anomalies
-weeks_of_interest = ds_obs_weekly['time'].dt.isocalendar().week.values
-
-#slice the climatology to match the weeks of interest
-ds_climatology_weekly = ds_climatology_weekly.isel(weekofyear=weeks_of_interest)
-clim_data = ds_climatology_weekly['data'].squeeze('ensemble')  # (weekofyear, variable, values)
-ds_climatology_weekly = xr.Dataset({
-    var_name: clim_data.isel(variable=i)
-    for i, var_name in enumerate(var_of_interest)
-})
-
-ds_climatology_weekly = ds_climatology_weekly.rename({"cell": "values"}).rename({"weekofyear": "time"}).assign_coords(time=time_weekly)
 
 #observed anomalies
-observed_anomalies = ds_obs_weekly - ds_climatology_weekly
+observed_anomalies = ds_obs_weekly - ds_climatology_weekly_obs
 
 #predicted anomalies
-predicted_anomalies = ds_inf_weekly - ds_climatology_weekly
+predicted_anomalies = ds_inf_weekly - ds_climatology_weekly_inf
 
 ############################################################################################################################################################
 #metrics
 n_ensemble = ds_inf_weekly.member.size
-n_leadtime = len(time_weekly)
+n_leadtime = 8
 n_vars = len(var_of_interest)
 n_values = ds_obs_weekly[var_of_interest[0]].values.shape[-1]
+n_init_dates = ds_inf_weekly.init_date.size
+weeks_lead_time = np.arange(1,9)
 
 #create empty array to store the results of the metrics
 acc_results = xr.DataArray(
-    data=np.full((n_vars, n_leadtime), np.nan),
-    dims=("variable", "time"),
+    data=np.full((n_init_dates, n_vars, n_leadtime), np.nan),
+    dims=("init_date", "variable", "leadtime"),
+    coords={
+        "init_date": ds_inf_weekly.init_date,
+        "variable": var_of_interest,
+        "leadtime": np.arange(1, n_leadtime + 1)
+    }
+)
+
+R_t_results =  xr.DataArray(
+    data=np.full((n_vars, n_leadtime, n_values), np.nan),
+    dims=("variable", "leadtime", "values"),
     coords={
         "variable": var_of_interest,
-        "time": time_weekly
+        "leadtime": np.arange(1, n_leadtime + 1),
+        "values": range(n_values)
     }
 )
 
 rmse_results = xr.DataArray(
-    data=np.full((n_vars, n_leadtime), np.nan),
-    dims=("variable", "time"),
+    data=np.full((n_init_dates, n_vars, n_leadtime), np.nan),
+    dims=("init_date", "variable", "leadtime"),
     coords={
+        "init_date": ds_inf_weekly.init_date,
         "variable": var_of_interest,
-        "time": time_weekly
+        "leadtime": np.arange(1, n_leadtime + 1)
     }
 )
 
@@ -192,40 +206,58 @@ spatial_rmse_results = xr.DataArray(
     dims=("variable", "leadtime", "values"),
     coords={
         "variable": var_of_interest,
-        "leadtime": time_weekly,
+        "leadtime": np.arange(1, n_leadtime + 1),
         "values": range(n_values)
     }
 )
 
-# Compute CRPS for all weeks and variables
+
+# Compute CRPS for all init dates, weeks and variables
 crps_results = xr.DataArray(
-    data=np.full((n_vars, n_leadtime), np.nan),
-    dims=("variable", "time"),
+    data=np.full((n_init_dates, n_vars, n_leadtime), np.nan),
+    dims=("init_date", "variable", "leadtime"),
     coords={
+        "init_date": ds_inf_weekly.init_date,
         "variable": var_of_interest,
-        "time": time_weekly
+        "leadtime": np.arange(1, n_leadtime + 1)
+    }
+)
+
+#Spread/Skill for all init dates, variables and lead times
+spead_skill_results = xr.DataArray(
+    data=np.full((n_init_dates, n_vars, n_leadtime), np.nan),
+    dims=("init_date", "variable", "leadtime"),
+    coords={
+        "init_date": ds_inf_weekly.init_date,
+        "variable": var_of_interest,
+        "leadtime": np.arange(1, n_leadtime + 1)
     }
 )
 
 #acc computation
-for var in var_of_interest:
-    acc_results.loc[var, :] = xr.corr(observed_anomalies[var], predicted_anomalies[var].mean(dim="member"), dim="values", weights = lat_weights).values
+for init_date in init_dates:
+    for var in var_of_interest:
+        acc_results.loc[init_date, var, :] = xr.corr(observed_anomalies[var].sel(init_date=init_date), predicted_anomalies[var].sel(init_date=init_date).mean(dim="member"), dim="values", weights = lat_weights).values
 
+#R_t computation
+for var in var_of_interest:
+    R_t_results.loc[var, :, :] = xr.corr(observed_anomalies[var], predicted_anomalies[var].mean(dim="member"), dim="init_date").values
 
 #rmse computation with latitude weighting
-for var in var_of_interest:
-    obs = ds_obs_weekly[var]
-    pred = ds_inf_weekly[var].mean(dim="member")
-    squared_error = (obs - pred) ** 2
-    weighted_mse = (squared_error * lat_weights).sum(dim="values") / lat_weights.sum()
-    rmse_results.loc[var, :] = np.sqrt(weighted_mse).values
+for init_date in init_dates:
+    for var in var_of_interest:
+        obs = ds_obs_weekly[var].sel(init_date=init_date)
+        pred = ds_inf_weekly[var].sel(init_date=init_date).mean(dim="member")
+        squared_error = (obs - pred) ** 2
+        weighted_mse = (squared_error * lat_weights).sum(dim="values") / lat_weights.sum()
+        rmse_results.loc[init_date, var, :] = np.sqrt(weighted_mse).values
 
-for t_idx in range(n_leadtime):  
+for t_idx in weeks_lead_time:  
     for var in var_of_interest:    
-        obs = ds_obs_weekly[var].isel(time=t_idx)       # (values,)
-        pred = ds_inf_weekly[var].isel(time=t_idx)       # (member, values)
-        pred_mean = pred.mean(dim="member")              # (values,)
-        spatial_rmse_results.loc[var, time_weekly[t_idx], :] = np.abs(obs - pred_mean).values
+        obs = ds_obs_weekly[var].sel(week_lead_time=t_idx)       # (init_time, values,)
+        pred = ds_inf_weekly[var].sel(week_lead_time=t_idx)         # (init_time, member, values)
+        pred_mean = pred.mean(dim="member")              # (init_time, values)
+        spatial_rmse_results.loc[var, t_idx, :] = np.sqrt(((obs - pred_mean) ** 2).mean(dim="init_date")).values
 
 
 #Compute binary dataset for probability of detection and false detection
@@ -248,15 +280,27 @@ for t_idx in range(n_leadtime):
         )
 
 #compute crps for the different weeks and variables
-for t_idx in range(n_leadtime):
-    for var in var_of_interest:
-        crps_results.loc[var, time_weekly[t_idx]] = crps_for_ensemble(
-            ds_inf_weekly[var].isel(time=t_idx).compute(), 
-            ds_obs_weekly[var].isel(time=t_idx).compute(), 
-            ensemble_member_dim="member",
-            method="fair",
-            weights=lat_weights
-        ).values
+for init_date in init_dates:
+    for t_idx in weeks_lead_time:
+        for var in var_of_interest:
+            crps_results.loc[init_date, var, t_idx] = crps_for_ensemble(
+                ds_inf_weekly[var].sel(init_date=init_date, week_lead_time=t_idx).compute(), 
+                ds_obs_weekly[var].sel(init_date=init_date, week_lead_time=t_idx).compute(), 
+                ensemble_member_dim="member",
+                method="fair",
+                weights=lat_weights
+            ).values
+            
+
+#Computation of Spread/Skill ratio for the different weeks and variables
+
+for var in var_of_interest:
+    ensemble_spread = ds_inf_weekly[var].std(dim="member")
+    # Spatially average the spread with latitude weighting
+    weighted_spread = (ensemble_spread * lat_weights).sum(dim="values") / lat_weights.sum()
+    weighted_spread = weighted_spread.rename({"week_lead_time": "leadtime"})
+    ensemble_skill = rmse_results.loc[:, var, :]
+    spead_skill_results.loc[:, var, :] = (weighted_spread / ensemble_skill).values
 ############################################################################################################################################################
 #export
 
@@ -269,6 +313,14 @@ acc_results_ds = xr.Dataset({var: acc_results.sel(variable=var).drop_vars('varia
 nc_acc_path = os.path.join(output_dir, "ACC_weekly_anomalies_AIFS.nc")
 acc_results_ds.to_netcdf(nc_acc_path)
 
+#R_t
+R_t_results_ds = xr.Dataset({var: R_t_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
+R_t_results_ds = R_t_results_ds.assign_coords(
+    latitude=("values",lat_lon_coords["latitude"].values),
+    longitude=("values", lat_lon_coords["longitude"].values),)
+nc_R_t_path = os.path.join(output_dir, "R_t_weekly_anomalies_AIFS.nc")
+R_t_results_ds.to_netcdf(nc_R_t_path)
+
 #rmse
 rmse_results_ds = xr.Dataset({var: rmse_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
 nc_rmse_path = os.path.join(output_dir, "RMSE_weekly_AIFS.nc")
@@ -276,15 +328,11 @@ rmse_results_ds.to_netcdf(nc_rmse_path)
 
 spatial_rmse_results_ds = xr.Dataset({var: spatial_rmse_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
 spatial_rmse_results_ds = spatial_rmse_results_ds.assign_coords(
-    latitude=("values", ds_obs.latitudes.values),
-    longitude=("values", ds_obs.longitudes.values),)
+    latitude=("values",lat_lon_coords["latitude"].values),
+    longitude=("values", lat_lon_coords["longitude"].values),)
 nc_spatial_rmse_path = os.path.join(output_dir, "Spatial_RMSE_weekly_AIFS.nc")
 spatial_rmse_results_ds.to_netcdf(nc_spatial_rmse_path)
 
-#sedi
-sedi_results_ds = xr.Dataset({var: sedi_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
-nc_sedi_path = os.path.join(output_dir, "SEDI_weekly_AIFS.nc")
-sedi_results_ds.to_netcdf(nc_sedi_path)
 
 #roc - save each week separately as they contain different variables and structures
 for week_key, week_data in roc_data.items():
@@ -304,3 +352,8 @@ for week_key, week_data in roc_data.items():
 crps_results_ds = xr.Dataset({var: crps_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
 nc_crps_path = os.path.join(output_dir, "CRPS_weekly_AIFS.nc")
 crps_results_ds.to_netcdf(nc_crps_path)
+
+#Spread/Skill
+spead_skill_results_ds = xr.Dataset({var: spead_skill_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
+nc_spead_skill_path = os.path.join(output_dir, "Spread_Skill_weekly_AIFS.nc")
+spead_skill_results_ds.to_netcdf(nc_spead_skill_path)
