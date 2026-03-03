@@ -30,17 +30,17 @@ color_vars = {
 acc_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/ACC_weekly_anomalies_AIFS.nc"
 ACC_ds = xr.open_dataset(acc_path)
 
+R_t_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/R_t_weekly_anomalies_AIFS.nc"
+R_t_ds = xr.open_dataset(R_t_path)
 
 #RMSE path and loading
-rmse_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/RMSE_weekly_anomalies_AIFS.nc"
+rmse_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/RMSE_weekly_AIFS.nc"
 RMSE_ds = xr.open_dataset(rmse_path)
 
-spatial_rmse_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Spatial_RMSE_weekly_anomalies_AIFS.nc"
+spatial_rmse_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Spatial_RMSE_weekly_AIFS.nc"
 SPATIAL_RMSE_ds = xr.open_dataset(spatial_rmse_path)
 
-#Sedi path and loading
-sedi_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/SEDI_weekly_anomalies_AIFS.nc"
-SEDI_ds = xr.open_dataset(sedi_path)
+
 
 #Roc path and loading
 roc_datasets = {}
@@ -52,12 +52,16 @@ for i in range(8):
 crps_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/CRPS_weekly_AIFS.nc"
 CRPS_ds = xr.open_dataset(crps_path)
 
+#SKill/Spread path and loading
+spead_skill_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Spread_Skill_weekly_AIFS.nc"
+spead_skill_ds = xr.open_dataset(spead_skill_path)
+
 # Line plot data for ACC (ensemble mean metrics)
 lineplot_acc = {
-    "2m Temperature": ACC_ds["2t"].values,
-    "Total Precipitation": ACC_ds["tp"].values,
-    "10m U Wind": ACC_ds["10u"].values,
-    "10m V Wind": ACC_ds["10v"].values
+    "2m Temperature": ACC_ds["2t"].mean(dim="init_date").values,
+    "Total Precipitation": ACC_ds["tp"].mean(dim="init_date").values,
+    "10m U Wind": ACC_ds["10u"].mean(dim="init_date").values,
+    "10m V Wind": ACC_ds["10v"].mean(dim="init_date").values
 }
 
 # Line plot for ACC
@@ -72,10 +76,10 @@ pf.plot_weekly_lines(
 
 # Line plot data for RMSE (ensemble mean metrics)
 lineplot_rmse = {
-    "2m Temperature": RMSE_ds["2t"].values,
-    "Total Precipitation": RMSE_ds["tp"].values,
-    "10m U Wind": RMSE_ds["10u"].values,
-    "10m V Wind": RMSE_ds["10v"].values
+    "2m Temperature": RMSE_ds["2t"].mean(dim="init_date").values,
+    "Total Precipitation": RMSE_ds["tp"].mean(dim="init_date").values,
+    "10m U Wind": RMSE_ds["10u"].mean(dim="init_date").values,
+    "10m V Wind": RMSE_ds["10v"].mean(dim="init_date").values
 }
 
 # Line plot for RMSE
@@ -88,34 +92,35 @@ pf.plot_weekly_lines(
     ylim=None  # Auto scale for RMSE since different variables have different scales
 )
 
-#line plot of SEDI
-pf.plot_weekly_lines(
-    data_dict={
-        "2m Temperature": SEDI_ds["2t"].values,
-        "Total Precipitation": SEDI_ds["tp"].values,
-        "10m U Wind": SEDI_ds["10u"].values,
-        "10m V Wind": SEDI_ds["10v"].values
-    },
-    title='SEDI for Weekly Forecasts of Reference Model, 95th Percentile Event Threshold, 50% Ensemble Probability',
-    colors=color_vars,
-    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/sedi_AIFS.png',
-    ylabel='Symmetric Extremal Dependence Index',
-    ylim=(0, 1)
-)
 
 #line plot of crps
 pf.plot_weekly_lines(
     data_dict={
-        "2m Temperature": CRPS_ds["2t"].values,
-        "Total Precipitation": CRPS_ds["tp"].values,
-        "10m U Wind": CRPS_ds["10u"].values,
-        "10m V Wind": CRPS_ds["10v"].values
+        "2m Temperature": CRPS_ds["2t"].mean(dim="init_date").values,
+        "Total Precipitation": CRPS_ds["tp"].mean(dim="init_date").values,
+        "10m U Wind": CRPS_ds["10u"].mean(dim="init_date").values,
+        "10m V Wind": CRPS_ds["10v"].mean(dim="init_date").values
     },
     title='fair CRPS for Weekly Forecasts of Reference Model',
     colors=color_vars,
     savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/crps_AIFS.png',
     ylabel='Continuous Ranked Probability Score',
     ylim=None  # Auto scale for CRPS since different variables have different scales
+)
+
+#line plot of spread/skill ratio
+pf.plot_weekly_lines(
+    data_dict={
+        "2m Temperature": spead_skill_ds["2t"].mean(dim="init_date").values,
+        "Total Precipitation": spead_skill_ds["tp"].mean(dim="init_date").values,
+        "10m U Wind": spead_skill_ds["10u"].mean(dim="init_date").values,
+        "10m V Wind": spead_skill_ds["10v"].mean(dim="init_date").values
+    },
+    title='Spread/Skill Ratio for Weekly Forecasts of Reference Model',
+    colors=color_vars,
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/spread_skill_AIFS.png',
+    ylabel='Spread/Skill Ratio',
+    ylim=None  # Auto scale for Spread/Skill Ratio
 )
 
 
@@ -136,6 +141,12 @@ for var in spatial_vars:
         suptitle=f'Ensemble Mean RMSE — {spatial_var_labels[var]}',
         savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/spatial_rmse_{var}_AIFS.png',
     )
+
+#Spatial map of R_t
+pf.plot_weekly_spatial_maps(R_t_ds, ['2t', 'tp', '10u', '10v'], [0, 2, 4, 6], "Temporal CC",
+                            'Temporal Correlation Coefficient of Reference Model',
+                            '/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/R_t_AIFS.png')
+
 
 # ROC curves — one subplot per week, all variables overlaid
 var_short = ["2t", "tp", "10u", "10v"]

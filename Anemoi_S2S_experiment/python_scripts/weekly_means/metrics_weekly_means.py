@@ -22,24 +22,11 @@ obs = xr.open_zarr(dataset_path)
 times = obs.dates.values
 obs = obs.assign_coords(time=times).rename({"cell": "values"})
 
-
-
 #select only a substet of variable
 var_names = obs.attrs["variables"]
 var_of_interest = ["2t", "tp", "10u", "10v"]
 var_indices = [var_names.index(var) for var in var_of_interest]
 obs = obs.isel(variable=var_indices)
-
-#load weekly climatology
-climatology_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/weekly_climatology_1979-2019.nc"
-ds_climatology_weekly = xr.open_dataset(climatology_path)
-
-#load weekly thresholds per grid cell
-thresholds_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/thresholds_1979-2019.nc"
-thresholds = xr.open_dataset(thresholds_path)
-thresholds = thresholds["data"].squeeze(dim="ensemble").rename({"cell": "values"}).assign_coords(variable=var_of_interest).transpose("variable","values")
-ds_thresholds = xr.Dataset({var: thresholds.sel(variable=var).drop_vars('variable') for var in var_of_interest})
-
 
 #create latitudinal weights for the metrics
 lat_lon_coords = {
@@ -153,14 +140,28 @@ for init_date in ds_inf_weekly.init_date.values:
 ds_climatology_weekly_inf = xr.concat(ds_clim_multiple__inf_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 ds_climatology_weekly_obs = xr.concat(ds_clim_multiple_obs_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 
-
-
 #observed anomalies
 observed_anomalies = ds_obs_weekly - ds_climatology_weekly_obs
 
 #predicted anomalies
 predicted_anomalies = ds_inf_weekly - ds_climatology_weekly_inf
 
+
+    
+#Compute thresholds for forecat
+thresholds_per_init = []
+
+for init_date in ds_inf_weekly.init_date.values:
+    month = pd.to_datetime(init_date).month
+    day = pd.to_datetime(init_date).day
+    mask = (ds_inf_weekly.init_date.dt.month == month) & (ds_inf_weekly.init_date.dt.day == day)
+    #thresholds for forecast
+    threshold_95 = ds_inf_weekly.isel(init_date=mask).quantile(0.95, dim=['init_date', 'member'])
+    thresholds_per_init.append(threshold_95)
+    
+
+
+ds_thresholds = xr.concat(thresholds_per_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 ############################################################################################################################################################
 #metrics
 n_ensemble = ds_inf_weekly.member.size
@@ -269,15 +270,20 @@ prob_model = binary_model.mean(dim="member")
 p_threshold = np.linspace(0, 1, 8)
 roc_data = {}
 
-for t_idx in range(n_leadtime):
-    week_key = f"week {t_idx}"
-    roc_data[week_key] = {}
-    for var in var_of_interest:
-        roc_data[week_key][var] = roc(
-            prob_model[var].isel(time=t_idx).compute(), 
-            binary_obs[var].isel(time=t_idx).compute(), 
-            p_threshold
-        )
+for init_date in init_dates:
+    print(f"Processing ROC for init date: {init_date}")
+    init_date_key = pd.to_datetime(init_date).strftime('%Y-%m-%d')
+    roc_data[init_date_key] = {}
+    for week in weeks_lead_time:
+        print(f"processing week {week}")
+        week_key = f"week {week}"
+        roc_data[init_date_key][week_key] = {}
+        for var in var_of_interest:
+            roc_data[init_date_key][week_key][var] = roc(
+                prob_model[var].sel(init_date=init_date, week_lead_time=week).compute(), 
+                binary_obs[var].sel(init_date=init_date, week_lead_time=week).compute(), 
+                p_threshold
+            )
 
 #compute crps for the different weeks and variables
 for init_date in init_dates:
@@ -296,8 +302,10 @@ for init_date in init_dates:
 
 for var in var_of_interest:
     ensemble_spread = ds_inf_weekly[var].std(dim="member")
+    spread_squared = ensemble_spread ** 2
     # Spatially average the spread with latitude weighting
-    weighted_spread = (ensemble_spread * lat_weights).sum(dim="values") / lat_weights.sum()
+    weighted_var = (spread_squared * lat_weights).sum(dim="values") / lat_weights.sum()
+    weighted_spread = np.sqrt(weighted_var)
     weighted_spread = weighted_spread.rename({"week_lead_time": "leadtime"})
     ensemble_skill = rmse_results.loc[:, var, :]
     spead_skill_results.loc[:, var, :] = (weighted_spread / ensemble_skill).values
@@ -334,19 +342,21 @@ nc_spatial_rmse_path = os.path.join(output_dir, "Spatial_RMSE_weekly_AIFS.nc")
 spatial_rmse_results_ds.to_netcdf(nc_spatial_rmse_path)
 
 
-#roc - save each week separately as they contain different variables and structures
-for week_key, week_data in roc_data.items():
-    # Merge all variables for this week into one dataset
-    week_ds = xr.merge([week_data[var].rename({metric: f"{var}_{metric}" for metric in week_data[var].data_vars}) 
-                        for var in var_of_interest])
-    
-    # Remove attributes that can't be serialized to NetCDF
-    for var_name in week_ds.data_vars:
-        week_ds[var_name].attrs = {k: v for k, v in week_ds[var_name].attrs.items() 
-                                   if isinstance(v, (str, int, float, list, tuple, bytes, np.ndarray))}
-    
-    nc_roc_week_path = os.path.join(output_dir, f"ROC_{week_key.replace(' ', '_')}_AIFS.nc")
-    week_ds.to_netcdf(nc_roc_week_path)
+#roc - save each init_date and week separately as they contain different variables and structures
+
+for init_date_key, init_data in roc_data.items():
+    for week_key, week_data in init_data.items():
+        # Merge all variables for this week into one dataset
+        week_ds = xr.merge([week_data[var].rename({metric: f"{var}_{metric}" for metric in week_data[var].data_vars}) 
+                            for var in var_of_interest])
+        
+        # Remove attributes that can't be serialized to NetCDF
+        for var_name in week_ds.data_vars:
+            week_ds[var_name].attrs = {k: v for k, v in week_ds[var_name].attrs.items() 
+                                       if isinstance(v, (str, int, float, list, tuple, bytes, np.ndarray))}
+        
+        nc_roc_week_path = os.path.join(output_dir, f"ROC_{init_date_key}_{week_key.replace(' ', '_')}_AIFS.nc")
+        week_ds.to_netcdf(nc_roc_week_path)
     
 #crps
 crps_results_ds = xr.Dataset({var: crps_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
