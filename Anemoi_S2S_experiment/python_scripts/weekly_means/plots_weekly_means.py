@@ -40,13 +40,13 @@ RMSE_ds = xr.open_dataset(rmse_path)
 spatial_rmse_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Spatial_RMSE_weekly_AIFS.nc"
 SPATIAL_RMSE_ds = xr.open_dataset(spatial_rmse_path)
 
-
-
 #Roc path and loading
-roc_datasets = {}
-for i in range(8):
-    path = f"/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/ROC_week_{i}_AIFS.nc"
-    roc_datasets[f"week_{i}"] = xr.open_dataset(path)
+roc_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/ROC_weekly_AIFS.nc"
+ROC_ds = xr.open_dataset(roc_path)
+
+#Brier Score path and loading
+brier_score_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Brier_Score_weekly_AIFS.nc"
+brier_score_ds = xr.open_dataset(brier_score_path)
     
 #CRPS path and loading
 crps_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/CRPS_weekly_AIFS.nc"
@@ -55,6 +55,15 @@ CRPS_ds = xr.open_dataset(crps_path)
 #SKill/Spread path and loading
 spead_skill_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Spread_Skill_weekly_AIFS.nc"
 spead_skill_ds = xr.open_dataset(spead_skill_path)
+
+#Reliability  path and loading
+reliability_ds_dict = {}
+for var in ["2t", "tp", "10u", "10v"]:
+    reliability_path = f"/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Reliability_{var}_weekly_AIFS.nc"
+    reliability_ds = xr.open_dataset(reliability_path)
+    reliability_ds_dict[var] = reliability_ds
+
+
 
 # Line plot data for ACC (ensemble mean metrics)
 lineplot_acc = {
@@ -124,6 +133,22 @@ pf.plot_weekly_lines(
 )
 
 
+#line plot of brier score
+pf.plot_weekly_lines(
+    data_dict={
+        "2m Temperature": brier_score_ds["2t"].mean(dim="init_date").values,
+        "Total Precipitation": brier_score_ds["tp"].mean(dim="init_date").values,
+        "10m U Wind": brier_score_ds["10u"].mean(dim="init_date").values,
+        "10m V Wind": brier_score_ds["10v"].mean(dim="init_date").values
+    },
+    title='Brier Score for Weekly Forecasts of Reference Model',
+    colors=color_vars,
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/brier_score_AIFS.png',
+    ylabel='Brier Score',
+    ylim=None  # Auto scale for Brier Score since different variables have different scales
+)
+
+
 #spatial maps of RMSE — one figure per variable, 4 weeks each
 spatial_vars = ['2t', 'tp', '10u', '10v']
 spatial_var_labels = {"2t": "2m Temperature", "tp": "Total Precipitation",
@@ -156,23 +181,64 @@ var_labels = {"2t": "2m Temperature", "tp": "Total Precipitation",
 fig, axes = plt.subplots(2, 4, figsize=(20, 10))
 axes = axes.flatten()
 
-for i, (week_key, roc_ds) in enumerate(roc_datasets.items()):
-    ax = axes[i]
+for week_idx in range(8):
+    ax = axes[week_idx]
     for var in var_short:
-        auc_val = roc_ds[f"{var}_AUC"].item()
-        ax.plot(roc_ds[f"{var}_POFD"], roc_ds[f"{var}_POD"],
+        # Average over init_date and select the week
+        roc_week_var = ROC_ds[var].sel(week_lead_time=week_idx+1).mean(dim='init_date')
+        
+        # Extract FPR, TPR, and AUC from the metric dimension
+        fpr = roc_week_var.sel(metric='false positive rate')
+        tpr = roc_week_var.sel(metric='true positive rate')
+        auc_val = roc_week_var.sel(metric='area under curve').mean().item()
+        
+        ax.plot(fpr, tpr,
                 color=color_vars[var_labels[var]],
                 label=f"{var_labels[var]} (AUC={auc_val:.2f})")
     ax.plot([0, 1], [0, 1], "k--")
     ax.set_xlim([0, 1])
     ax.set_ylim([0, 1])
-    ax.set_xlabel("POFD")
-    ax.set_ylabel("POD")
-    ax.set_title(f"ROC — Week {i}")
+    ax.set_xlabel("False Positive Rate")
+    ax.set_ylabel("True Positive Rate")
+    ax.set_title(f"ROC — Week {week_idx+1}")
     ax.legend(loc="lower right", fontsize=7)
 
 fig.suptitle("Receiver Operating Characteristic per Week", fontsize=14)
 plt.tight_layout()
 plt.savefig('/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/roc_AIFS.png', dpi=150)
-plt.show()
+
+
+# Reliability diagrams — one subplot per week, all variables overlaid
+fig, axes = plt.subplots(2, 4, figsize=(20, 10))
+axes = axes.flatten()
+
+for week_idx in range(8):
+    ax = axes[week_idx]
+    for var in var_short:
+        # Average over init_date and select the week
+        rel_week_var = reliability_ds_dict[var][var].sel(week_lead_time=week_idx+1).mean(dim='init_date')
+        
+        # Get forecast probability (x-axis) and observed frequency (y-axis)
+        forecast_prob = rel_week_var['forecast_probability'].values
+        observed_freq = rel_week_var.values
+        
+        ax.plot(forecast_prob, observed_freq,
+                marker='o',
+                color=color_vars[var_labels[var]],
+                label=var_labels[var])
+    
+    # Add perfect calibration line (diagonal)
+    ax.plot([0, 1], [0, 1], "k--", label="Perfect calibration")
+    ax.set_xlim([0, 1])
+    ax.set_ylim([0, 1])
+    ax.set_xlabel("Forecast Probability")
+    ax.set_ylabel("Observed Frequency")
+    ax.set_title(f"Reliability — Week {week_idx+1}")
+    ax.legend(loc="upper left", fontsize=7)
+    ax.grid(True, alpha=0.3)
+
+fig.suptitle("Reliability Diagrams per Week", fontsize=14)
+plt.tight_layout()
+plt.savefig('/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/reliability_AIFS.png', dpi=150)
+
 

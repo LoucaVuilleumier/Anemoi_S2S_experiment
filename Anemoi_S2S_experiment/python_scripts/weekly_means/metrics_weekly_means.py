@@ -13,6 +13,7 @@ import importlib
 from utils import metrics_function as mf
 importlib.reload(mf)
 from matplotlib import pyplot as plt
+from xskillscore import roc, brier_score, reliability
 ############################################################################################################################################################
 
 #loading and preprocessing the data
@@ -212,7 +213,6 @@ spatial_rmse_results = xr.DataArray(
     }
 )
 
-
 # Compute CRPS for all init dates, weeks and variables
 crps_results = xr.DataArray(
     data=np.full((n_init_dates, n_vars, n_leadtime), np.nan),
@@ -266,24 +266,15 @@ binary_obs = xr.where(ds_obs_weekly > ds_thresholds, 1, 0)
 binary_model = xr.where(ds_inf_weekly >  ds_thresholds, 1, 0)
 prob_model = binary_model.mean(dim="member")
 
-# Compute ROC data for all weeks and variables using compact loops
-p_threshold = np.linspace(0, 1, 8)
-roc_data = {}
+#roc computation (ROC AUC)
+roc_results = {}           
+for var in var_of_interest:
+    roc_results[var] = roc(binary_obs[var], prob_model[var], dim = "values", bin_edges='continuous', return_results = "all_as_metric_dim")
 
-for init_date in init_dates:
-    print(f"Processing ROC for init date: {init_date}")
-    init_date_key = pd.to_datetime(init_date).strftime('%Y-%m-%d')
-    roc_data[init_date_key] = {}
-    for week in weeks_lead_time:
-        print(f"processing week {week}")
-        week_key = f"week {week}"
-        roc_data[init_date_key][week_key] = {}
-        for var in var_of_interest:
-            roc_data[init_date_key][week_key][var] = roc(
-                prob_model[var].sel(init_date=init_date, week_lead_time=week).compute(), 
-                binary_obs[var].sel(init_date=init_date, week_lead_time=week).compute(), 
-                p_threshold
-            )
+#Brier Score computation
+brier_score_results = {}
+for var in var_of_interest:
+    brier_score_results[var] = brier_score(binary_obs[var], binary_model[var], member_dim = "member", fair=True, dim = "values", weights=lat_weights)
 
 #compute crps for the different weeks and variables
 for init_date in init_dates:
@@ -299,7 +290,6 @@ for init_date in init_dates:
             
 
 #Computation of Spread/Skill ratio for the different weeks and variables
-
 for var in var_of_interest:
     ensemble_spread = ds_inf_weekly[var].std(dim="member")
     spread_squared = ensemble_spread ** 2
@@ -309,6 +299,11 @@ for var in var_of_interest:
     weighted_spread = weighted_spread.rename({"week_lead_time": "leadtime"})
     ensemble_skill = rmse_results.loc[:, var, :]
     spead_skill_results.loc[:, var, :] = (weighted_spread / ensemble_skill).values
+    
+#reliability computation
+reliability_results = {}
+for var in var_of_interest:
+    reliability_results[var] = reliability(binary_obs[var], prob_model[var], dim = "values", probability_bin_edges = np.linspace(0, 1, 9))
 ############################################################################################################################################################
 #export
 
@@ -341,23 +336,16 @@ spatial_rmse_results_ds = spatial_rmse_results_ds.assign_coords(
 nc_spatial_rmse_path = os.path.join(output_dir, "Spatial_RMSE_weekly_AIFS.nc")
 spatial_rmse_results_ds.to_netcdf(nc_spatial_rmse_path)
 
+#roc - save all metrics (FPR, TPR, AUC) with probability bins
+roc_results_ds = xr.Dataset(roc_results)
+nc_roc_path = os.path.join(output_dir, "ROC_weekly_AIFS.nc")
+roc_results_ds.to_netcdf(nc_roc_path)
 
-#roc - save each init_date and week separately as they contain different variables and structures
+#brier score
+brier_score_results_ds = xr.Dataset({var: brier_score_results[var] for var in var_of_interest})
+nc_brier_score_path = os.path.join(output_dir, "Brier_Score_weekly_AIFS.nc")
+brier_score_results_ds.to_netcdf(nc_brier_score_path)
 
-for init_date_key, init_data in roc_data.items():
-    for week_key, week_data in init_data.items():
-        # Merge all variables for this week into one dataset
-        week_ds = xr.merge([week_data[var].rename({metric: f"{var}_{metric}" for metric in week_data[var].data_vars}) 
-                            for var in var_of_interest])
-        
-        # Remove attributes that can't be serialized to NetCDF
-        for var_name in week_ds.data_vars:
-            week_ds[var_name].attrs = {k: v for k, v in week_ds[var_name].attrs.items() 
-                                       if isinstance(v, (str, int, float, list, tuple, bytes, np.ndarray))}
-        
-        nc_roc_week_path = os.path.join(output_dir, f"ROC_{init_date_key}_{week_key.replace(' ', '_')}_AIFS.nc")
-        week_ds.to_netcdf(nc_roc_week_path)
-    
 #crps
 crps_results_ds = xr.Dataset({var: crps_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
 nc_crps_path = os.path.join(output_dir, "CRPS_weekly_AIFS.nc")
@@ -367,3 +355,8 @@ crps_results_ds.to_netcdf(nc_crps_path)
 spead_skill_results_ds = xr.Dataset({var: spead_skill_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
 nc_spead_skill_path = os.path.join(output_dir, "Spread_Skill_weekly_AIFS.nc")
 spead_skill_results_ds.to_netcdf(nc_spead_skill_path)
+
+#Reliability - save one file per variable to avoid conflicts
+for var in var_of_interest:
+    nc_reliability_path = os.path.join(output_dir, f"Reliability_{var}_weekly_AIFS.nc")
+    reliability_results[var].to_netcdf(nc_reliability_path)
