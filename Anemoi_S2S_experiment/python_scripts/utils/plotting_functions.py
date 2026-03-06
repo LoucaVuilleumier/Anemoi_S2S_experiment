@@ -245,17 +245,67 @@ def plot_boxplots(data_dict, title, colors, savename, ylabel="Mean absolute erro
 
 
 
-def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitle, savename):
+def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitle, savename, 
+                            norm=None, cmap='RdBu_r'):
+    """
+    Plot spatial maps for multiple variables and forecast weeks.
     
+    Parameters
+    ----------
+    dataset : xr.Dataset
+        Dataset with variables, longitude, latitude, and leadtime dimensions
+    list_variables : list
+        List of variable names to plot
+    list_weeks : list
+        List of week indices (0-based) to plot
+    label : str or dict
+        Colorbar label(s). Can be:
+        - str: single label for all variables (single colorbar)
+        - dict: {var_name: label} for per-variable colorbars
+    subtitle : str
+        Figure title
+    savename : str
+        Path to save figure (without extension)
+    norm : Normalize object, dict, or None
+        Colorbar normalization. Can be:
+        - None: auto-compute TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
+        - Normalize object: single norm for all variables
+        - dict: {var_name: norm_object} for per-variable norms
+    cmap : str or dict
+        Colormap. Can be:
+        - str: single colormap for all variables (default 'RdBu_r')
+        - dict: {var_name: cmap_string} for per-variable colormaps
+    """
     
     fig = plt.figure(figsize=(20, 16))
 
     variables = list_variables
-    #var_names_full = ['2m Temperature', 'Total Precipitation', '10m U Wind', '10m V Wind']
-    weeks = list_weeks  # Weeks 1, 3, 5, 7 (0-indexed)
+    weeks = list_weeks
+    
+    # Determine if we're using per-variable colorbars
+    use_multiple_colorbars = isinstance(label, dict)
+    
+    # Convert single norm/cmap/label to dicts if needed
+    if not isinstance(norm, dict):
+        norm_dict = {var: norm if norm is not None else TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1) 
+                     for var in variables}
+    else:
+        norm_dict = norm
+    
+    if not isinstance(cmap, dict):
+        cmap_dict = {var: cmap for var in variables}
+    else:
+        cmap_dict = cmap
+    
+    if not isinstance(label, dict):
+        label_dict = {var: label for var in variables}
+    else:
+        label_dict = label
 
     proj = ccrs.PlateCarree()
-    norm = TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
+    
+    # Store plot handles for colorbars
+    var_images = {}
 
     for i, var in enumerate(variables):
         for j, week in enumerate(weeks):
@@ -274,9 +324,13 @@ def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitl
             mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(data_week)
             lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
             
-            # Plot using tricontourf
+            # Plot using tricontourf with per-variable norm and cmap
             im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40, 
-                            transform=proj, norm=norm, cmap='RdBu_r')
+                            transform=proj, norm=norm_dict[var], cmap=cmap_dict[var])
+            
+            # Store image for colorbar (one per variable)
+            if var not in var_images:
+                var_images[var] = im
             
             # Add coastlines
             ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
@@ -284,18 +338,44 @@ def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitl
             # Set title
             ax.set_title(f'{var}\nWeek {week+1}', fontsize=10, fontweight='bold')
 
-    # Add colorbar
-    cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-    cbar = fig.colorbar(im, cax=cbar_ax)
-    cbar.set_label(f'{label}', fontsize=12)
+    # Add colorbar(s)
+    if use_multiple_colorbars:
+        # Multiple colorbars - one per variable row
+        # First apply tight_layout to get final subplot positions
+        plt.tight_layout(rect=[0, 0, 0.91, 0.97])
+        
+        for idx, var in enumerate(variables):
+            # Get the axes for this variable's row
+            # Each variable occupies a row of subplots (one per week)
+            first_subplot_idx = idx * len(weeks)
+            
+            # Get position of the first subplot in this row
+            first_ax = fig.axes[first_subplot_idx]
+            pos = first_ax.get_position()
+            
+            # Place colorbar to the right of this row, matching its height
+            cbar_x = 0.92
+            cbar_y = pos.y0
+            cbar_width = 0.012
+            cbar_height = pos.height
+            
+            cbar_ax = fig.add_axes([cbar_x, cbar_y, cbar_width, cbar_height])
+            cbar = fig.colorbar(var_images[var], cax=cbar_ax)
+            cbar.set_label(label_dict[var], fontsize=9)
+            cbar.ax.tick_params(labelsize=8)
+    else:
+        # Single colorbar (use the last image)
+        cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
+        cbar = fig.colorbar(im, cax=cbar_ax)
+        cbar.set_label(label_dict[variables[0]], fontsize=12)
+        plt.tight_layout(rect=[0, 0, 0.91, 0.97])
 
     plt.suptitle(subtitle, 
                 fontsize=16, fontweight='bold', y=0.98)
-    plt.tight_layout(rect=[0, 0, 0.91, 0.97])
 
     plt.savefig(f'{savename}.png', 
                 dpi=300, bbox_inches='tight')
-    print("R_t spatial maps saved!")
+    print("spatial maps saved!")
 
 
 def plot_single_var_spatial_rmse(dataset, var, weeks, var_label, unit, suptitle, savename, cmap='YlOrRd'):

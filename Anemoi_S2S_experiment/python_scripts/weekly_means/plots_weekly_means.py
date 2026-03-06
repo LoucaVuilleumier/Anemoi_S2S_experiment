@@ -26,6 +26,12 @@ color_vars = {
     "10m V Wind": "#ff7f0e",  # orange
 }
 
+#Load weekly mean datasets for forecasts and observations
+weekly_forecasts_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Forecasts_weekly_AIFS.nc"
+weekly_observations_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/Observations_weekly_AIFS.nc" 
+ds_inf_weekly = xr.open_dataset(weekly_forecasts_path)
+ds_obs_weekly = xr.open_dataset(weekly_observations_path)
+
 #ACC path and loading
 acc_path = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/ACC_weekly_anomalies_AIFS.nc"
 ACC_ds = xr.open_dataset(acc_path)
@@ -166,11 +172,64 @@ for var in spatial_vars:
         suptitle=f'Ensemble Mean RMSE — {spatial_var_labels[var]}',
         savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/spatial_rmse_{var}_AIFS.png',
     )
+    
+    
 
 #Spatial map of R_t
 pf.plot_weekly_spatial_maps(R_t_ds, ['2t', 'tp', '10u', '10v'], [0, 2, 4, 6], "Temporal CC",
                             'Temporal Correlation Coefficient of Reference Model',
                             '/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/R_t_AIFS.png')
+
+#Forecasting
+ds_inf_weekly = ds_inf_weekly.rename({"week_lead_time": "leadtime"})
+
+# Define per-variable normalizations for forecast data (different physical ranges)
+forecast_norms = {
+    '2t': Normalize(vmin=250, vmax=310),  # Temperature in Kelvin
+    'tp': Normalize(vmin=0, vmax=0.02),    # Total precipitation in m
+    '10u': Normalize(vmin=-15, vmax=15),   # U wind in m/s
+    '10v': Normalize(vmin=-15, vmax=15)    # V wind in m/s
+}
+
+# Per-variable colormaps for better visualization
+forecast_cmaps = {
+    '2t': 'RdYlBu_r',  # Red-Yellow-Blue reversed for temperature
+    'tp': 'YlGnBu',    # Yellow-Green-Blue for precipitation
+    '10u': 'RdBu_r',   # Red-Blue diverging for wind
+    '10v': 'RdBu_r'    # Red-Blue diverging for wind
+}
+
+# Per-variable labels with units
+forecast_labels = {
+    '2t': '2m Temperature [K]',
+    'tp': 'Total Precipitation [m]',
+    '10u': '10m U Wind [m/s]',
+    '10v': '10m V Wind [m/s]'
+}
+
+pf.plot_weekly_spatial_maps(
+    ds_inf_weekly.isel(init_date=0).mean(dim="member"), 
+    ['2t', 'tp', '10u', '10v'], 
+    [1, 3, 5, 7], 
+    label=forecast_labels,
+    subtitle="Ensemble Mean Forecast of Reference Model",
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/forecast_weekly_AIFS',
+    norm=forecast_norms,
+    cmap=forecast_cmaps
+)
+
+#Era-5
+ds_obs_weekly = ds_obs_weekly.rename({"week_lead_time": "leadtime"})
+pf.plot_weekly_spatial_maps(
+    ds_obs_weekly.isel(init_date = 0),
+    ['2t', 'tp', '10u', '10v'],
+    [1, 3, 5, 7],
+    label=forecast_labels,
+    subtitle="ERA5 Ground Truth",
+    savename = '/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/era5_weekly_AIFS',
+    norm = forecast_norms,
+    cmap = forecast_cmaps
+)
 
 
 # ROC curves — one subplot per week, all variables overlaid
@@ -228,9 +287,9 @@ for week_idx in range(8):
                 label=var_labels[var])
     
     # Add perfect calibration line (diagonal)
-    ax.plot([0, 1], [0, 1], "k--", label="Perfect calibration")
-    ax.set_xlim([0, 1])
-    ax.set_ylim([0, 1])
+    ax.plot([0, .4], [0, .4], "k--", label="Perfect calibration")
+    ax.set_xlim([0, .4])
+    ax.set_ylim([0, .4])
     ax.set_xlabel("Forecast Probability")
     ax.set_ylabel("Observed Frequency")
     ax.set_title(f"Reliability — Week {week_idx+1}")

@@ -224,8 +224,8 @@ crps_results = xr.DataArray(
     }
 )
 
-#Spread/Skill for all init dates, variables and lead times
-spead_skill_results = xr.DataArray(
+#Spread for all init dates, variables and lead times
+RMS_spread_results = xr.DataArray(
     data=np.full((n_init_dates, n_vars, n_leadtime), np.nan),
     dims=("init_date", "variable", "leadtime"),
     coords={
@@ -297,8 +297,7 @@ for var in var_of_interest:
     weighted_var = (spread_squared * lat_weights).sum(dim="values") / lat_weights.sum()
     weighted_spread = np.sqrt(weighted_var)
     weighted_spread = weighted_spread.rename({"week_lead_time": "leadtime"})
-    ensemble_skill = rmse_results.loc[:, var, :]
-    spead_skill_results.loc[:, var, :] = (weighted_spread / ensemble_skill).values
+    RMS_spread_results.loc[:, var, :] = weighted_spread.values
     
 #reliability computation
 reliability_results = {}
@@ -309,6 +308,16 @@ for var in var_of_interest:
 
 output_dir = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS"
 os.makedirs(output_dir, exist_ok=True)
+
+#inf and obs weekly means
+ds_inf_weekly = ds_inf_weekly.assign_coords(
+    latitude=("values",lat_lon_coords["latitude"].values),
+    longitude=("values", lat_lon_coords["longitude"].values),)
+ds_obs_weekly = ds_obs_weekly.assign_coords(
+    latitude=("values",lat_lon_coords["latitude"].values),
+    longitude=("values", lat_lon_coords["longitude"].values),)
+ds_inf_weekly.to_netcdf(os.path.join(output_dir, "Forecasts_weekly_AIFS.nc"))
+ds_obs_weekly.to_netcdf(os.path.join(output_dir, "Observations_weekly_AIFS.nc"))
 
 # Convert to Dataset for easier variable-based access and then export
 #acc
@@ -352,9 +361,9 @@ nc_crps_path = os.path.join(output_dir, "CRPS_weekly_AIFS.nc")
 crps_results_ds.to_netcdf(nc_crps_path)
 
 #Spread/Skill
-spead_skill_results_ds = xr.Dataset({var: spead_skill_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
-nc_spead_skill_path = os.path.join(output_dir, "Spread_Skill_weekly_AIFS.nc")
-spead_skill_results_ds.to_netcdf(nc_spead_skill_path)
+RMS_spread_results_ds = xr.Dataset({var: RMS_spread_results.sel(variable=var).drop_vars('variable') for var in var_of_interest})
+nc_RMS_spread_path = os.path.join(output_dir, "RMS_Spread_weekly_AIFS.nc")
+RMS_spread_results_ds.to_netcdf(nc_RMS_spread_path)
 
 #Reliability - save one file per variable to avoid conflicts
 for var in var_of_interest:
