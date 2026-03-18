@@ -107,6 +107,16 @@ pf.plot_weekly_lines(
     ylim=None  # Auto scale for RMSE since different variables have different scales
 )
 
+# Line plot for RMSE (only t2m)
+pf.plot_weekly_lines(
+    data_dict={"2m Temperature": lineplot_rmse["2m Temperature"]},
+    title='RMSE of t2m for Weekly Forecasts of Reference Model (Ensemble Mean)',
+    colors=color_vars,
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/rmse_2tm_AIFS.png',
+    ylabel='Root Mean Square Error [K]',
+    ylim=None  # Auto scale for RMSE since different variables have different scales
+)
+
 
 #line plot of crps
 pf.plot_weekly_lines(
@@ -182,14 +192,8 @@ pf.plot_weekly_spatial_maps(R_t_ds, ['2t', 'tp', '10u', '10v'], [0, 2, 4, 6], "T
 
 #Forecasting
 ds_inf_weekly = ds_inf_weekly.rename({"week_lead_time": "leadtime"})
+ds_obs_weekly = ds_obs_weekly.rename({"week_lead_time": "leadtime"})
 
-# Define per-variable normalizations for forecast data (different physical ranges)
-forecast_norms = {
-    '2t': Normalize(vmin=250, vmax=310),  # Temperature in Kelvin
-    'tp': Normalize(vmin=0, vmax=0.02),    # Total precipitation in m
-    '10u': Normalize(vmin=-15, vmax=15),   # U wind in m/s
-    '10v': Normalize(vmin=-15, vmax=15)    # V wind in m/s
-}
 
 # Per-variable colormaps for better visualization
 forecast_cmaps = {
@@ -197,6 +201,13 @@ forecast_cmaps = {
     'tp': 'YlGnBu',    # Yellow-Green-Blue for precipitation
     '10u': 'RdBu_r',   # Red-Blue diverging for wind
     '10v': 'RdBu_r'    # Red-Blue diverging for wind
+}
+
+forecast_norms = {
+    '2t': Normalize(vmin=250, vmax=310),  # Temperature in Kelvin
+    'tp': Normalize(vmin=0, vmax=0.02),    # Total precipitation in m
+    '10u': Normalize(vmin=-15, vmax=15),   # U wind in m/s
+    '10v': Normalize(vmin=-15, vmax=15)    # V wind in m/s
 }
 
 # Per-variable labels with units
@@ -219,7 +230,6 @@ pf.plot_weekly_spatial_maps(
 )
 
 #Era-5
-ds_obs_weekly = ds_obs_weekly.rename({"week_lead_time": "leadtime"})
 pf.plot_weekly_spatial_maps(
     ds_obs_weekly.isel(init_date = 0),
     ['2t', 'tp', '10u', '10v'],

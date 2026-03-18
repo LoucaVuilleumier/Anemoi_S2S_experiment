@@ -360,13 +360,26 @@ def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitl
             cbar_height = pos.height
             
             cbar_ax = fig.add_axes([cbar_x, cbar_y, cbar_width, cbar_height])
-            cbar = fig.colorbar(var_images[var], cax=cbar_ax)
+            
+            # Create colorbar from a ScalarMappable with explicit norm instead of from image data
+            # This ensures identical colorbar for the same norm, independent of actual data
+            from matplotlib.cm import ScalarMappable
+            sm = ScalarMappable(norm=norm_dict[var], cmap=cmap_dict[var])
+            sm.set_array([])  # Dummy array
+            cbar = fig.colorbar(sm, cax=cbar_ax)
             cbar.set_label(label_dict[var], fontsize=9)
             cbar.ax.tick_params(labelsize=8)
     else:
-        # Single colorbar (use the last image)
+        # Single colorbar
         cbar_ax = fig.add_axes([0.92, 0.15, 0.02, 0.7])
-        cbar = fig.colorbar(im, cax=cbar_ax)
+        
+        # Create colorbar from ScalarMappable for consistency
+        from matplotlib.cm import ScalarMappable
+        norm_to_use = norm_dict[variables[0]]
+        cmap_to_use = cmap_dict[variables[0]]
+        sm = ScalarMappable(norm=norm_to_use, cmap=cmap_to_use)
+        sm.set_array([])
+        cbar = fig.colorbar(sm, cax=cbar_ax)
         cbar.set_label(label_dict[variables[0]], fontsize=12)
         plt.tight_layout(rect=[0, 0, 0.91, 0.97])
 

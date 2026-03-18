@@ -96,16 +96,39 @@ for init_date in init_dates:
     # Store the absolute time as a non-dimension coordinate
     ds_init = ds_init.assign_coords(forecast_time=('time', ds_init.time.values))
     
-    #select only forecast at 12:00
-    ds_init_daily = ds_init.sel(time=ds_init.time.dt.hour == 12).squeeze("ensemble")
-    ds_init_daily = ds_init_daily.assign_coords(variable=var_of_interest)
+    # Process tp and other variables separately
+    ds_init = ds_init.squeeze("ensemble").assign_coords(variable=var_of_interest)
+    
+    # Process tp: daily accumulation (sum of all 6-hourly values in each day)
+    # Work with the data variable directly to avoid datetime coordinate issues
+    ds_tp_data = ds_init.sel(variable="tp")['data']
+    ds_tp_daily= ds_tp_data.resample(time="1D").sum()
+    ds_tp_daily = ds_tp_daily.expand_dims(variable=["tp"], axis=1)  # Add variable dimension back for concatenation
+    
+    # Process other variables: select only 12:00 values
+    ds_other = ds_init.sel(variable=["2t", "10u", "10v"])["data"]
+    ds_other_daily = ds_other.sel(time=ds_other.time.dt.hour == 12)
+    
+    
+    ds_tp_daily = ds_tp_daily.assign_coords(time=ds_other_daily.time.values)
+    ds_tp_daily = ds_tp_daily.assign_coords(forecast_time=('time', ds_other_daily.time.values))
+    
+    # Combine back in original variable order
+    var_list = []
+    for var in var_of_interest:
+        if var == "tp":
+            var_list.append(ds_tp_daily)
+        else:
+            var_list.append(ds_other_daily.sel(variable=var))
+    
+    ds_init_daily = xr.concat(var_list, dim="variable")
     
     # Replace time dimension with relative lead_time (in days from init)
     lead_times = (ds_init_daily.time.values - init_date) / np.timedelta64(1, 'D')
     ds_init_daily = ds_init_daily.assign_coords(time=lead_times).rename({'time': 'lead_time'})
     
     # Convert from 'data' variable with variable dimension to separate variables
-    xr_ds_init = xr.Dataset({var: ds_init_daily['data'].sel(variable=var).drop_vars('variable') for var in var_of_interest})
+    xr_ds_init = xr.Dataset({var: ds_init_daily.sel(variable=var).drop_vars('variable') for var in var_of_interest})
     ds_obs_multiple_init.append(xr_ds_init)
 
 ds_obs_daily = xr.concat(ds_obs_multiple_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
