@@ -185,13 +185,13 @@ data:
   num_features: 131
   resolution: o96
 dataloader:
-  prefetch_factor: 2
+  prefetch_factor: 1
   pin_memory: true
   read_group_size: 1
   num_workers:
-    training: 8
-    validation: 8
-    test: 8
+    training: 4
+    validation: 4
+    test: 4
   batch_size:
     training: 1
     validation: 1
@@ -209,11 +209,13 @@ dataloader:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
         start: 1979
         end: 1999
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
         start: 1979
         end: 1999
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
-        start: 1979
+        start: '1979-01-08'
         end: 1999
       select:
       - 10u
@@ -351,14 +353,17 @@ dataloader:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
         start: 2000
         end: 2006
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
         start: 2000
         end: 2006
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-2000-2006-6h-v1-ERA51-pl
         start: 2000
         end: 2006
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
-        start: 2000
+        start: '2000-01-08'
         end: 2006
       select:
       - 10u
@@ -496,11 +501,13 @@ dataloader:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
         start: 2012
         end: 2023
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
         start: 2012
         end: 2023
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
-        start: 2012
+        start: '2012-01-08'
         end: 2023
       select:
       - 10u
@@ -638,11 +645,13 @@ dataloader:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-for-single-v2
         start: '2024-01-01'
         end: '2024-12-31'
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-2024-2024-6h-v2-s2s-predictors
         start: '2024-01-01'
         end: '2024-12-31'
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
-        start: '2024-01-01'
+        start: '2024-01-08'
         end: '2024-12-31'
       select:
       - 10u
@@ -777,25 +786,27 @@ dataloader:
       - tp
       - ttr
     fill_missing_gaps: true
-    rolling_average: [-28, 0, 'frequency']
+
   training:
     dataset: ${dataloader.dataset}
     start: null
     end: 2024
     frequency: 6h
     drop: []
-  validation_rollout: 28
+  validation_rollout: 7
   validation:
     dataset:
       join:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
         start: 2007
         end: 2011
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
         start: 2007
         end: 2011
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
-        start: 2007
+        start: '2007-01-08'
         end: 2011
       select:
       - 10u
@@ -1063,7 +1074,7 @@ diagnostics:
       warmup: 0
   callbacks:
   - _target_: anemoi.training.diagnostics.callbacks.evaluation.RolloutEvalEns
-    rollout: 28
+    rollout: 7
     every_n_batches: 1
   debug:
     anomaly_detection: false
