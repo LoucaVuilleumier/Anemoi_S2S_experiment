@@ -185,20 +185,20 @@ data:
   num_features: 131
   resolution: o96
 dataloader:
-  prefetch_factor: 1
+  prefetch_factor: 2
   pin_memory: true
   read_group_size: 1
   num_workers:
-    training: 4
-    validation: 4
-    test: 4
+    training: 8
+    validation: 8
+    test: 8
   batch_size:
     training: 1
     validation: 1
     test: 4
   limit_batches:
-    training: null
-    validation: 256
+    training: 2048
+    validation: 128
     test: 20
   grid_indices:
     _target_: anemoi.training.data.grid_indices.FullGrid
@@ -793,7 +793,7 @@ dataloader:
     end: 2024
     frequency: 6h
     drop: []
-  validation_rollout: 7
+  validation_rollout: 8
   validation:
     dataset:
       join:
@@ -1074,7 +1074,7 @@ diagnostics:
       warmup: 0
   callbacks:
   - _target_: anemoi.training.diagnostics.callbacks.evaluation.RolloutEvalEns
-    rollout: 7
+    rollout: 8
     every_n_batches: 1
   debug:
     anomaly_detection: false
@@ -1111,8 +1111,8 @@ diagnostics:
       project_name: 'Anemoi'
       system: true
       terminal: true
-      run_name: aifs-subs-debug-finetuning
-      on_resume_create_child: true
+      run_name: aifs-subs-weekly-lr-2.5e-4
+      on_resume_create_child: false
       expand_hyperparams:
       - config
       http_max_retries: 35
@@ -1339,8 +1339,8 @@ training:
       nodes_name: data
       nodes_attribute_name: area_weight
       norm: unit-sum
-  run_id: null 
-  fork_run_id: null
+  run_id: null
+  fork_run_id: true
   transfer_learning: true
   load_weights_only: true
   deterministic: false
@@ -1419,11 +1419,11 @@ training:
     epoch_increment: 0
     max: 1
   max_epochs: null
-  max_steps: 10000
+  max_steps: 100000
   lr:
     warmup: 100
-    rate: 6.25e-05
-    iterations: 50000
-    min: 5.0e-07
+    rate: 2.5e-4 #same as pretrained model scaled for 4 GPUs
+    iterations: 100000
+    min:  1.0e-7 # not scaled with number of GPUs
   submodules_to_freeze: []
 config_validation: false

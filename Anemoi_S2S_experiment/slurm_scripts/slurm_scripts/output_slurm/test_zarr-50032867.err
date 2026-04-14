@@ -1,0 +1,53 @@
+[ECMWF-INFO -ecprofile] /bin/bash NON_INTERACTIVE on ag6-410 at 20260410_141129.023, PID: 2299103, JOBID: 50032867
+[ECMWF-INFO -ecprofile] $SCRATCH=/ec/res4/scratch/nld4584
+[ECMWF-INFO -ecprofile] $PERM=/perm/nld4584
+[ECMWF-INFO -ecprofile] $HPCPERM=/ec/res4/hpcperm/nld4584
+[ECMWF-INFO -ecprofile] $TMPDIR=/ssd/tmpdirs/nld4584.50032867
+[ECMWF-INFO -ecprofile] $SCRATCHDIR=/ec/res4/scratchdir/nld4584/3/50032867
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/anemoi-datasets/src/anemoi/datasets/data/rolling_average.py:82: RuntimeWarning: Mean of empty slice
+  return np.nanmean(array, axis=0)
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] This is the ECMWF job Epilogue
+[ECMWF-INFO -ecepilog] +++ Please report issues using the Support portal +++
+[ECMWF-INFO -ecepilog] +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+[ECMWF-INFO -ecepilog] Run at 2026-04-10T14:32:04 on ag
+[ECMWF-INFO -ecepilog] JobName                   : test_zarr
+[ECMWF-INFO -ecepilog] JobID                     : 50032867
+[ECMWF-INFO -ecepilog] Submit                    : 2026-04-10T12:20:24
+[ECMWF-INFO -ecepilog] Start                     : 2026-04-10T14:11:22
+[ECMWF-INFO -ecepilog] End                       : 2026-04-10T14:32:04
+[ECMWF-INFO -ecepilog] QueuedTime                : 6658.0
+[ECMWF-INFO -ecepilog] ElapsedRaw                : 1242
+[ECMWF-INFO -ecepilog] ExitCode                  : 0:0
+[ECMWF-INFO -ecepilog] DerivedExitCode           : 0:0
+[ECMWF-INFO -ecepilog] State                     : COMPLETED
+[ECMWF-INFO -ecepilog] Account                   : nldmlam
+[ECMWF-INFO -ecepilog] QOS                       : ng
+[ECMWF-INFO -ecepilog] User                      : nld4584
+[ECMWF-INFO -ecepilog] StdOut                    : /lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/slurm_scripts/output_slurm/test_zarr-50032867.out
+[ECMWF-INFO -ecepilog] StdErr                    : /lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/slurm_scripts/output_slurm/test_zarr-50032867.err
+[ECMWF-INFO -ecepilog] NNodes                    : 1
+[ECMWF-INFO -ecepilog] NCPUS                     : 32
+[ECMWF-INFO -ecepilog] SBU                       : 94.191
+[ECMWF-INFO -ecepilog] jobtag                    : nld4584-test_zarr-1x32-/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/slurm_scripts/output_slurm/test_zarr-_JOBID_.out
+[ECMWF-INFO -ecepilog] ----------------------------------------------------------------------------------------------------
+

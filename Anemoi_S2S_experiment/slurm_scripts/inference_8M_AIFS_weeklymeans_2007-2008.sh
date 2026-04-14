@@ -7,8 +7,8 @@
 #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
 
 # Set the error and output files
-#SBATCH --output=./slurm_scripts/output_slurm/inference_8M_AIFS_weeklymeans_2007-2008.out
-#SBATCH --error=./slurm_scripts/output_slurm/inference_8M_AIFS_weeklymeans_2007-2008.out
+#SBATCH --output=./slurm_scripts/output_slurm/inference_8M_AIFS_weeklymeans_epoch1_2007-2008.out
+#SBATCH --error=./slurm_scripts/output_slurm/inference_8M_AIFS_weeklymeans_epoch1_2007-2008.out
 
 #SBATCH --array=0-7
 #SBATCH --qos=ng
@@ -17,7 +17,7 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --gpus-per-node=4
 #SBATCH --mem=64G
-#SBATCH --time=12:00:00
+#SBATCH --time=2:00:00
 
 export ANEMOI_BASE_SEED=$SLURM_ARRAY_TASK_ID
 export HYDRA_FULL_ERROR=1
@@ -40,7 +40,7 @@ for year in {2007..2009}; do
         
         # Run inference for first day
         BASE_DATE="${first_day}T12:00"
-        OUTPUT_DIR="/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/AIFS/aifs-subs-pretrain-weeklymeans-${first_day}"
+        OUTPUT_DIR="/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/Weekly_Means_14k_lr_0.625e-7/aifs-subs-pretrain-weeklymeans-${first_day}"
         mkdir -p ${OUTPUT_DIR}
         OUTPUT_FILE="${OUTPUT_DIR}/member-${SLURM_ARRAY_TASK_ID}.nc"
         export INFERENCE_OUTPUT_PATH=${OUTPUT_FILE}
@@ -50,7 +50,7 @@ for year in {2007..2009}; do
         
         # Run inference for fifteenth day
         BASE_DATE="${fifteenth}T12:00"
-        OUTPUT_DIR="/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/AIFS/aifs-subs-pretrain-weeklymeans-${fifteenth}"
+        OUTPUT_DIR="/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_inference/Weekly_Means_14k_lr_0.625e-7/aifs-subs-pretrain-weeklymeans-${fifteenth}"
         mkdir -p ${OUTPUT_DIR}
         OUTPUT_FILE="${OUTPUT_DIR}/member-${SLURM_ARRAY_TASK_ID}.nc"
         export INFERENCE_OUTPUT_PATH=${OUTPUT_FILE}

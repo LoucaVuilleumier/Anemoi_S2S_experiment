@@ -1,0 +1,447 @@
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] -  This is the ECMWF jobfilter
+[ECMWF-INFO -sbatch] -  +++ Please report issues using the Support portal +++
+[ECMWF-INFO -sbatch] -  +++ https://support.ecmwf.int                     +++
+[ECMWF-INFO -sbatch] -  /usr/local/bin/ecsbatch: size: 53171, mtime: Thu Aug 28 09:28:10 2025
+[ECMWF-INFO -sbatch] - -------------------------------------------------------------------------------------
+[ECMWF-INFO -sbatch] - Time at submit: Fri Apr 10 12:20:24 2026 (1775823624.7389178) on ag6-400:/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts
+[ECMWF-INFO -sbatch] - --- SLURM VARIABLES ---
+[ECMWF-INFO -sbatch] - SLURM_EXPORT_ENV=ALL
+[ECMWF-INFO -sbatch] - SBATCH_EXPORT=NONE
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - jobscript: /lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/test_zarr_corruption.sh
+[ECMWF-INFO -sbatch] - --- SCRIPT OPTIONS ---
+[ECMWF-INFO -sbatch] - #SBATCH --job-name=test_zarr
+[ECMWF-INFO -sbatch] - #SBATCH --output=slurm_scripts/output_slurm/test_zarr-%j.out
+[ECMWF-INFO -sbatch] - #SBATCH --error=slurm_scripts/output_slurm/test_zarr-%j.err
+[ECMWF-INFO -sbatch] - #SBATCH --qos=ng
+[ECMWF-INFO -sbatch] - #SBATCH --nodes=1
+[ECMWF-INFO -sbatch] - #SBATCH --ntasks-per-node=4
+[ECMWF-INFO -sbatch] - #SBATCH --gpus-per-node=4
+[ECMWF-INFO -sbatch] - #SBATCH --cpus-per-gpu=8
+[ECMWF-INFO -sbatch] - #SBATCH --mem=60G
+[ECMWF-INFO -sbatch] - #SBATCH --time=01:00:00
+[ECMWF-INFO -sbatch] - -----------------------
+[ECMWF-INFO -sbatch] - --- POST-PROCESSED OPTIONS ---
+[ECMWF-INFO -sbatch] - ARG --positional=['test_zarr_corruption.sh']
+[ECMWF-INFO -sbatch] - ARG --error=slurm_scripts/output_slurm/test_zarr-%j.err
+[ECMWF-INFO -sbatch] - ARG --job_name=test_zarr
+[ECMWF-INFO -sbatch] - ARG --ntasks_per_node=4
+[ECMWF-INFO -sbatch] - ARG --nodes=1
+[ECMWF-INFO -sbatch] - ARG --output=slurm_scripts/output_slurm/test_zarr-%j.out
+[ECMWF-INFO -sbatch] - ARG --qos=ng
+[ECMWF-INFO -sbatch] - ARG --time=01:00:00
+[ECMWF-INFO -sbatch] - ARG --mem=60G
+[ECMWF-INFO -sbatch] - ARG --cpus_per_gpu=8
+[ECMWF-INFO -sbatch] - ARG --gpus_per_node=4
+[ECMWF-INFO -sbatch] - ------------------------------
+[ECMWF-INFO -sbatch] - jobtag: nld4584-test_zarr-1x4-/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/slurm_scripts/output_slurm/test_zarr-_JOBID_.out
+[ECMWF-INFO -sbatch] - ['/usr/bin/sbatch', '--error=slurm_scripts/output_slurm/test_zarr-%j.err', '--job-name=test_zarr', '--ntasks-per-node=4', '--nodes=1', '--output=slurm_scripts/output_slurm/test_zarr-%j.out', '--qos=ng', '--time=01:00:00', '--mem=60G', '--cpus-per-gpu=8', '--gpus-per-node=4', '--export=EC_user_time_limit=01:00:00', '/lus/h2resw01/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/test_zarr_corruption.sh']
+[ECMWF-INFO -sbatch] - sbatch executed on ag
+[ECMWF-INFO -sbatch] - Job queued on ag using method local
+[ECMWF-INFO -sbatch] - Submitted batch job 50032867
+=========================================
+Starting Zarr corruption tests
+Date: Fri Apr 10 14:11:29 UTC 2026
+Node: ag6-410
+=========================================
+
+[1/3] Running basic corruption test...
+================================================================================
+ZARR CHUNK CORRUPTION TEST
+Started at: 2026-04-10 14:11:47.385107
+Output file: zarr_corruption_test_20260410_141147.log
+================================================================================
+
+[1/3] Opening validation dataset...
+Dataset length: 7276
+Date range: 2007-01-08T00:00:00 to 2011-12-31T18:00:00
+Shape: (7276, 160, 1, 40320)
+
+[2/3] Testing sequential access (every 10th timestep)...
+  ✓ Index 0 (2007-01-08T00:00:00): OK
+  ✓ Index 100 (2007-02-02T00:00:00): OK
+  ✓ Index 200 (2007-02-27T00:00:00): OK
+  ✓ Index 300 (2007-03-24T00:00:00): OK
+  ✓ Index 400 (2007-04-18T00:00:00): OK
+  ✓ Index 500 (2007-05-13T00:00:00): OK
+  ✓ Index 600 (2007-06-07T00:00:00): OK
+  ✓ Index 700 (2007-07-02T00:00:00): OK
+  ✓ Index 800 (2007-07-27T00:00:00): OK
+  ✓ Index 900 (2007-08-21T00:00:00): OK
+  ✓ Index 1000 (2007-09-15T00:00:00): OK
+  ✓ Index 1100 (2007-10-10T00:00:00): OK
+  ✓ Index 1200 (2007-11-04T00:00:00): OK
+  ✓ Index 1300 (2007-11-29T00:00:00): OK
+  ✓ Index 1400 (2007-12-24T00:00:00): OK
+  ✓ Index 1500 (2008-01-18T00:00:00): OK
+  ✓ Index 1600 (2008-02-12T00:00:00): OK
+  ✓ Index 1700 (2008-03-08T00:00:00): OK
+  ✓ Index 1800 (2008-04-02T00:00:00): OK
+  ✓ Index 1900 (2008-04-27T00:00:00): OK
+  ✓ Index 2000 (2008-05-22T00:00:00): OK
+  ✓ Index 2100 (2008-06-16T00:00:00): OK
+  ✓ Index 2200 (2008-07-11T00:00:00): OK
+  ✓ Index 2300 (2008-08-05T00:00:00): OK
+  ✓ Index 2400 (2008-08-30T00:00:00): OK
+  ✓ Index 2500 (2008-09-24T00:00:00): OK
+  ✓ Index 2600 (2008-10-19T00:00:00): OK
+  ✓ Index 2700 (2008-11-13T00:00:00): OK
+  ✓ Index 2800 (2008-12-08T00:00:00): OK
+  ✓ Index 2900 (2009-01-02T00:00:00): OK
+  ✓ Index 3000 (2009-01-27T00:00:00): OK
+  ✓ Index 3100 (2009-02-21T00:00:00): OK
+  ✓ Index 3200 (2009-03-18T00:00:00): OK
+  ✓ Index 3300 (2009-04-12T00:00:00): OK
+  ✓ Index 3400 (2009-05-07T00:00:00): OK
+  ✓ Index 3500 (2009-06-01T00:00:00): OK
+  ✓ Index 3600 (2009-06-26T00:00:00): OK
+  ✓ Index 3700 (2009-07-21T00:00:00): OK
+  ✓ Index 3800 (2009-08-15T00:00:00): OK
+  ✓ Index 3900 (2009-09-09T00:00:00): OK
+  ✓ Index 4000 (2009-10-04T00:00:00): OK
+  ✓ Index 4100 (2009-10-29T00:00:00): OK
+  ✓ Index 4200 (2009-11-23T00:00:00): OK
+  ✓ Index 4300 (2009-12-18T00:00:00): OK
+  ✓ Index 4400 (2010-01-12T00:00:00): OK
+  ✓ Index 4500 (2010-02-06T00:00:00): OK
+  ✓ Index 4600 (2010-03-03T00:00:00): OK
+  ✓ Index 4700 (2010-03-28T00:00:00): OK
+  ✓ Index 4800 (2010-04-22T00:00:00): OK
+  ✓ Index 4900 (2010-05-17T00:00:00): OK
+  ✓ Index 5000 (2010-06-11T00:00:00): OK
+  ✓ Index 5100 (2010-07-06T00:00:00): OK
+  ✓ Index 5200 (2010-07-31T00:00:00): OK
+  ✓ Index 5300 (2010-08-25T00:00:00): OK
+  ✓ Index 5400 (2010-09-19T00:00:00): OK
+  ✓ Index 5500 (2010-10-14T00:00:00): OK
+  ✓ Index 5600 (2010-11-08T00:00:00): OK
+  ✓ Index 5700 (2010-12-03T00:00:00): OK
+  ✓ Index 5800 (2010-12-28T00:00:00): OK
+  ✓ Index 5900 (2011-01-22T00:00:00): OK
+  ✓ Index 6000 (2011-02-16T00:00:00): OK
+  ✓ Index 6100 (2011-03-13T00:00:00): OK
+  ✓ Index 6200 (2011-04-07T00:00:00): OK
+  ✓ Index 6300 (2011-05-02T00:00:00): OK
+  ✓ Index 6400 (2011-05-27T00:00:00): OK
+  ✓ Index 6500 (2011-06-21T00:00:00): OK
+  ✓ Index 6600 (2011-07-16T00:00:00): OK
+  ✓ Index 6700 (2011-08-10T00:00:00): OK
+  ✓ Index 6800 (2011-09-04T00:00:00): OK
+  ✓ Index 6900 (2011-09-29T00:00:00): OK
+  ✓ Index 7000 (2011-10-24T00:00:00): OK
+  ✓ Index 7100 (2011-11-18T00:00:00): OK
+  ✓ Index 7200 (2011-12-13T00:00:00): OK
+
+[3/3] Testing random sampling (50 samples)...
+  ✗ Random index 6058 (2011-03-02T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 5441 (2010-09-29T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4475 (2010-01-30T18:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3689 (2009-07-18T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4515 (2010-02-09T18:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 185 (2007-02-23T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4894 (2010-05-15T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3258 (2009-04-01T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4990 (2010-06-08T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 6142 (2011-03-23T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 6772 (2011-08-28T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 5267 (2010-08-16T18:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 61 (2007-01-23T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4600 (2010-03-03T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3269 (2009-04-04T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 6948 (2011-10-11T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3100 (2009-02-21T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 6028 (2011-02-23T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 7264 (2011-12-29T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 5849 (2011-01-09T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4961 (2010-06-01T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 5501 (2010-10-14T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 6380 (2011-05-22T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 5469 (2010-10-06T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 308 (2007-03-26T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3204 (2009-03-19T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4818 (2010-04-26T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 6864 (2011-09-20T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4230 (2009-11-30T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 1729 (2008-03-15T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 5508 (2010-10-16T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3779 (2009-08-09T18:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3806 (2009-08-16T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 828 (2007-08-03T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 408 (2007-04-20T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4416 (2010-01-16T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 2656 (2008-11-02T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3540 (2009-06-11T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3664 (2009-07-12T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 457 (2007-05-02T06:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 2210 (2008-07-13T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 2223 (2008-07-16T18:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 642 (2007-06-17T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 6964 (2011-10-15T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 1446 (2008-01-04T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 5570 (2010-10-31T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 3658 (2009-07-10T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 4196 (2009-11-22T00:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 2882 (2008-12-28T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+  ✗ Random index 5278 (2010-08-19T12:00:00): AttributeError: 'numpy.int64' object has no attribute 'indices'
+
+================================================================================
+RESULTS SUMMARY
+================================================================================
+
+❌ FOUND 50 CORRUPTED CHUNKS!
+
+  Index 6058 (2011-03-02T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 5441 (2010-09-29T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4475 (2010-01-30T18:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3689 (2009-07-18T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4515 (2010-02-09T18:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 185 (2007-02-23T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4894 (2010-05-15T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3258 (2009-04-01T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4990 (2010-06-08T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 6142 (2011-03-23T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 6772 (2011-08-28T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 5267 (2010-08-16T18:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 61 (2007-01-23T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4600 (2010-03-03T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3269 (2009-04-04T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 6948 (2011-10-11T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3100 (2009-02-21T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 6028 (2011-02-23T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 7264 (2011-12-29T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 5849 (2011-01-09T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4961 (2010-06-01T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 5501 (2010-10-14T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 6380 (2011-05-22T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 5469 (2010-10-06T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 308 (2007-03-26T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3204 (2009-03-19T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4818 (2010-04-26T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 6864 (2011-09-20T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4230 (2009-11-30T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 1729 (2008-03-15T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 5508 (2010-10-16T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3779 (2009-08-09T18:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3806 (2009-08-16T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 828 (2007-08-03T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 408 (2007-04-20T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4416 (2010-01-16T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 2656 (2008-11-02T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3540 (2009-06-11T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3664 (2009-07-12T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 457 (2007-05-02T06:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 2210 (2008-07-13T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 2223 (2008-07-16T18:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 642 (2007-06-17T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 6964 (2011-10-15T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 1446 (2008-01-04T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 5570 (2010-10-31T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 3658 (2009-07-10T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 4196 (2009-11-22T00:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 2882 (2008-12-28T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+  Index 5278 (2010-08-19T12:00:00):
+    Error: 'numpy.int64' object has no attribute 'indices'...
+
+================================================================================
+Test completed at: 2026-04-10 14:28:24.881857
+Results saved to: zarr_corruption_test_20260410_141147.log
+================================================================================
+
+[2/3] Running grid shard test...
+================================================================================
+ZARR GRID SHARD CORRUPTION TEST
+Started at: 2026-04-10 14:28:39.647156
+Output file: zarr_grid_shard_test_20260410_142839.log
+================================================================================
+
+[1/4] Opening validation dataset...
+Dataset shape: (7276, 160, 1, 40320)
+  Timesteps: 7276
+  Variables: 160
+  Grid points: 1
+
+[2/4] Testing spatial shards (simulating 4 GPUs)...
+
+  Testing GPU rank 0 (grid points 0:0)...
+    ✓ Timestep 0 (2007-01-08T00:00:00), shard 0: OK
+    ✓ Timestep 1819 (2008-04-06T18:00:00), shard 0: OK
+    ✓ Timestep 3638 (2009-07-05T12:00:00), shard 0: OK
+    ✓ Timestep 5457 (2010-10-03T06:00:00), shard 0: OK
+    ✓ Timestep 7275 (2011-12-31T18:00:00), shard 0: OK
+
+  Testing GPU rank 1 (grid points 0:0)...
+    ✓ Timestep 0 (2007-01-08T00:00:00), shard 1: OK
+    ✓ Timestep 1819 (2008-04-06T18:00:00), shard 1: OK
+    ✓ Timestep 3638 (2009-07-05T12:00:00), shard 1: OK
+    ✓ Timestep 5457 (2010-10-03T06:00:00), shard 1: OK
+    ✓ Timestep 7275 (2011-12-31T18:00:00), shard 1: OK
+
+  Testing GPU rank 2 (grid points 0:0)...
+    ✓ Timestep 0 (2007-01-08T00:00:00), shard 2: OK
+    ✓ Timestep 1819 (2008-04-06T18:00:00), shard 2: OK
+    ✓ Timestep 3638 (2009-07-05T12:00:00), shard 2: OK
+    ✓ Timestep 5457 (2010-10-03T06:00:00), shard 2: OK
+    ✓ Timestep 7275 (2011-12-31T18:00:00), shard 2: OK
+
+  Testing GPU rank 3 (grid points 0:1)...
+    ✓ Timestep 0 (2007-01-08T00:00:00), shard 3: OK
+    ✓ Timestep 1819 (2008-04-06T18:00:00), shard 3: OK
+    ✓ Timestep 3638 (2009-07-05T12:00:00), shard 3: OK
+    ✓ Timestep 5457 (2010-10-03T06:00:00), shard 3: OK
+    ✓ Timestep 7275 (2011-12-31T18:00:00), shard 3: OK
+
+[3/4] Testing specific variables...
+  ✓ Variable 0 at timestep 3638: OK
+  ✓ Variable 40 at timestep 3638: OK
+  ✓ Variable 80 at timestep 3638: OK
+  ✓ Variable 159 at timestep 3638: OK
+
+[4/4] Testing batch-like access (validation pattern)...
+  ✓ Batch starting at index 0 (2007-01-08T00:00:00): OK
+  ✓ Batch starting at index 280 (2007-03-19T00:00:00): OK
+  ✓ Batch starting at index 560 (2007-05-28T00:00:00): OK
+  ✓ Batch starting at index 840 (2007-08-06T00:00:00): OK
+
+================================================================================
+DETAILED RESULTS
+================================================================================
+
+✅ All tested combinations are OK!
+
+Possible reasons for training errors despite passing this test:
+  1. Multi-process/multi-node concurrency issues
+  2. Different random seed produces different data access patterns
+  3. Memory pressure during longer runs
+  4. Network filesystem intermittent issues
+
+Recommendations:
+  - Add retry logic in the dataloader
+  - Reduce num_workers for validation
+  - Check filesystem health/logs
+
+================================================================================
+Test completed at: 2026-04-10 14:31:21.958487
+Results saved to: zarr_grid_shard_test_20260410_142839.log
+================================================================================
+
+[3/3] Running multiprocess test (simulates actual dataloader)...
+================================================================================
+ZARR MULTIPROCESS CORRUPTION TEST
+Started at: 2026-04-10 14:31:31.588056
+Output file: zarr_multiproc_test_20260410_143131.log
+================================================================================
+
+Configuration:
+  Number of workers: 8
+  Samples per worker: 20
+  Total samples: 160
+  GPU shards: 4
+
+Opening dataset to get dimensions...
+Dataset shape: (7276, 160, 1, 40320)
+Grid points per shard: 0
+
+================================================================================
+Testing GPU Rank 0 (grid points 0:0)
+================================================================================
+Launching 8 workers...
+
+GPU Rank 0 Results:
+  Successful reads: 160
+  Failed reads: 0
+  ✅ All reads successful!
+
+================================================================================
+Testing GPU Rank 1 (grid points 0:0)
+================================================================================
+Launching 8 workers...
+
+GPU Rank 1 Results:
+  Successful reads: 160
+  Failed reads: 0
+  ✅ All reads successful!
+
+================================================================================
+Testing GPU Rank 2 (grid points 0:0)
+================================================================================
+Launching 8 workers...
+
+GPU Rank 2 Results:
+  Successful reads: 160
+  Failed reads: 0
+  ✅ All reads successful!
+
+================================================================================
+Testing GPU Rank 3 (grid points 0:1)
+================================================================================
+Launching 8 workers...
+
+GPU Rank 3 Results:
+  Successful reads: 160
+  Failed reads: 0
+  ✅ All reads successful!
+
+================================================================================
+OVERALL SUMMARY
+================================================================================
+Test completed at: 2026-04-10 14:32:04.378730
+Results saved to: zarr_multiproc_test_20260410_143131.log
+================================================================================
+
+=========================================
+Tests completed at: Fri Apr 10 14:32:04 UTC 2026
+Check the generated .log files for results:
+  - zarr_corruption_test_*.log
+  - zarr_grid_shard_test_*.log
+  - zarr_multiproc_test_*.log
+=========================================

@@ -1,0 +1,112 @@
+training:
+  scalers:
+    datasets:
+      data:
+        general_variable:
+          _target_: anemoi.training.losses.scalers.GeneralVariableLossScaler
+          weights:
+            default: 1
+            q: 0.6
+            t: 6
+            u: 0.8
+            v: 0.5
+            z: 12
+            sp: 10
+            10u: 0.1
+            10v: 0.1
+            2d: 0.5
+            tp: 0.025
+            tcc: 0.1
+            hcc: 0.1
+            mcc: 0.1
+            lcc: 0.1
+            ssrd: 0.05
+            strd: 0.1
+            100u: 0.1
+            100v: 0.1
+        node_weights:
+          weight_frac_of_total: 0.25
+
+
+  ensemble_size_per_device: 1
+
+  precision: bf16-mixed
+
+  run_id: 12becb7bc3f54e90b56eb21feffeb016
+  fork_run_id: null
+  load_weights_only: False
+  transfer_learning: False
+
+  optimizer:
+    _target_: torch.optim.AdamW
+    betas: [0.9, 0.95]
+    weight_decay: 0.1
+
+  max_steps: 300000  # We want 30k samples at batch size 16   
+  lr:
+    rate: 0.3125e-4     # global lr = 16 (batch size) * local_lr (0.3125e-4)
+    min: 3e-7
+    iterations: ${training.max_steps}
+    warmup: 1000
+
+  variable_groups:
+    datasets:
+      data:
+        default: sfc
+        pl: 
+          param: [q, t, u, v, z]
+
+
+  training_loss:
+    datasets:
+      data:
+        _target_: anemoi.training.losses.MultiscaleLossWrapper
+        loss_matrices_path: ${system.input.loss_matrices_path}
+        loss_matrices: [null]
+        weights: [1.0]
+
+        keep_batch_sharded: ${model.keep_batch_sharded}
+
+        per_scale_loss:
+          _target_: anemoi.training.losses.kcrps.AlmostFairKernelCRPS
+          scalers: ['pressure_level', 'general_variable', 'nan_mask_weights', 'node_weights']
+
+          ignore_nans: False
+          no_autocast: True
+          alpha: 0.95
+
+  # Validation metrics calculation,
+  # This may be a list, in which case all metrics will be calculated
+  # and logged according to their name.
+  # These metrics are calculated in the output model space, and thus
+  # have undergone postprocessing.
+  validation_metrics:
+    datasets:
+      data:
+        fkcrps:
+          _target_: anemoi.training.losses.kcrps.AlmostFairKernelCRPS
+          scalers: []
+          ignore_nans: True
+          alpha: 1.0
+
+        # multiscale:
+        #   _target_: anemoi.training.losses.MultiscaleLossWrapper
+
+        #   loss_matrices_path: ${system.input.loss_matrices_path}
+        #   loss_matrices: [null] #['gauss_weight-cerra_o96_cutoff_95km_sigma_0.01.npz', null]
+        #   weights: [1.0] #[1.0, 1.0]
+
+        #   keep_batch_sharded: ${model.keep_batch_sharded}
+
+        #   per_scale_loss:
+        #     _target_: anemoi.training.losses.kcrps.AlmostFairKernelCRPS
+        #     scalers: ['node_weights']
+
+        #     # Scalers to include in loss calculation
+        #     # A selection of available scalers are listed in training/scalers.
+        #     # '*' is a valid entry to use all `scalers` given, if a scaler is to be excluded
+        #     # add `!scaler_name`, i.e. ['*', '!scaler_1'], and `scaler_1` will not be added.
+        #     # scalers: ['pressure_level', 'general_variable', 'nan_mask_weights', 'node_weights']
+        #     ignore_nans: False
+        #     no_autocast: True
+        #     alpha: 1.0

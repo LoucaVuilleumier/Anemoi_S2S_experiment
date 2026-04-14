@@ -1,0 +1,92 @@
+================================================================================
+ZARR RANK-SPECIFIC BATCH CORRUPTION TEST
+Started at: 2026-04-13 08:15:33.842825
+Output file: zarr_rank_batch_test_20260413_081533.log
+================================================================================
+
+[1/3] Opening validation dataset...
+Dataset shape: (7276, 160, 1, 40320)
+  Timesteps: 7276
+  Variables: 160
+  Grid points: 1
+
+[2/3] Simulating batch distribution across ranks...
+Total batches: 128
+Batches per rank: 32
+Dataset timesteps available: 7276
+Rollout: 8 steps
+Approximate batch stride: 56
+
+  Testing RANK 0 (batches 0-31)...
+    ✓ Batch 0 (timesteps 0-7, dates 2007-01-08T00:00:00 to 2007-01-09T18:00:00): OK
+    ✓ Batch 8 (timesteps 448-455, dates 2007-04-30T00:00:00 to 2007-05-01T18:00:00): OK
+    ✓ Batch 16 (timesteps 896-903, dates 2007-08-20T00:00:00 to 2007-08-21T18:00:00): OK
+    ✓ Batch 24 (timesteps 1344-1351, dates 2007-12-10T00:00:00 to 2007-12-11T18:00:00): OK
+
+  Testing RANK 1 (batches 32-63)...
+    ✓ Batch 32 (timesteps 1792-1799, dates 2008-03-31T00:00:00 to 2008-04-01T18:00:00): OK
+    ✓ Batch 40 (timesteps 2240-2247, dates 2008-07-21T00:00:00 to 2008-07-22T18:00:00): OK
+    ✓ Batch 48 (timesteps 2688-2695, dates 2008-11-10T00:00:00 to 2008-11-11T18:00:00): OK
+    ✓ Batch 56 (timesteps 3136-3143, dates 2009-03-02T00:00:00 to 2009-03-03T18:00:00): OK
+
+  Testing RANK 2 (batches 64-95)...
+    ✓ Batch 64 (timesteps 3584-3591, dates 2009-06-22T00:00:00 to 2009-06-23T18:00:00): OK
+    ✓ Batch 72 (timesteps 4032-4039, dates 2009-10-12T00:00:00 to 2009-10-13T18:00:00): OK
+    ✓ Batch 80 (timesteps 4480-4487, dates 2010-02-01T00:00:00 to 2010-02-02T18:00:00): OK
+    ✓ Batch 88 (timesteps 4928-4935, dates 2010-05-24T00:00:00 to 2010-05-25T18:00:00): OK
+
+  Testing RANK 3 (batches 96-127)...
+    ✓ Batch 96 (timesteps 5376-5383, dates 2010-09-13T00:00:00 to 2010-09-14T18:00:00): OK
+    ✓ Batch 104 (timesteps 5824-5831, dates 2011-01-03T00:00:00 to 2011-01-04T18:00:00): OK
+    ✓ Batch 112 (timesteps 6272-6279, dates 2011-04-25T00:00:00 to 2011-04-26T18:00:00): OK
+    ✓ Batch 120 (timesteps 6720-6727, dates 2011-08-15T00:00:00 to 2011-08-16T18:00:00): OK
+
+[3/3] Detailed test of RANK 3 batches (where error occurs)...
+Testing all 32 batches for rank 3 (batches 96-127)...
+  ✓ Batch 96: timesteps 5376-5383 OK
+  ✓ Batch 97: timesteps 5432-5439 OK
+  ✓ Batch 98: timesteps 5488-5495 OK
+  ✓ Batch 99: timesteps 5544-5551 OK
+  ✓ Batch 100: timesteps 5600-5607 OK
+  ✓ Batch 101: timesteps 5656-5663 OK
+  ✓ Batch 102: timesteps 5712-5719 OK
+  ✓ Batch 103: timesteps 5768-5775 OK
+  ✓ Batch 104: timesteps 5824-5831 OK
+  ✓ Batch 105: timesteps 5880-5887 OK
+  ✓ Batch 106: timesteps 5936-5943 OK
+  ✓ Batch 107: timesteps 5992-5999 OK
+  ✓ Batch 108: timesteps 6048-6055 OK
+  ✓ Batch 109: timesteps 6104-6111 OK
+  ✓ Batch 110: timesteps 6160-6167 OK
+  ✓ Batch 111: timesteps 6216-6223 OK
+  ✓ Batch 112: timesteps 6272-6279 OK
+  ✓ Batch 113: timesteps 6328-6335 OK
+  ✓ Batch 114: timesteps 6384-6391 OK
+  ✓ Batch 115: timesteps 6440-6447 OK
+  ✓ Batch 116: timesteps 6496-6503 OK
+  ✓ Batch 117: timesteps 6552-6559 OK
+  ✓ Batch 118: timesteps 6608-6615 OK
+  ✓ Batch 119: timesteps 6664-6671 OK
+  ✓ Batch 120: timesteps 6720-6727 OK
+  ✓ Batch 121: timesteps 6776-6783 OK
+  ✓ Batch 122: timesteps 6832-6839 OK
+  ✓ Batch 123: timesteps 6888-6895 OK
+  ✓ Batch 124: timesteps 6944-6951 OK
+  ✓ Batch 125: timesteps 7000-7007 OK
+  ✓ Batch 126: timesteps 7056-7063 OK
+  ✓ Batch 127: timesteps 7112-7119 OK
+
+================================================================================
+TEST SUMMARY
+================================================================================
+
+✓ NO FAILURES DETECTED
+  This suggests the error might be:
+  - Related to concurrent access by multiple workers
+  - State-dependent (only after many training steps)
+  - Network/filesystem issue during long-running jobs
+
+✓ All rank 3 batches passed in this test
+
+Test completed at: 2026-04-13 10:19:49.757295
+Full log saved to: zarr_rank_batch_test_20260413_081533.log

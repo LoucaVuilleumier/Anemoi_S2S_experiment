@@ -1,0 +1,62 @@
+================================================================================
+ZARR MULTIPROCESS CORRUPTION TEST
+Started at: 2026-04-10 14:31:31.588056
+Output file: zarr_multiproc_test_20260410_143131.log
+================================================================================
+
+Configuration:
+  Number of workers: 8
+  Samples per worker: 20
+  Total samples: 160
+  GPU shards: 4
+
+Opening dataset to get dimensions...
+Dataset shape: (7276, 160, 1, 40320)
+Grid points per shard: 0
+
+================================================================================
+Testing GPU Rank 0 (grid points 0:0)
+================================================================================
+Launching 8 workers...
+
+GPU Rank 0 Results:
+  Successful reads: 160
+  Failed reads: 0
+  ✅ All reads successful!
+
+================================================================================
+Testing GPU Rank 1 (grid points 0:0)
+================================================================================
+Launching 8 workers...
+
+GPU Rank 1 Results:
+  Successful reads: 160
+  Failed reads: 0
+  ✅ All reads successful!
+
+================================================================================
+Testing GPU Rank 2 (grid points 0:0)
+================================================================================
+Launching 8 workers...
+
+GPU Rank 2 Results:
+  Successful reads: 160
+  Failed reads: 0
+  ✅ All reads successful!
+
+================================================================================
+Testing GPU Rank 3 (grid points 0:1)
+================================================================================
+Launching 8 workers...
+
+GPU Rank 3 Results:
+  Successful reads: 160
+  Failed reads: 0
+  ✅ All reads successful!
+
+================================================================================
+OVERALL SUMMARY
+================================================================================
+Test completed at: 2026-04-10 14:32:04.378730
+Results saved to: zarr_multiproc_test_20260410_143131.log
+================================================================================

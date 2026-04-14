@@ -391,13 +391,14 @@ def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitl
     print("spatial maps saved!")
 
 
-def plot_single_var_spatial_rmse(dataset, var, weeks, var_label, unit, suptitle, savename, cmap='YlOrRd'):
-    """Plot spatial RMSE maps for a single variable across several weeks.
+def plot_single_var_spatial_rmse(dataset, var, weeks, var_label, unit, suptitle, savename, cmap='YlOrRd', models=None):
+    """Plot spatial RMSE maps for a single variable across several weeks and models.
 
     Parameters
     ----------
     dataset : xr.Dataset
         Dataset with spatial RMSE values, longitude, latitude, and a leadtime dim.
+        Can optionally have a model dimension.
     var : str
         Short variable name (key in *dataset*), e.g. '2t', 'tp'.
     weeks : list[int]
@@ -412,45 +413,260 @@ def plot_single_var_spatial_rmse(dataset, var, weeks, var_label, unit, suptitle,
         Full path (with extension) where the figure is saved.
     cmap : str, optional
         Matplotlib sequential colourmap name (default 'YlOrRd').
+    models : list[str], optional
+        List of model names to plot. If None, plots all models or assumes no model dim.
     """
     proj = ccrs.PlateCarree()
     n_weeks = len(weeks)
-    fig, axes = plt.subplots(1, n_weeks, figsize=(5.5 * n_weeks, 5),
-                             subplot_kw={"projection": proj})
-    if n_weeks == 1:
-        axes = [axes]
+    
+    # Check if dataset has model dimension
+    has_model_dim = 'model' in dataset[var].dims
+    
+    if has_model_dim:
+        if models is None:
+            models = dataset['model'].values
+        n_models = len(models)
+        
+        # Create grid: rows=models, columns=weeks
+        fig, axes = plt.subplots(n_models, n_weeks, figsize=(5.5 * n_weeks, 5 * n_models),
+                                 subplot_kw={"projection": proj})
+        
+        # Ensure axes is always 2D
+        if n_models == 1 and n_weeks == 1:
+            axes = np.array([[axes]])
+        elif n_models == 1:
+            axes = axes.reshape(1, -1)
+        elif n_weeks == 1:
+            axes = axes.reshape(-1, 1)
+        
+        # Shared colour range across all selected weeks and models
+        all_data = []
+        for model in models:
+            for week in weeks:
+                d = dataset[var].sel(model=model).isel(leadtime=week).values.ravel()
+                all_data.append(d[np.isfinite(d)])
+        all_data = np.concatenate(all_data)
+        vmin, vmax = 0, np.nanpercentile(all_data, 99)
+        norm = Normalize(vmin=vmin, vmax=vmax)
 
-    # Shared colour range across the selected weeks
-    all_data = []
-    for week in weeks:
-        d = dataset[var].isel(leadtime=week).values.ravel()
-        all_data.append(d[np.isfinite(d)])
-    all_data = np.concatenate(all_data)
-    vmin, vmax = 0, np.nanpercentile(all_data, 99)
-    norm = Normalize(vmin=vmin, vmax=vmax)
+        lons = dataset['longitude'].values.ravel()
+        lats = dataset['latitude'].values.ravel()
+        lons = np.where(lons > 180, lons - 360, lons)
 
-    lons = dataset['longitude'].values.ravel()
-    lats = dataset['latitude'].values.ravel()
-    lons = np.where(lons > 180, lons - 360, lons)
+        for i, model in enumerate(models):
+            for j, week in enumerate(weeks):
+                ax = axes[i, j]
+                ax.set_global()
 
-    for j, week in enumerate(weeks):
-        ax = axes[j]
-        ax.set_global()
+                data_week = dataset[var].sel(model=model).isel(leadtime=week).values.ravel()
+                mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(data_week)
+                lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
 
-        data_week = dataset[var].isel(leadtime=week).values.ravel()
-        mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(data_week)
-        lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
+                im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40,
+                                    transform=proj, norm=norm, cmap=cmap)
+                ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
+                
+                # Add title: week number for top row, model name for leftmost column
+                if i == 0:
+                    ax.set_title(f'Week {week + 1}', fontsize=11, fontweight='bold')
+                if j == 0:
+                    ax.text(-0.1, 0.5, model.replace('_', ' ').title(), 
+                           transform=ax.transAxes, fontsize=11, fontweight='bold',
+                           rotation=90, va='center', ha='right')
 
-        im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40,
-                            transform=proj, norm=norm, cmap=cmap)
-        ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
-        ax.set_title(f'Week {week + 1}', fontsize=11, fontweight='bold')
+        # Add colorbar
+        cbar_ax = fig.add_axes([0.92, 0.15, 0.015, 0.7])
+        cbar = fig.colorbar(im, cax=cbar_ax)
+        cbar.set_label(f'RMSE [{unit}]', fontsize=11)
 
-    cbar_ax = fig.add_axes([0.92, 0.15, 0.015, 0.7])
-    cbar = fig.colorbar(im, cax=cbar_ax)
-    cbar.set_label(f'RMSE [{unit}]', fontsize=11)
+        fig.suptitle(suptitle, fontsize=14, fontweight='bold', y=0.98)
+        plt.tight_layout(rect=[0, 0, 0.91, 0.95])
+        
+    else:
+        # Original single-model behavior
+        fig, axes = plt.subplots(1, n_weeks, figsize=(5.5 * n_weeks, 5),
+                                 subplot_kw={"projection": proj})
+        if n_weeks == 1:
+            axes = [axes]
 
-    fig.suptitle(suptitle, fontsize=14, fontweight='bold', y=0.98)
-    plt.tight_layout(rect=[0, 0, 0.91, 0.95])
+        # Shared colour range across the selected weeks
+        all_data = []
+        for week in weeks:
+            d = dataset[var].isel(leadtime=week).values.ravel()
+            all_data.append(d[np.isfinite(d)])
+        all_data = np.concatenate(all_data)
+        vmin, vmax = 0, np.nanpercentile(all_data, 99)
+        norm = Normalize(vmin=vmin, vmax=vmax)
+
+        lons = dataset['longitude'].values.ravel()
+        lats = dataset['latitude'].values.ravel()
+        lons = np.where(lons > 180, lons - 360, lons)
+
+        for j, week in enumerate(weeks):
+            ax = axes[j]
+            ax.set_global()
+
+            data_week = dataset[var].isel(leadtime=week).values.ravel()
+            mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(data_week)
+            lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
+
+            im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40,
+                                transform=proj, norm=norm, cmap=cmap)
+            ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
+            ax.set_title(f'Week {week + 1}', fontsize=11, fontweight='bold')
+
+        cbar_ax = fig.add_axes([0.92, 0.15, 0.015, 0.7])
+        cbar = fig.colorbar(im, cax=cbar_ax)
+        cbar.set_label(f'RMSE [{unit}]', fontsize=11)
+
+        fig.suptitle(suptitle, fontsize=14, fontweight='bold', y=0.98)
+        plt.tight_layout(rect=[0, 0, 0.91, 0.95])
+    
     plt.savefig(savename, dpi=300, bbox_inches='tight')
+    plt.close()
     print(f"Spatial RMSE map for {var_label} saved!")
+
+
+def plot_model_comparison_subplots(dataset, variables, var_labels, ylabel, title, savename, 
+                                   ylim=None, figsize=(14, 10), model_colors=None, 
+                                   add_zero_line=False, secondary_dataset=None, 
+                                   secondary_ylabel=None, secondary_linestyle='--',
+                                   var_units=None, secondary_ylim=None, use_dual_axes=False):
+    """
+    Plot metric comparison across models with subplots for each variable.
+    
+    Parameters
+    ----------
+    dataset : xr.Dataset
+        Dataset with metric values, must have dimensions (model, init_date, leadtime)
+        and model coordinate with model names
+    variables : list of tuple
+        List of (var_short, var_label) tuples, e.g., [("2t", "2m Temperature"), ...]
+    var_labels : dict
+        Mapping from variable short names to display labels (can be same as variables)
+    ylabel : str
+        Y-axis label (metric name)
+    title : str
+        Figure super-title
+    savename : str
+        Full path where the figure is saved (including extension)
+    ylim : tuple, optional
+        Y-axis limits (ymin, ymax). If None, auto-scale per subplot
+    figsize : tuple, optional
+        Figure size (width, height), default (14, 10)
+    model_colors : dict, optional
+        Mapping from model names to colors. If None, uses default blue/orange
+    add_zero_line : bool, optional
+        Whether to add a horizontal line at y=0, default False
+    secondary_dataset : xr.Dataset, optional
+        Optional second dataset to overlay on the same plot with different linestyle
+    secondary_ylabel : str, optional
+        Label for the secondary metric (shown in legend or on right y-axis if use_dual_axes=True)
+    secondary_linestyle : str, optional
+        Linestyle for secondary dataset lines, default '--'
+    var_units : dict, optional
+        Mapping from variable short names to units, e.g., {"2t": "K", "tp": "m"}
+    secondary_ylim : tuple, optional
+        Y-axis limits for secondary axis (ymin, ymax). Only used if use_dual_axes=True
+    use_dual_axes : bool, optional
+        If True and secondary_dataset is provided, use dual y-axes. If False, plot on same axis. Default False.
+    
+    Returns
+    -------
+    None
+    """
+    
+    fig, axes = plt.subplots(2, 2, figsize=figsize)
+    axes = axes.flatten()
+    
+    # Default model colors if not provided
+    if model_colors is None:
+        model_colors = {
+            'reference': '#1f77b4',  # blue
+            'finetuning': '#ff7f0e'   # orange
+        }
+    
+    for idx, (var_short, var_label) in enumerate(variables):
+        ax = axes[idx]
+        
+        # Get unit for this variable if available
+        unit = var_units.get(var_short, '') if var_units else ''
+        unit_str = f' [{unit}]' if unit else ''
+        
+        # Plot each model for primary dataset
+        for model in dataset.model.values:
+            # Mean over init_date dimension
+            metric_values = dataset[var_short].sel(model=model).mean(dim="init_date").values
+            weeks = range(1, len(metric_values) + 1)
+            # Add metric name to label only if secondary dataset is present
+            label = f'{model.capitalize()} - {ylabel}' if secondary_dataset is not None else model.capitalize()
+            ax.plot(weeks, metric_values, 
+                    color=model_colors.get(model, 'gray'),
+                    marker='o',
+                    label=label,
+                    linewidth=2,
+                    linestyle='-')
+        
+        # Plot secondary dataset if provided
+        if secondary_dataset is not None and use_dual_axes:
+            # Use dual y-axis for secondary dataset
+            ax2 = ax.twinx()  # Create secondary y-axis
+            for model in secondary_dataset.model.values:
+                metric_values = secondary_dataset[var_short].sel(model=model).mean(dim="init_date").values
+                weeks = range(1, len(metric_values) + 1)
+                label_suffix = f' - {secondary_ylabel}' if secondary_ylabel else ' (secondary)'
+                ax2.plot(weeks, metric_values, 
+                        color=model_colors.get(model, 'gray'),
+                        marker='s',
+                        label=f'{model.capitalize()}{label_suffix}',
+                        linewidth=2,
+                        linestyle=secondary_linestyle)
+            
+            # Set secondary y-axis label with units
+            ax2.set_ylabel(secondary_ylabel + unit_str if secondary_ylabel else 'Secondary' + unit_str, 
+                          fontsize=10, color='black')
+            if secondary_ylim is not None:
+                ax2.set_ylim(secondary_ylim)
+            
+            # Combine legends from both axes
+            lines1, labels1 = ax.get_legend_handles_labels()
+            lines2, labels2 = ax2.get_legend_handles_labels()
+            ax.legend(lines1 + lines2, labels1 + labels2, loc='best', fontsize=9)
+        elif secondary_dataset is not None:
+            # Plot on same axis (for spread-skill comparison)
+            for model in secondary_dataset.model.values:
+                metric_values = secondary_dataset[var_short].sel(model=model).mean(dim="init_date").values
+                weeks = range(1, len(metric_values) + 1)
+                label_suffix = f' - {secondary_ylabel}' if secondary_ylabel else ' (secondary)'
+                ax.plot(weeks, metric_values, 
+                        color=model_colors.get(model, 'gray'),
+                        marker='s',
+                        label=f'{model.capitalize()}{label_suffix}',
+                        linewidth=2,
+                        linestyle=secondary_linestyle)
+            ax.legend(loc='best', fontsize=9)
+        else:
+            ax.legend(loc='best', fontsize=9)
+        
+        # Set primary y-axis label with units
+        # If secondary dataset is on same axis, combine the labels
+        if secondary_dataset is not None and not use_dual_axes and secondary_ylabel:
+            combined_ylabel = f'{ylabel} & {secondary_ylabel}{unit_str}'
+        else:
+            combined_ylabel = ylabel + unit_str
+        ax.set_ylabel(combined_ylabel, fontsize=10, color='black')
+        if ylim is not None:
+            ax.set_ylim(ylim)
+        
+        ax.set_xlabel('Week', fontsize=10)
+        ax.set_title(var_label, fontsize=11)
+        ax.grid(True, alpha=0.3)
+        
+        if add_zero_line:
+            ax.axhline(y=0, color='k', linestyle='--', linewidth=0.8, alpha=0.5)
+    
+    fig.suptitle(title, fontsize=14)
+    plt.tight_layout()
+    plt.savefig(savename, dpi=150)
+    plt.close()
+    print(f"Model comparison plot saved to {savename}")

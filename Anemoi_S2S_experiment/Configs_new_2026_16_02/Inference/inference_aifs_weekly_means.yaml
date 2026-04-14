@@ -3,7 +3,7 @@
 #   ```
 #   anemoi inference --config-path path-to-config --config-name inference-aifs-subs-pretrain.yaml
 #   ```
-checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_training/checkpoint/61f22da114004068bb65fa80582c841b/inference-last.ckpt
+checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_training/checkpoint/2e27d65164254b1dbb40ebeb904906bd/inference-last.ckpt
 date: ${oc.env:INFERENCE_DATE}
 lead_time: 1344h
 
@@ -25,7 +25,7 @@ input:
         end: 2011
         rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
-        start: 2007
+        start: '2007-01-08'
         end: 2011
   #mars:
   #  class: ea
