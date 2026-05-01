@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # The job name
-#SBATCH --job-name=finetuning_weekly_means-100K_1node_lr-2.5e-4-from_ref
+#SBATCH --job-name=aifs-subs-weekly-finetuning-freeze-model.processor-encoder-lr-0.625e-6
 
 
 
@@ -9,8 +9,8 @@
 #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
 
 # Set the error and output files
-#SBATCH --output=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/output_slurm/finetuning_weekly_means-100K_1node_lr-2.5e-4-from_ref%J.out
-#SBATCH --error=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/output_slurm/finetuning_weekly_means-100K_1node_lr-2.5e-4-from_ref%J.out
+#SBATCH --output=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/output_slurm/aifs-subs-weekly-finetuning-freeze-model.processor-encoder-lr-0.625e-6-%J.out
+#SBATCH --error=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/output_slurm/aifs-subs-weekly-finetuning-freeze-model.processor-encoder-lr-0.625e-6-%J.out
 #SBATCH --qos=ng
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
@@ -36,10 +36,10 @@ cp $CONFIG_DIR/$CONFIG_NAME "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Conf
 module load cuda/12.9
 
 # Activate Python 3.11 environment with flash-attn
-source /ec/res4/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/.venv/bin/activate
+source /ec/res4/hpcperm/nld4584/anemoi_python_3_11_ag_2026_23_04/.venv/bin/activate
 
 # Add PyTorch library path for libc10_cuda.so
-export LD_LIBRARY_PATH=/lus/h2resw01/hpcperm/nld4584/anemoi_python3_11_ag_2026_16_03/.venv/lib/python3.11/site-packages/torch/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/lus/h2resw01/hpcperm/nld4584/anemoi_python_3_11_ag_2026_23_04/.venv/lib/python3.11/site-packages/torch/lib:$LD_LIBRARY_PATH
 
 export ANEMOI_CONFIG_PATH=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new_2026_16_02/Training
 srun anemoi-training train --config-name=finetune_aifs_weekly_means.yaml

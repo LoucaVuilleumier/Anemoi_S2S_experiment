@@ -1111,8 +1111,8 @@ diagnostics:
       project_name: 'Anemoi'
       system: true
       terminal: true
-      run_name: aifs-subs-weekly-lr-2.5e-4
-      on_resume_create_child: false
+      run_name: aifs-subs-weekly-finetuning-freeze-model.processor-encoder-lr-0.625e-6
+      on_resume_create_child: true
       expand_hyperparams:
       - config
       http_max_retries: 35
@@ -1339,8 +1339,8 @@ training:
       nodes_name: data
       nodes_attribute_name: area_weight
       norm: unit-sum
-  run_id: null
-  fork_run_id: true
+  run_id: null 
+  fork_run_id: null
   transfer_learning: true
   load_weights_only: true
   deterministic: false
@@ -1419,11 +1419,13 @@ training:
     epoch_increment: 0
     max: 1
   max_epochs: null
-  max_steps: 100000
+  max_steps: 20000
   lr:
     warmup: 100
-    rate: 2.5e-4 #same as pretrained model scaled for 4 GPUs
+    rate: 0.625e-6 #for 4 GPUs eff_lr=0.25e-5 
     iterations: 100000
     min:  1.0e-7 # not scaled with number of GPUs
-  submodules_to_freeze: []
+  submodules_to_freeze: 
+  - processor
+  - encoder 
 config_validation: false

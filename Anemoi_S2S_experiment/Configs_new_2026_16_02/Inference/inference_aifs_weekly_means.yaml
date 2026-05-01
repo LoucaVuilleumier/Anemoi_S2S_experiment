@@ -3,7 +3,7 @@
 #   ```
 #   anemoi inference --config-path path-to-config --config-name inference-aifs-subs-pretrain.yaml
 #   ```
-checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_training/checkpoint/2e27d65164254b1dbb40ebeb904906bd/inference-last.ckpt
+checkpoint: /ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_training/checkpoint/fb99e77999eb4872ae012989525e4e62/inference-last.ckpt
 date: ${oc.env:INFERENCE_DATE}
 lead_time: 1344h
 

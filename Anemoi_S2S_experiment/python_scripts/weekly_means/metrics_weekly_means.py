@@ -19,6 +19,8 @@ from xskillscore import roc, brier_score, reliability
 #loading and preprocessing the data
 #load dataset with observations
 dataset_path = "/home/mlx/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-for-single-v2.zarr"
+#accumulated_path = "/ec/ai/project/ai-ml/datasets/aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h.zarr"
+#acc = xr.open_zarr(accumulated_path)
 obs = xr.open_zarr(dataset_path)
 times = obs.dates.values
 obs = obs.assign_coords(time=times).rename({"cell": "values"})
@@ -72,8 +74,8 @@ for path_init in paths_init:
     lead_times = (ds_init.time.values - init_date) / np.timedelta64(1, 'D')
     ds_init = ds_init.assign_coords(time=lead_times).rename({'time': 'lead_time'})
     
-    #Remove the first time step which corresponds to the initialization time and is not a forecast
-    ds_init = ds_init.isel(lead_time= slice(1, None))    
+    # Keep day 0 to align with finetuned model's weekly means which include init day
+    # (Don't remove the first timestep)
     
     reforecast_datasets.append(ds_init)
 
@@ -90,7 +92,7 @@ print(f"Dataset dimensions: {dict(ds_inf_daily.dims)}")
 ds_inf_daily = ds_inf_daily[var_of_interest]
 
 #Same process with finetune models for weekly means
-finetune_models_list = ["Weekly_Means_14k_lr_0.625e-5", "Weekly_Means_14k_lr_0.625e-7", "Weekly_Means_18k_lr_0.625e-6"]
+finetune_models_list = ["Weekly_Means_14k_lr_0.625e-5", "Weekly_Means_14k_lr_0.625e-7", "Weekly_Means_18k_lr_0.625e-6", "Weekly_Means_72k_lr_0.625e-7"]
 finetune_models = {}
 
 for finetune_model in finetune_models_list:
@@ -128,8 +130,9 @@ for finetune_model in finetune_models_list:
         lead_times = (ds_init.time.values - init_date) / np.timedelta64(7, 'D')
         ds_init = ds_init.assign_coords(time=lead_times).rename({'time': 'week_lead_time'})
         
-        #Remove the first time step which corresponds to the initialization time and is not a forecast
-        ds_init = ds_init.isel(week_lead_time= slice(1, None))    
+        # Remove the first timestep (day 0 init) to compare only forecasts
+        # Finetuned model's first forecast (day 7) represents avg[day 0-7]
+        ds_init = ds_init.isel(week_lead_time=slice(1, None))    
         
         reforecast_datasets_finetuning.append(ds_init)
 
@@ -140,6 +143,10 @@ for finetune_model in finetune_models_list:
     )
 
     ds_inf_weekly_finetuning = ds_inf_weekly_finetuning[var_of_interest]
+    
+    # Transpose to match reference model dimension order: (week_lead_time, init_date, member, values)
+    ds_inf_weekly_finetuning = ds_inf_weekly_finetuning.transpose('week_lead_time', 'init_date', 'member', 'values')
+    
     finetune_models[finetune_model] = ds_inf_weekly_finetuning
 
 
@@ -164,14 +171,12 @@ for init_date in init_dates:
     ds_tp_daily= ds_tp_data.resample(time="1D").sum()
     ds_tp_daily = ds_tp_daily.expand_dims(variable=["tp"], axis=1)  # Add variable dimension back for concatenation
     
-    #remove the first time step which corresponds to the initialization time and is not a forecast
-    ds_tp_daily = ds_tp_daily.isel(time= slice(1, None))
+    # Keep day 0 to align with finetuned model (which includes init day in week 1)
     
     # Process other variables: select only 12:00 values
     ds_other = ds_init.sel(variable=["2t", "10u", "10v"])["data"]
     ds_other_daily = ds_other.sel(time=ds_other.time.dt.hour == 12)
-    #remove the first time step which corresponds to the initialization time and is not a forecast
-    ds_other_daily = ds_other_daily.isel(time= slice(1, None))
+    # Keep day 0 to align with finetuned model
     
     
     ds_tp_daily = ds_tp_daily.assign_coords(time=ds_other_daily.time.values)
@@ -197,20 +202,42 @@ for init_date in init_dates:
 
 ds_obs_daily = xr.concat(ds_obs_multiple_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 
-#compute weekly means (7 days per week, 1-day timesteps = 7 timesteps per week)
-#for the forecasts: (init_date, member, lead_time, values)
-ds_inf_weekly = ds_inf_daily.coarsen(lead_time=7, boundary='trim').mean()
-ds_inf_weekly = ds_inf_weekly.rename({"lead_time": "week_lead_time"}).assign_coords(week_lead_time=np.arange(1,9))
+# Compute weekly means with overlapping 7-day windows (matching finetuned model's rolling average)
+# Week 1: avg[day 0-7], Week 2: avg[day 7-14], Week 3: avg[day 14-21], etc.
+# Each week is 8 days (7-day interval), with consecutive weeks overlapping by 1 day
 
-#for the observations: (init_date, lead_time, var, values)  
-ds_obs_weekly = ds_obs_daily.coarsen(lead_time=7, boundary='trim').mean()
-ds_obs_weekly = ds_obs_weekly.rename({"lead_time": "week_lead_time"}).assign_coords(week_lead_time=np.arange(1,9))
+# For reference model forecasts
+weekly_forecasts = []
+week_indices = []
+for week_num in range(1, 9):  # 8 weeks: [0-7], [7-14], [14-21], ..., [49-56]
+    start_day = (week_num - 1) * 7
+    end_day = start_day + 8  # 8 days total (7-day interval + 1 overlap)
+    if end_day <= 57:  # Make sure we don't exceed available data (0-56 = 57 days)
+        week_mean = ds_inf_daily.isel(lead_time=slice(start_day, end_day)).mean(dim='lead_time')
+        weekly_forecasts.append(week_mean)
+        week_indices.append(week_num)
+
+ds_inf_weekly = xr.concat(weekly_forecasts, dim='week_lead_time')
+ds_inf_weekly = ds_inf_weekly.assign_coords(week_lead_time=week_indices)
+
+# For observations
+weekly_obs = []
+for week_num in range(1, 9):
+    start_day = (week_num - 1) * 7
+    end_day = start_day + 8
+    if end_day <= 57:
+        week_mean = ds_obs_daily.isel(lead_time=slice(start_day, end_day)).mean(dim='lead_time')
+        weekly_obs.append(week_mean)
+
+ds_obs_weekly = xr.concat(weekly_obs, dim='week_lead_time')
+ds_obs_weekly = ds_obs_weekly.assign_coords(week_lead_time=week_indices)
 
 ds_clim_multiple__inf_init = []
 ds_clim_multiple_obs_init = []
 ds_clim_multiple_inf_finetuning_14k_e5_init = []
 ds_clim_multiple_inf_finetuning_14k_e7_init = []
 ds_clim_multiple_inf_finetuning_18k_e6_init = []
+ds_clim_multiple_inf_finetuning_72k_e7_init = []
 
 #compute climatology per member
 for init_date in ds_inf_weekly.init_date.values:
@@ -236,6 +263,11 @@ for init_date in ds_inf_weekly.init_date.values:
     climatology_weekly_inf_finetuning_18k_e6 = finetune_models["Weekly_Means_18k_lr_0.625e-6"].isel(init_date=mask).mean(dim="init_date")
     ds_clim_multiple_inf_finetuning_18k_e6_init.append(climatology_weekly_inf_finetuning_18k_e6)
     
+    #Same for finetuning model 72k_lr_0.625e-7
+    climatology_weekly_inf_finetuning_72k_e7 = finetune_models["Weekly_Means_72k_lr_0.625e-7"].isel(init_date=mask).mean(dim="init_date")
+    ds_clim_multiple_inf_finetuning_72k_e7_init.append(climatology_weekly_inf_finetuning_72k_e7)
+
+    
     #build climatology for observations
     climatology_weekly_obs = ds_obs_weekly.isel(init_date=mask).mean(dim="init_date")
     ds_clim_multiple_obs_init.append(climatology_weekly_obs)
@@ -244,6 +276,7 @@ ds_climatology_weekly_inf = xr.concat(ds_clim_multiple__inf_init, dim=xr.DataArr
 ds_climatology_weekly_inf_finetuning_14k_e5 = xr.concat(ds_clim_multiple_inf_finetuning_14k_e5_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 ds_climatology_weekly_inf_finetuning_14k_e7 = xr.concat(ds_clim_multiple_inf_finetuning_14k_e7_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 ds_climatology_weekly_inf_finetuning_18k_e6 = xr.concat(ds_clim_multiple_inf_finetuning_18k_e6_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
+ds_climatology_weekly_inf_finetuning_72k_e7 = xr.concat(ds_clim_multiple_inf_finetuning_72k_e7_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 ds_climatology_weekly_obs = xr.concat(ds_clim_multiple_obs_init, dim=xr.DataArray(init_dates, dims='init_date', name='init_date'))
 
 #observed anomalies
@@ -261,6 +294,8 @@ predicted_anomalies_finetuning_14k_e7 = finetune_models["Weekly_Means_14k_lr_0.6
 #predicted anomalies for finetuning model 18k_lr_0.625e-6
 predicted_anomalies_finetuning_18k_e6 = finetune_models["Weekly_Means_18k_lr_0.625e-6"] - ds_climatology_weekly_inf_finetuning_18k_e6
 
+#predicted anomalies for finetuning model 72k_lr_0.625e-7
+predicted_anomalies_finetuning_72k_e7 = finetune_models["Weekly_Means_72k_lr_0.625e-7"] - ds_climatology_weekly_inf_finetuning_72k_e7
 
     
 #Compute thresholds for forecast
@@ -280,12 +315,12 @@ ds_thresholds = xr.concat(thresholds_per_init, dim=xr.DataArray(init_dates, dims
 ############################################################################################################################################################
 #metrics
 n_ensemble = ds_inf_weekly.member.size
-n_leadtime = 8
+n_leadtime = 8  # 8 weeks with overlapping windows
 n_vars = len(var_of_interest)
 n_values = ds_obs_weekly[var_of_interest[0]].values.shape[-1]
 n_init_dates = ds_inf_weekly.init_date.size
-weeks_lead_time = np.arange(1,9)
-models = ["reference", "Weekly_Means_14k_lr_0.625e-5", "Weekly_Means_14k_lr_0.625e-7", "Weekly_Means_18k_lr_0.625e-6"]
+weeks_lead_time = np.arange(1, 9)  # Weeks 1-8
+models = ["reference", "Weekly_Means_14k_lr_0.625e-5", "Weekly_Means_14k_lr_0.625e-7", "Weekly_Means_18k_lr_0.625e-6", "Weekly_Means_72k_lr_0.625e-7"]
 
 #create empty array to store the results of the metrics
 acc_results = xr.DataArray(
@@ -377,19 +412,19 @@ RMS_spread_results = xr.DataArray(
     }
 )
 
-preds_list = [ds_inf_weekly, finetune_models["Weekly_Means_14k_lr_0.625e-5"], finetune_models["Weekly_Means_14k_lr_0.625e-7"], finetune_models["Weekly_Means_18k_lr_0.625e-6"]]
-anomalies_preds_list = [predicted_anomalies, predicted_anomalies_finetuning_14k_e5, predicted_anomalies_finetuning_14k_e7, predicted_anomalies_finetuning_18k_e6]
+preds_list = [ds_inf_weekly, finetune_models["Weekly_Means_14k_lr_0.625e-5"], finetune_models["Weekly_Means_14k_lr_0.625e-7"], finetune_models["Weekly_Means_18k_lr_0.625e-6"], finetune_models["Weekly_Means_72k_lr_0.625e-7"]]
+anomalies_preds_list = [predicted_anomalies, predicted_anomalies_finetuning_14k_e5, predicted_anomalies_finetuning_14k_e7, predicted_anomalies_finetuning_18k_e6, predicted_anomalies_finetuning_72k_e7]
 
 #acc computation
-for model, predicted_anomalies in zip(models, anomalies_preds_list):
+for model, pred_anomalies in zip(models, anomalies_preds_list):
     for init_date in init_dates:
         for var in var_of_interest:
-            acc_results.loc[model, init_date, var, :] = xr.corr(observed_anomalies[var].sel(init_date=init_date), predicted_anomalies[var].sel(init_date=init_date).mean(dim="member"), dim="values", weights = lat_weights).values
+            acc_results.loc[model, init_date, var, :] = xr.corr(observed_anomalies[var].sel(init_date=init_date), pred_anomalies[var].sel(init_date=init_date).mean(dim="member"), dim="values", weights = lat_weights).values
 
 #R_t computation
-for model, predicted_anomalies in zip(models, anomalies_preds_list):
+for model, pred_anomalies in zip(models, anomalies_preds_list):
     for var in var_of_interest:
-        R_t_results.loc[model, var, :, :] = xr.corr(observed_anomalies[var], predicted_anomalies[var].mean(dim="member"), dim="init_date").values
+        R_t_results.loc[model, var, :, :] = xr.corr(observed_anomalies[var], pred_anomalies[var].mean(dim="member"), dim="init_date").values
 
 #rmse computation with latitude weighting
 
@@ -422,13 +457,14 @@ binary_model = xr.where(ds_inf_weekly >  ds_thresholds, 1, 0)
 binary_model_finetuning_14k_e5 = xr.where(finetune_models["Weekly_Means_14k_lr_0.625e-5"] >  ds_thresholds, 1, 0)
 binary_model_finetuning_14k_e7 = xr.where(finetune_models["Weekly_Means_14k_lr_0.625e-7"] >  ds_thresholds, 1, 0)
 binary_model_finetuning_18k_e6 = xr.where(finetune_models["Weekly_Means_18k_lr_0.625e-6"] >  ds_thresholds, 1, 0)
-
+binary_model_finetuning_72k_e7 = xr.where(finetune_models["Weekly_Means_72k_lr_0.625e-7"] >  ds_thresholds, 1, 0)
 prob_model = binary_model.mean(dim="member")
 prob_model_finetuning_14k_e5 = binary_model_finetuning_14k_e5.mean(dim="member")
 prob_model_finetuning_14k_e7 = binary_model_finetuning_14k_e7.mean(dim="member")
 prob_model_finetuning_18k_e6 = binary_model_finetuning_18k_e6.mean(dim="member")
+prob_model_finetuning_72k_e7 = binary_model_finetuning_72k_e7.mean(dim="member")
 
-prob_model_list = [prob_model, prob_model_finetuning_14k_e5, prob_model_finetuning_14k_e7, prob_model_finetuning_18k_e6]
+prob_model_list = [prob_model, prob_model_finetuning_14k_e5, prob_model_finetuning_14k_e7, prob_model_finetuning_18k_e6, prob_model_finetuning_72k_e7]
 
 #roc computation (ROC AUC)
 roc_results = {}
@@ -454,6 +490,10 @@ brier_score_finetuning_18k_e6_results = {}
 for var in var_of_interest:
     brier_score_finetuning_18k_e6_results[var] = brier_score(binary_obs[var], binary_model_finetuning_18k_e6[var], member_dim = "member", fair=True, dim = "values", weights=lat_weights)
 
+brier_score_finetuning_72k_e7_results = {}
+for var in var_of_interest:
+    brier_score_finetuning_72k_e7_results[var] = brier_score(binary_obs[var], binary_model_finetuning_72k_e7[var], member_dim = "member", fair=True, dim = "values", weights=lat_weights)
+
 #compute crps for the different weeks and variables
 for model, preds, anomalies in zip(models, preds_list, anomalies_preds_list):
     for init_date in init_dates:
@@ -468,7 +508,7 @@ for model, preds, anomalies in zip(models, preds_list, anomalies_preds_list):
             ).values
                 anomalies_crps_results.loc[model, init_date, var, t_idx] = crps_for_ensemble(
                     anomalies[var].sel(init_date=init_date, week_lead_time=t_idx).compute(), 
-                ds_obs_weekly[var].sel(init_date=init_date, week_lead_time=t_idx).compute(), 
+                observed_anomalies[var].sel(init_date=init_date, week_lead_time=t_idx).compute(), 
                 ensemble_member_dim="member",
                 method="fair",
                 weights=lat_weights

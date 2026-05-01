@@ -33,6 +33,7 @@ model_colors = {
     'Weekly_Means_14k_lr_0.625e-5': '#ff7f0e',  # orange
     'Weekly_Means_14k_lr_0.625e-7': '#2ca02c',  # green
     'Weekly_Means_18k_lr_0.625e-6': '#d62728'  # red
+    Weekly_Means_64
 }
 
 #Load weekly mean datasets for forecasts and observations
@@ -173,8 +174,8 @@ pf.plot_model_comparison_subplots(
     dataset=CRPS_ds,
     variables=variables,
     var_labels={v[0]: v[1] for v in variables},
-    ylabel='Continuous Ranked Probability Score',
-    title='fair CRPS for Weekly Forecasts: Model Comparison',
+    ylabel='fCRPS',
+    title='fCRPS for Weekly Forecasts: Model Comparison',
     savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/crps_AIFS.png',
     ylim=None,
     model_colors=model_colors
@@ -184,8 +185,8 @@ pf.plot_model_comparison_subplots(
     dataset=CRPS_anomalies_ds,
     variables=variables,
     var_labels={v[0]: v[1] for v in variables},
-    ylabel='CRPS of Anomalies',
-    title='CRPS of Anomalies for Weekly Forecasts: Model Comparison',
+    ylabel='fCRPS of Anomalies',
+    title='fCRPS of Anomalies for Weekly Forecasts: Model Comparison',
     savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/crps_anomalies_AIFS.png',
     ylim=None,
     model_colors=model_colors
