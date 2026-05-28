@@ -5,16 +5,16 @@
 #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
 #SBATCH --qos=np
 #SBATCH --time=24:00:00
-#SBATCH --mem=300G
+#SBATCH --mem=200G
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=16
+#SBATCH --cpus-per-task=12
 
 echo "============================================"
 echo "Preprocessing Heatwave Physics Data"
 echo "Start time: $(date)"
 echo "Node: $SLURM_NODELIST"
 echo "CPUs: $SLURM_CPUS_PER_TASK"
-echo "Memory: 300GB"
+echo "Memory: 180GB"
 echo "============================================"
 echo ""
 

@@ -56,6 +56,7 @@ def process_forecasts():
     
     reforecast_datasets = []
     init_dates = []
+    skipped_dates = []  # Track which dates were skipped
     
     for path_init in paths_init:
         init_date_str = path_init.split('-')[-3:]
@@ -73,20 +74,29 @@ def process_forecasts():
             print(f"  ⚠️  WARNING: Skipping {skipped} empty/corrupted file(s): {', '.join(skipped_files)}")
         
         if not valid_paths:
-            print(f"  ❌ ERROR: No valid files found, skipping this initialization date")
+            print(f"  ❌ ERROR: No valid files found")
+            print(f"  ⚠️  ⚠️  ⚠️  SKIPPING INITIALIZATION DATE: {init_date_str} ⚠️  ⚠️  ⚠️")
+            skipped_dates.append(init_date_str)
             continue
             
         print(f"  Loading {len(valid_paths)} ensemble members...")
         
-        # Load all members with chunking for parallel processing
-        ds_init = xr.open_mfdataset(
-            valid_paths,
-            combine="nested",
-            concat_dim="member",
-            parallel=True,
-            chunks={'time': 100, 'values': 10000},
-            engine='netcdf4'
-        )
+        # Load all members - use serial loading to avoid HDF5 threading issues
+        # Parallel computation will happen during the coarsen/mean operations
+        try:
+            ds_init = xr.open_mfdataset(
+                valid_paths,
+                combine="nested",
+                concat_dim="member",
+                parallel=False,  # Serial loading to avoid HDF5 file locking issues
+                chunks={'time': 100, 'values': 10000},
+                engine='netcdf4'
+            )
+        except (RuntimeError, OSError) as e:
+            print(f"  ❌ ERROR: Failed to load files: {e}")
+            print(f"  ⚠️  ⚠️  ⚠️  SKIPPING INITIALIZATION DATE: {init_date_str} ⚠️  ⚠️  ⚠️")
+            skipped_dates.append(init_date_str)
+            continue
         
         # Check which variables are available
         available_vars = [v for v in ALL_VARS if v in ds_init.data_vars]
@@ -134,6 +144,14 @@ def process_forecasts():
     
     print(f"\nForecast weekly dataset shape: {dict(ds_fcst_weekly.dims)}")
     print(f"Variables: {list(ds_fcst_weekly.data_vars)}")
+    
+    # Print summary of skipped dates
+    if skipped_dates:
+        print(f"\n⚠️  WARNING: {len(skipped_dates)} initialization date(s) were skipped:")
+        for date in skipped_dates:
+            print(f"  - {date}")
+    else:
+        print(f"\n✓ All {len(paths_init)} initialization dates processed successfully!")
     
     # Save to NetCDF
     output_file = os.path.join(OUTPUT_DIR, "Forecasts_weekly_AIFS_physics.nc")

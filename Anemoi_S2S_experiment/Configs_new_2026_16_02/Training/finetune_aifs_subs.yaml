@@ -1,3 +1,4 @@
+
 # Yaml to finetune the AIFS-subs pretrained model
 # Your need to:
 # 1. Replace the paths with the actual paths
@@ -30,7 +31,7 @@ hardware:
     plots: "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_training/plots/"
     #profiler: path-to-profiler
     graph: "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_training/graph/"
-    warm_start: "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/checkpoints_jakob/last.ckpt"
+    warm_start: null
     #grids: path-to-grids
 
   files:
@@ -42,7 +43,7 @@ hardware:
       every_n_epochs: anemoi-by_epoch-epoch_{epoch:03d}-step_{step:06d}
       every_n_train_steps: anemoi-by_step-epoch_{epoch:03d}-step_{step:06d}
       every_n_minutes: anemoi-by_time-epoch_{epoch:03d}-step_{step:06d}
-    warm_start: ${hardware.paths.warm_start}
+    warm_start: null
   accelerator: auto
   num_gpus_per_node: 4
   num_nodes: 1
@@ -52,7 +53,7 @@ hardware:
 data:
   format: zarr
   frequency: 6h
-  timestep: 24h
+  timestep: 168h
   forcing:
   - cos_latitude
   - cos_longitude
@@ -196,8 +197,8 @@ dataloader:
     validation: 1
     test: 4
   limit_batches:
-    training: null
-    validation: 256
+    training: 2048
+    validation: 128
     test: 20
   grid_indices:
     _target_: anemoi.training.data.grid_indices.FullGrid
@@ -208,11 +209,13 @@ dataloader:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
         start: 1979
         end: 1999
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
         start: 1979
         end: 1999
-      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
-        start: 1979
+        rolling_average: [-28, 0, 'frequency']
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
+        start: '1979-01-08'
         end: 1999
       select:
       - 10u
@@ -350,14 +353,17 @@ dataloader:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
         start: 2000
         end: 2006
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
         start: 2000
         end: 2006
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-2000-2006-6h-v1-ERA51-pl
         start: 2000
         end: 2006
-      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
-        start: 2000
+        rolling_average: [-28, 0, 'frequency']
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
+        start: '2000-01-08'
         end: 2006
       select:
       - 10u
@@ -495,11 +501,13 @@ dataloader:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
         start: 2012
         end: 2023
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
         start: 2012
         end: 2023
-      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
-        start: 2012
+        rolling_average: [-28, 0, 'frequency']
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
+        start: '2012-01-08'
         end: 2023
       select:
       - 10u
@@ -637,11 +645,13 @@ dataloader:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-for-single-v2
         start: '2024-01-01'
         end: '2024-12-31'
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-2024-2024-6h-v2-s2s-predictors
         start: '2024-01-01'
         end: '2024-12-31'
-      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
-        start: '2024-01-01'
+        rolling_average: [-28, 0, 'frequency']
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
+        start: '2024-01-08'
         end: '2024-12-31'
       select:
       - 10u
@@ -776,24 +786,27 @@ dataloader:
       - tp
       - ttr
     fill_missing_gaps: true
+
   training:
-    dataset: ${dataloader.datasets}
+    dataset: ${dataloader.dataset}
     start: null
     end: 2024
     frequency: 6h
     drop: []
-  validation_rollout: 28
+  validation_rollout: 8
   validation:
     dataset:
       join:
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v8
         start: 2007
         end: 2011
+        rolling_average: [-28, 0, 'frequency']
       - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2023-6h-v2-s2s-predictors
         start: 2007
         end: 2011
-      - dataset: aifs-ea-an-oper-0001-mars-o96-1979-2024-6h-v1-accumulation24h
-        start: 2007
+        rolling_average: [-28, 0, 'frequency']
+      - dataset: aifs-ea-an-oper-0001-mars-o96-1950-2025-6h-v1-accumulation168h
+        start: '2007-01-08'
         end: 2011
       select:
       - 10u
@@ -933,7 +946,7 @@ dataloader:
   # The test dataset is here within the training because it is not used during training
   # The test data should be beyond 2025
   test:
-    dataset: ${dataloader.datasets}
+    dataset: ${dataloader.dataset}
     start: 2024
     end: null
     frequency: 6h
@@ -1061,7 +1074,7 @@ diagnostics:
       warmup: 0
   callbacks:
   - _target_: anemoi.training.diagnostics.callbacks.evaluation.RolloutEvalEns
-    rollout: 28
+    rollout: 8
     every_n_batches: 1
   debug:
     anomaly_detection: false
@@ -1098,7 +1111,7 @@ diagnostics:
       project_name: 'Anemoi'
       system: true
       terminal: true
-      run_name: aifs-subs-debug-finetuning
+      run_name: aifs-subs-weekly-from-daily-finetuning-lr-0.625e-6
       on_resume_create_child: true
       expand_hyperparams:
       - config
@@ -1326,10 +1339,10 @@ training:
       nodes_name: data
       nodes_attribute_name: area_weight
       norm: unit-sum
-  run_id: null 
+  run_id:  "weekly-scratch"
   fork_run_id: null
-  transfer_learning: true
-  load_weights_only: true
+  transfer_learning: false
+  load_weights_only: false
   deterministic: false
   precision: bf16-mixed
   multistep_input: 2
@@ -1406,13 +1419,11 @@ training:
     epoch_increment: 0
     max: 1
   max_epochs: null
-  max_steps: 10
+  max_steps: 50000
   lr:
     warmup: 100
-    rate: 6.25e-05
-    iterations: 50000
-    min: 5.0e-07
+    rate: 0.625e-6 #for 4 GPUs eff_lr=0.25e-5 
+    iterations: 100000
+    min:  1.0e-7 # not scaled with number of GPUs
   submodules_to_freeze: []
 config_validation: false
-
-

@@ -32,8 +32,7 @@ model_colors = {
     'reference': '#1f77b4',  # blue
     'Weekly_Means_14k_lr_0.625e-5': '#ff7f0e',  # orange
     'Weekly_Means_14k_lr_0.625e-7': '#2ca02c',  # green
-    'Weekly_Means_18k_lr_0.625e-6': '#d62728'  # red
-    Weekly_Means_64
+    'Weekly_Means_18k_lr_0.625e-6': '#d62728',  # red
 }
 
 #Load weekly mean datasets for forecasts and observations
@@ -242,13 +241,25 @@ for var in spatial_vars:
         unit=spatial_var_units[var],
         suptitle=f'Ensemble Mean RMSE — {spatial_var_labels[var]} — All Models',
         savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/spatial_rmse_{var}_AIFS.png',
-        models=['reference', 'Weekly_Means_14k_lr_0.625e-5', 'Weekly_Means_14k_lr_0.625e-7', 'Weekly_Means_18k_lr_0.625e-6']
+        models=['reference', "daily_finetuned", 'Weekly_Means_14k_lr_0.625e-5', 'Weekly_Means_14k_lr_0.625e-7', 'Weekly_Means_18k_lr_0.625e-6']
     )
-    
+
+for var in spatial_vars:
+    pf.plot_single_var_spatial_rmse(
+        dataset=R_t_ds,
+        var=var,
+        weeks=selected_weeks,
+        var_label=spatial_var_labels[var],
+        unit=spatial_var_units[var],
+        suptitle=f'Temporal Correlation Coefficient — {spatial_var_labels[var]} — All Models',
+        savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/python_scripts/weekly_means/images/spatial_temporal_cc_{var}_AIFS.png',
+        cmap = "RdBu_r",
+        models=['reference', "daily_finetuned", 'Weekly_Means_14k_lr_0.625e-5', 'Weekly_Means_14k_lr_0.625e-7', 'Weekly_Means_18k_lr_0.625e-6']
+    )    
     
 
 #Spatial map of R_t for each model
-for model in ['reference', 'Weekly_Means_14k_lr_0.625e-5', 'Weekly_Means_14k_lr_0.625e-7', 'Weekly_Means_18k_lr_0.625e-6']:
+for model in ['reference', "daily_finetuned", 'Weekly_Means_14k_lr_0.625e-5', 'Weekly_Means_14k_lr_0.625e-7', 'Weekly_Means_18k_lr_0.625e-6']:
     model_display = model.replace('_', ' ').replace('lr ', 'lr=')
     pf.plot_weekly_spatial_maps(
         R_t_ds.sel(model=model), 
@@ -321,14 +332,16 @@ model_linestyles = {
     'reference': '-',
     'Weekly_Means_14k_lr_0.625e-5': '--',
     'Weekly_Means_14k_lr_0.625e-7': ':',
-    'Weekly_Means_18k_lr_0.625e-6': '-.'
+    'Weekly_Means_18k_lr_0.625e-6': '-.',
+    'daily_finetuned': '-'
 }
 
 model_roc_datasets = {
     'reference': ROC_ds,
     'Weekly_Means_14k_lr_0.625e-5': ROC_14k_e5_ds,
     'Weekly_Means_14k_lr_0.625e-7': ROC_14k_e7_ds,
-    'Weekly_Means_18k_lr_0.625e-6': ROC_18k_e6_ds
+    'Weekly_Means_18k_lr_0.625e-6': ROC_18k_e6_ds,
+    'daily_finetuned': ROC_daily_finetuned_ds
 }
 
 # Create one figure per variable with 8 weeks as subplots

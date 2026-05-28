@@ -55,7 +55,7 @@ def plot_surface_field(ds_dataset, sur_field, timestep, title, unit, savename, c
     fig = plt.figure(figsize=(10, 6))
     ax = plt.axes(projection=ccrs.PlateCarree())
     ax.set_global()
-    cf = ax.tricontourf(lons, lats, field_plot, 40, transform=proj, norm=norm, cmap=cmap_use)
+    cf = ax.tricontourf(lons, lats, field_plot, 60, transform=proj, norm=norm, cmap=cmap_use)
     ax.add_feature(cfeature.COASTLINE)
     ax.set_title(f"{title} at {str(date)[:13]}", fontsize=14)
     cbar = plt.colorbar(cf, ax=ax, pad=0.05)
@@ -325,7 +325,7 @@ def plot_weekly_spatial_maps(dataset, list_variables, list_weeks, label, subtitl
             lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
             
             # Plot using tricontourf with per-variable norm and cmap
-            im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40, 
+            im = ax.tricontourf(lons_plot, lats_plot, data_plot, 60, 
                             transform=proj, norm=norm_dict[var], cmap=cmap_dict[var])
             
             # Store image for colorbar (one per variable)
@@ -462,7 +462,7 @@ def plot_single_var_spatial_rmse(dataset, var, weeks, var_label, unit, suptitle,
                 mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(data_week)
                 lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
 
-                im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40,
+                im = ax.tricontourf(lons_plot, lats_plot, data_plot, 60,
                                     transform=proj, norm=norm, cmap=cmap)
                 ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
                 
@@ -510,7 +510,7 @@ def plot_single_var_spatial_rmse(dataset, var, weeks, var_label, unit, suptitle,
             mask = np.isfinite(lons) & np.isfinite(lats) & np.isfinite(data_week)
             lons_plot, lats_plot, data_plot = lons[mask], lats[mask], data_week[mask]
 
-            im = ax.tricontourf(lons_plot, lats_plot, data_plot, 40,
+            im = ax.tricontourf(lons_plot, lats_plot, data_plot, 60,
                                 transform=proj, norm=norm, cmap=cmap)
             ax.add_feature(cfeature.COASTLINE, linewidth=0.5)
             ax.set_title(f'Week {week + 1}', fontsize=11, fontweight='bold')

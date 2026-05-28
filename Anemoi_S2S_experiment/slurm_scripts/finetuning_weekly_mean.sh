@@ -1,16 +1,15 @@
 #!/bin/bash
 
 # The job name
-#SBATCH --job-name=aifs-subs-weekly-finetuning-freeze-model.processor-encoder-lr-0.625e-6
-
+#SBATCH --job-name=aifs-subs-weekly-finetuning-lr-0.625e-rolling-average-27-0-part2
 
 
 # Set the initial working directory
 #SBATCH --chdir=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
 
 # Set the error and output files
-#SBATCH --output=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/output_slurm/aifs-subs-weekly-finetuning-freeze-model.processor-encoder-lr-0.625e-6-%J.out
-#SBATCH --error=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/output_slurm/aifs-subs-weekly-finetuning-freeze-model.processor-encoder-lr-0.625e-6-%J.out
+#SBATCH --output=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/output_slurm/aifs-subs-weekly-finetuning-lr-0.625e-rolling-average-27-0-part2-%J.out
+#SBATCH --error=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/slurm_scripts/output_slurm/aifs-subs-weekly-finetuning-lr-0.625e-rolling-average-27-0-part2-%J.out
 #SBATCH --qos=ng
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
@@ -27,7 +26,7 @@ export HYDRA_FULL_ERROR=1
 
 
 
-CONFIG_NAME=finetune_aifs_weekly_means.yaml
+CONFIG_NAME=finetune_aifs_weekly_means3.yaml
 CONFIG_DIR=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new_2026_16_02/Training/
 
 cp $CONFIG_DIR/$CONFIG_NAME "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new_2026_16_02/log_trainings/${SLURM_JOB_NAME}-${SLURM_JOB_ID}_recipe.yaml"
@@ -41,5 +40,6 @@ source /ec/res4/hpcperm/nld4584/anemoi_python_3_11_ag_2026_23_04/.venv/bin/activ
 # Add PyTorch library path for libc10_cuda.so
 export LD_LIBRARY_PATH=/lus/h2resw01/hpcperm/nld4584/anemoi_python_3_11_ag_2026_23_04/.venv/lib/python3.11/site-packages/torch/lib:$LD_LIBRARY_PATH
 
-export ANEMOI_CONFIG_PATH=/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/Configs_new_2026_16_02/Training
-srun anemoi-training train --config-name=finetune_aifs_weekly_means.yaml
+# Note: Do NOT set ANEMOI_CONFIG_PATH as it overrides the datasets path from ~/.config/anemoi/settings.toml
+# Use --config-path flag instead to specify where to find YAML config files
+srun anemoi-training train --config-path=$CONFIG_DIR --config-name=$CONFIG_NAME
