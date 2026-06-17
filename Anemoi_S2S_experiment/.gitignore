@@ -16,4 +16,24 @@ slurm_scripts/output_slurm/
 slurm_scripts/output_slurm/*
 output_metrics/
 output_metrics/*
+slurm_scripts/
+slurm_scripts/*
 
+python_scripts/bench*
+python_scripts/custom_Lossses/*
+python_scripts/custom_Lossses/
+python_scripts/metrics/*
+python_scripts/metrics
+
+python_scripts/weekly_means/heat_wave_analysis.py
+python_scripts/weekly_means/metrics_weekly_means.py
+python_scripts/weekly_means/plots_weekly_means.py
+python_scripts/weekly_means/preprocess_heatwave_physics_data.py
+python_scripts/weekly_means/preprocessing_metrics_weekly_means.py
+
+Configs_new_2026_16_02/Inference/inference_aifs_daily_means.yaml
+Configs_new_2026_16_02/Inference/inference_aifs_weekly_means.yaml
+
+Configs_new_2026_16_02/log_trainings
+Configs_new_2026_16_02/Training/bastien_config.yaml
+Configs_new_2026_16_02/Training/finetune_aifs_weekly_means2.yaml
