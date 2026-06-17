@@ -1,8 +1,0 @@
-checkpoint: ${oc.env:CHECKPOINT_PATH}
-#/ec/res4/hpcperm/ecme5801/louca/inference-last.ckpt
-
-date: ${oc.env:INFERENCE_DATE}
-lead_time: 1344h
-output:
-  netcdf:
-    path: ${oc.env:INFERENCE_OUTPUT_PATH}
