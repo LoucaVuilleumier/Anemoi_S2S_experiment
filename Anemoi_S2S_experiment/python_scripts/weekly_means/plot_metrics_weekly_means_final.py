@@ -31,9 +31,9 @@ legend_labels = {
 
 # Colors for NEW models (27-0 structure)
 model_colors = {
-    'reference': '#ff7f0e',  # orange
-    'weekly_finetuned': '#2ca02c',  # orange
-    'daily_finetuned': '#d62728',  # green
+    'reference': '#4169E1',  # blue
+    'weekly_finetuned': '#228B22',  # green
+    'daily_finetuned': '#E69F00',  # orange
 }
 
 
@@ -52,6 +52,11 @@ RMSE_anomalies = xr.open_dataset("/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment
 obs = xr.open_dataset("/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/preprocessed_75_init/observations_weekly_27_0.nc")
 weekly_finetuned = xr.open_dataset("/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/preprocessed_75_init/weekly_finetuned_model_27_0.nc")
 
+Spatial_anomalies_RMSE = xr.open_dataset("/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/Spatial_RMSE_Anomalies_weekly_AIFS.nc")
+ACC_robust = xr.open_dataset("/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/ACC_ROBUST_weekly_anomalies_AIFS.nc")
+CRPS_anomalies_robust = xr.open_dataset("/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/CRPS_Anomalies_ROBUST_weekly_AIFS.nc")
+RMSE_anomalies_robust = xr.open_dataset("/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/RMSE_Anomalies_ROBUST_weekly_AIFS.nc")
+R_t_robust = xr.open_dataset("/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/R_t_ROBUST_weekly_anomalies_AIFS.nc")
 #switch from m to mm for precipitation
 
 CRPS["tp"] = CRPS["tp"] * 1000
@@ -59,7 +64,13 @@ CRPS_anomalies["tp"] = CRPS_anomalies["tp"] * 1000
 RMSE["tp"] = RMSE["tp"] * 1000
 RMSE_anomalies["tp"] = RMSE_anomalies["tp"] * 1000
 Spatial_RMSE["tp"] = Spatial_RMSE["tp"] * 1000
+Spatial_anomalies_RMSE["tp"] = Spatial_anomalies_RMSE["tp"] * 1000
 RMSE_anomalies["tp"] = RMSE_anomalies["tp"] * 1000
+RMS_Spread["tp"] = RMS_Spread["tp"] * 1000
+
+CRPS_anomalies_robust["tp"] = CRPS_anomalies_robust["tp"] * 1000
+RMSE_anomalies_robust["tp"] = RMSE_anomalies_robust["tp"] * 1000
+
 #######################################################################################################################################################################
 variables = [
     ("2t", "2m Temperature"),
@@ -80,24 +91,43 @@ pf.plot_model_comparison_subplots(
     dataset=ACC,
     variables=variables,
     var_labels={v[0]: v[1] for v in variables},
-    ylabel='Anomaly Correlation Coefficient',
+    ylabel='ACC',
     title='ACC for Weekly Forecasts: Model Comparison (Ensemble Mean)',
-    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/acc_AIFS.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/acc_AIFS.png',
     ylim=(-.2, 1),
     add_zero_line=True,
     model_colors=model_colors,
     legend_labels=legend_labels,
-    shared_legend=True
+    shared_legend=True,
+    var_units=None
+
 )
+
+pf.plot_model_comparison_subplots(
+    dataset=ACC_robust,
+    variables=variables,
+    var_labels={v[0]: v[1] for v in variables},
+    ylabel='ACC',
+    title='ACC for Weekly Forecasts: Model Comparison (Ensemble Mean)',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/acc_AIFS_robust.png',
+    ylim=(-.2, 1),
+    add_zero_line=True,
+    model_colors=model_colors,
+    legend_labels=legend_labels,
+    shared_legend=True,
+    var_units=None
+
+)
+
 
 # Line plot for RMSE with model comparison
 pf.plot_model_comparison_subplots(
     dataset=RMSE,
     variables=variables,
     var_labels={v[0]: v[1] for v in variables},
-    ylabel='Root Mean Square Error',
+    ylabel='RMSE',
     title='RMSE for Weekly Forecasts: Model Comparison (Ensemble Mean)',
-    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/rmse_AIFS.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/rmse_AIFS.png',
     ylim=None,
     model_colors=model_colors,
     var_units=var_units,
@@ -111,9 +141,9 @@ pf.plot_model_comparison_subplots(
     dataset=RMSE_anomalies,
     variables=variables,
     var_labels={v[0]: v[1] for v in variables},
-    ylabel='Root Mean Square Error of Anomalies',
+    ylabel='RMSE of Anomalies',
     title='RMSE of Anomalies for Weekly Forecasts: Model Comparison (Ensemble Mean)',
-    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/rmse_anomalies_AIFS.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/rmse_anomalies_AIFS.png',
     ylim=None,
     model_colors=model_colors,
     legend_labels=legend_labels,
@@ -121,14 +151,27 @@ pf.plot_model_comparison_subplots(
     shared_legend=True
 )
 
+pf.plot_model_comparison_subplots(
+    dataset=RMSE_anomalies_robust,
+    variables=variables,
+    var_labels={v[0]: v[1] for v in variables},
+    ylabel='RMSE of Anomalies',
+    title='RMSE of Anomalies for Weekly Forecasts: Model Comparison (Ensemble Mean)',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/rmse_anomalies_AIFS_robust.png',
+    ylim=None,
+    model_colors=model_colors,
+    legend_labels=legend_labels,
+    var_units=var_units,
+    shared_legend=True
+)
 # Line plot for fCRPS with model comparison
 pf.plot_model_comparison_subplots(
     dataset=CRPS,
     variables=variables,
     var_labels={v[0]: v[1] for v in variables},
-    ylabel='fair Continuous Ranked Probability Score',
+    ylabel='fCRPS',
     title='fCRPS for Weekly Forecasts: Model Comparison',
-    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/fcrps_AIFS.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/fcrps_AIFS.png',
     ylim=None,
     model_colors=model_colors,
     legend_labels=legend_labels,
@@ -140,9 +183,23 @@ pf.plot_model_comparison_subplots(
     dataset=CRPS_anomalies,
     variables=variables,
     var_labels={v[0]: v[1] for v in variables},
-    ylabel='fair Continuous Ranked Probability Score',
+    ylabel='fCRPS',
     title='Anomaly fCRPS for Weekly Forecasts: Model Comparison',
-    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/fcrps_anomalies_AIFS.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/fcrps_anomalies_AIFS.png',
+    ylim=None,
+    model_colors=model_colors,
+    legend_labels=legend_labels,
+    var_units=var_units,
+    shared_legend=True
+)
+
+pf.plot_model_comparison_subplots(
+    dataset=CRPS_anomalies_robust,
+    variables=variables,
+    var_labels={v[0]: v[1] for v in variables},
+    ylabel='fCRPS',
+    title='Anomaly fCRPS for Weekly Forecasts: Model Comparison',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/fcrps_anomalies_AIFS_robust.png',
     ylim=None,
     model_colors=model_colors,
     legend_labels=legend_labels,
@@ -158,7 +215,7 @@ pf.plot_model_comparison_subplots(
     var_labels={v[0]: v[1] for v in variables},
     ylabel='RMS Spread',
     title='Spread & Skill for Weekly Forecasts: Model Comparison',
-    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/spread_skill_AIFS.png',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/spread_skill_AIFS.png',
     ylim=None,
     secondary_dataset=RMSE,
     secondary_ylabel='RMSE',
@@ -187,7 +244,19 @@ for var in spatial_vars:
         var_label=spatial_var_labels[var],
         unit=spatial_var_units[var],
         suptitle=f'Ensemble Mean RMSE — {spatial_var_labels[var]} — Models Comparison',
-        savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/spatial_rmse_{var}_AIFS.png',
+        savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/spatial_rmse_{var}_AIFS.png',
+        models=['reference', "weekly_finetuned", 'daily_finetuned']
+    )
+    
+for var in spatial_vars:
+    pf.plot_single_var_spatial_rmse(
+        dataset=Spatial_anomalies_RMSE,
+        var=var,
+        weeks=selected_weeks,
+        var_label=spatial_var_labels[var],
+        unit=spatial_var_units[var],
+        suptitle=f'Ensemble Mean Anomalies RMSE — {spatial_var_labels[var]} — Models Comparison',
+        savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/spatial_anomalies_rmse_{var}_AIFS.png',
         models=['reference', "weekly_finetuned", 'daily_finetuned']
     )
 
@@ -199,18 +268,32 @@ for var in spatial_vars:
         var_label=spatial_var_labels[var],
         unit=None,
         suptitle=f'Temporal Correlation Coefficient — {spatial_var_labels[var]} — Models Comparison',
-        savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/R_t_{var}_AIFS.png',
-        cmap = "RdBu",
+        savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/R_t_{var}_AIFS.png',
+        cmap="RdBu",
         models=['reference', "weekly_finetuned", 'daily_finetuned'],
-        norm= [-1,1],
-        metric_cbar = r'$R_t$'
+        norm=Normalize(vmin=-1, vmax=1),
+        metric_cbar=r'$R_t$'
     )   
+    
+for var in spatial_vars:
+    pf.plot_single_var_spatial_rmse(
+        dataset=R_t_robust,
+        var=var,
+        weeks=selected_weeks,
+        var_label=spatial_var_labels[var],
+        unit=None,
+        suptitle=f'Temporal Correlation Coefficient — {spatial_var_labels[var]} — Models Comparison',
+        savename=f'/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/R_t_{var}_AIFS_robust.png',
+        cmap="RdBu",
+        models=['reference', "weekly_finetuned", 'daily_finetuned'],
+        norm=Normalize(vmin=-1, vmax=1),
+        metric_cbar=r'$R_t$'
+    ) 
 
 #Forecasting
 ds_inf_weekly = weekly_finetuned.rename({"week_lead_time": "leadtime"})
 ds_obs_weekly = obs.rename({"week_lead_time": "leadtime"})
 
-ds_inf_weekly["tp"].values = ds_inf_weekly["tp"].values * 7
 
 
 # Per-variable colormaps for better visualization
@@ -242,7 +325,7 @@ pf.plot_weekly_spatial_maps(
     [1, 3, 5, 7], 
     label=forecast_labels,
     subtitle="Ensemble Mean Forecast of Weekly FT Model",
-    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/forecast_finetuned_weekly',
+    savename='/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/forecast_finetuned_weekly',
     norm=forecast_norms,
     cmap=forecast_cmaps
 )
@@ -254,7 +337,7 @@ pf.plot_weekly_spatial_maps(
     [1, 3, 5, 7],
     label=forecast_labels,
     subtitle="ERA5 Ground Truth",
-    savename = '/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS-75-init/images/era5_weekly',
+    savename = '/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/metrics_images/era5_weekly',
     norm = forecast_norms,
     cmap = forecast_cmaps
 )

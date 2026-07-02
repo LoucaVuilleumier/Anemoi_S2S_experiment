@@ -37,6 +37,57 @@ dask.config.set(scheduler='threads', num_workers=n_workers)
 print(f"Dask configured to use {n_workers} threads", flush=True)
 
 ############################################################################################################################################################
+# Helper function to create NetCDF encoding with compression and chunking
+def create_netcdf_encoding(ds, chunk_size=None):
+    """
+    Create encoding dict for NetCDF export with compression and appropriate chunking.
+    This significantly speeds up writing large NetCDF files.
+    
+    Parameters:
+    -----------
+    ds : xarray.Dataset
+        The dataset to create encoding for
+    chunk_size : dict, optional
+        Dictionary specifying chunk sizes for dimensions. 
+        If None, uses automatic chunking based on data size.
+    
+    Returns:
+    --------
+    encoding : dict
+        Encoding dictionary for to_netcdf()
+    """
+    encoding = {}
+    
+    # Default chunk sizes if not provided
+    if chunk_size is None:
+        chunk_size = {}
+        # Set sensible defaults based on dimension sizes
+        if 'init_date' in ds.dims:
+            chunk_size['init_date'] = min(10, ds.dims['init_date'])
+        if 'member' in ds.dims:
+            chunk_size['member'] = ds.dims['member']
+        if 'week_lead_time' in ds.dims:
+            chunk_size['week_lead_time'] = ds.dims['week_lead_time']
+        if 'values' in ds.dims:
+            chunk_size['values'] = min(10000, ds.dims['values'])
+    
+    # Apply encoding to all data variables
+    for var in ds.data_vars:
+        var_chunks = tuple(chunk_size.get(dim, ds.dims[dim]) for dim in ds[var].dims)
+        encoding[var] = {
+            'zlib': True,
+            'complevel': 4,  # Compression level (1-9, 4 is a good balance)
+            'chunksizes': var_chunks
+        }
+    
+    # Also encode coordinates if they are large
+    for coord in ds.coords:
+        if coord in ds.dims and ds.dims[coord] > 1000:
+            encoding[coord] = {'zlib': True, 'complevel': 4}
+    
+    return encoding
+
+############################################################################################################################################################
 
 print("=" * 80, flush=True)
 print("PREPROCESSING WEEKLY MEANS DATA - 75 INIT DATES", flush=True)
@@ -517,11 +568,160 @@ print("=" * 80)
 print("Computing climatology for NEW models...")
 print("=" * 80)
 
+ds_inf_weekly_27_0["tp"].values = ds_inf_weekly_27_0["tp"].values * 7
+
+
 ds_clim_multiple_obs_27_0_init = []
 ds_clim_multiple_inf_weekly_27_0_init = []
 ds_clim_multiple_inf_weekly_27_0_ref_init = []
 ds_clim_multiple_inf_daily_weekly_3_0_init = []
 
+#Compute climatology with more sample points (±1 index)
+ds_clim_multiple_obs_robust_init = []
+ds_clim_multiple_inf_weekly_robust_init = []
+ds_clim_multiple_inf_weekly_ref_robust_init = []
+ds_clim_multiple_inf_daily_weekly_robust_init = []
+
+print("=" * 80)
+print("Computing ROBUST climatology (including ±1 init_date indices)...")
+print("=" * 80)
+
+if weekly_init_dates is not None:
+    for idx, init_date in enumerate(weekly_init_dates):
+        year = pd.to_datetime(init_date).year
+        month = pd.to_datetime(init_date).month
+        day = pd.to_datetime(init_date).day
+        
+        # Get neighboring init dates (±1 index) to expand climatology sample
+        dates_to_include = [(month, day)]
+        
+        if idx > 0:
+            prev_date = pd.to_datetime(weekly_init_dates[idx-1])
+            dates_to_include.append((prev_date.month, prev_date.day))
+        
+        if idx < len(weekly_init_dates) - 1:
+            next_date = pd.to_datetime(weekly_init_dates[idx+1])
+            dates_to_include.append((next_date.month, next_date.day))
+        
+        # Climatology for observations (27-0) - ROBUST version
+        if ds_obs_weekly_27_0 is not None:
+            mask_robust = None
+            for m, d in dates_to_include:
+                current_mask = (ds_obs_weekly_27_0.init_date.dt.month == m) & (ds_obs_weekly_27_0.init_date.dt.day == d) & (ds_obs_weekly_27_0.init_date.dt.year != year)
+                if mask_robust is None:
+                    mask_robust = current_mask
+                else:
+                    mask_robust = mask_robust | current_mask
+            
+            climatology_weekly_obs_robust = ds_obs_weekly_27_0.isel(init_date=mask_robust).mean(dim="init_date")
+            ds_clim_multiple_obs_robust_init.append(climatology_weekly_obs_robust)
+        
+        # Climatology for weekly finetuned model (27-0) - ROBUST version
+        if ds_inf_weekly_27_0 is not None and init_date in ds_inf_weekly_27_0.init_date.values:
+            mask_robust = None
+            for m, d in dates_to_include:
+                current_mask = (ds_inf_weekly_27_0.init_date.dt.month == m) & (ds_inf_weekly_27_0.init_date.dt.day == d) & (ds_inf_weekly_27_0.init_date.dt.year != year)
+                if mask_robust is None:
+                    mask_robust = current_mask
+                else:
+                    mask_robust = mask_robust | current_mask
+            
+            climatology_weekly_inf_robust = ds_inf_weekly_27_0.isel(init_date=mask_robust).mean(dim="init_date")
+            ds_clim_multiple_inf_weekly_robust_init.append(climatology_weekly_inf_robust)
+        
+        # Climatology for daily finetuned model weekly aggregation (3-0) - ROBUST version
+        if ds_inf_daily_weekly_3_0 is not None and init_date in ds_inf_daily_weekly_3_0.init_date.values:
+            mask_robust = None
+            for m, d in dates_to_include:
+                current_mask = (ds_inf_daily_weekly_3_0.init_date.dt.month == m) & (ds_inf_daily_weekly_3_0.init_date.dt.day == d) & (ds_inf_daily_weekly_3_0.init_date.dt.year != year)
+                if mask_robust is None:
+                    mask_robust = current_mask
+                else:
+                    mask_robust = mask_robust | current_mask
+            
+            climatology_weekly_inf_daily_robust = ds_inf_daily_weekly_3_0.isel(init_date=mask_robust).mean(dim="init_date")
+            ds_clim_multiple_inf_daily_weekly_robust_init.append(climatology_weekly_inf_daily_robust)
+        
+        # Climatology for reference model (27-0) - ROBUST version
+        if ds_inf_weekly_27_0_ref is not None and init_date in ds_inf_weekly_27_0_ref.init_date.values:
+            mask_robust = None
+            for m, d in dates_to_include:
+                current_mask = (ds_inf_weekly_27_0_ref.init_date.dt.month == m) & (ds_inf_weekly_27_0_ref.init_date.dt.day == d) & (ds_inf_weekly_27_0_ref.init_date.dt.year != year)
+                if mask_robust is None:
+                    mask_robust = current_mask
+                else:
+                    mask_robust = mask_robust | current_mask
+            
+            climatology_weekly_inf_ref_robust = ds_inf_weekly_27_0_ref.isel(init_date=mask_robust).mean(dim="init_date")
+            ds_clim_multiple_inf_weekly_ref_robust_init.append(climatology_weekly_inf_ref_robust)
+    
+    # Concatenate ROBUST climatologies
+    if ds_obs_weekly_27_0 is not None and ds_clim_multiple_obs_robust_init:
+        ds_climatology_weekly_obs_robust = xr.concat(ds_clim_multiple_obs_robust_init, dim=xr.DataArray(weekly_init_dates, dims='init_date', name='init_date'))
+    else:
+        ds_climatology_weekly_obs_robust = None
+    
+    if ds_inf_weekly_27_0 is not None and ds_clim_multiple_inf_weekly_robust_init:
+        weekly_27_0_init_dates_robust = [init_date for init_date in weekly_init_dates if init_date in ds_inf_weekly_27_0.init_date.values]
+        ds_climatology_weekly_inf_robust = xr.concat(ds_clim_multiple_inf_weekly_robust_init, dim=xr.DataArray(weekly_27_0_init_dates_robust, dims='init_date', name='init_date'))
+    else:
+        ds_climatology_weekly_inf_robust = None
+    
+    if ds_inf_daily_weekly_3_0 is not None and ds_clim_multiple_inf_daily_weekly_robust_init:
+        daily_3_0_init_dates_robust = [init_date for init_date in weekly_init_dates if init_date in ds_inf_daily_weekly_3_0.init_date.values]
+        ds_climatology_weekly_inf_daily_robust = xr.concat(ds_clim_multiple_inf_daily_weekly_robust_init, dim=xr.DataArray(daily_3_0_init_dates_robust, dims='init_date', name='init_date'))
+    else:
+        ds_climatology_weekly_inf_daily_robust = None
+    
+    if ds_inf_weekly_27_0_ref is not None and ds_clim_multiple_inf_weekly_ref_robust_init:
+        ref_27_0_init_dates_robust = [init_date for init_date in weekly_init_dates if init_date in ds_inf_weekly_27_0_ref.init_date.values]
+        ds_climatology_weekly_inf_ref_robust = xr.concat(ds_clim_multiple_inf_weekly_ref_robust_init, dim=xr.DataArray(ref_27_0_init_dates_robust, dims='init_date', name='init_date'))
+    else:
+        ds_climatology_weekly_inf_ref_robust = None
+    
+    print(f"Computed ROBUST climatology for {len(weekly_init_dates)} init dates")
+    print(f"  Observations (robust): {len(ds_clim_multiple_obs_robust_init)} climatologies")
+    print(f"  Weekly model (robust): {len(ds_clim_multiple_inf_weekly_robust_init)} climatologies")
+    print(f"  Daily model weekly (robust): {len(ds_clim_multiple_inf_daily_weekly_robust_init)} climatologies")
+    print(f"  Reference model (robust): {len(ds_clim_multiple_inf_weekly_ref_robust_init)} climatologies")
+else:
+    ds_climatology_weekly_obs_robust = None
+    ds_climatology_weekly_inf_robust = None
+    ds_climatology_weekly_inf_daily_robust = None
+    ds_climatology_weekly_inf_ref_robust = None
+
+##################################################################################################################################
+# Compute ROBUST anomalies
+print("=" * 80)
+print("Computing ROBUST anomalies...")
+print("=" * 80)
+
+if ds_obs_weekly_27_0 is not None and ds_climatology_weekly_obs_robust is not None:
+    observed_anomalies_robust = ds_obs_weekly_27_0 - ds_climatology_weekly_obs_robust
+    print("Computed ROBUST anomalies for observations")
+else:
+    observed_anomalies_robust = None
+
+if ds_inf_weekly_27_0 is not None and ds_climatology_weekly_inf_robust is not None:
+    predicted_anomalies_weekly_robust = ds_inf_weekly_27_0 - ds_climatology_weekly_inf_robust
+    print("Computed ROBUST anomalies for weekly model")
+else:
+    predicted_anomalies_weekly_robust = None
+
+if ds_inf_daily_weekly_3_0 is not None and ds_climatology_weekly_inf_daily_robust is not None:
+    predicted_anomalies_daily_robust = ds_inf_daily_weekly_3_0 - ds_climatology_weekly_inf_daily_robust
+    print("Computed ROBUST anomalies for daily model weekly")
+else:
+    predicted_anomalies_daily_robust = None
+
+if ds_inf_weekly_27_0_ref is not None and ds_climatology_weekly_inf_ref_robust is not None:
+    predicted_anomalies_ref_robust = ds_inf_weekly_27_0_ref - ds_climatology_weekly_inf_ref_robust
+    print("Computed ROBUST anomalies for reference model")
+else:
+    predicted_anomalies_ref_robust = None
+
+##################################################################################################################################
+# Keep original climatology computation for standard version
 if weekly_init_dates is not None:
     for init_date in weekly_init_dates:
         year = pd.to_datetime(init_date).year
@@ -626,182 +826,321 @@ print("=" * 80)
 output_dir = "/ec/res4/hpcperm/nld4584/Anemoi_S2S_experiment/output_metrics/AIFS/preprocessed_75_init"
 os.makedirs(output_dir, exist_ok=True)
 
-# Export observations (27-0)
-if ds_obs_weekly_27_0 is not None:
-    ds_obs_weekly_27_0 = ds_obs_weekly_27_0.assign_coords(
-        latitude=("values", lat_lon_coords["latitude"].values),
-        longitude=("values", lat_lon_coords["longitude"].values))
-    
-    obs_path_27_0 = os.path.join(output_dir, "observations_weekly_27_0.nc")
-    if os.path.exists(obs_path_27_0):
-        os.remove(obs_path_27_0)
-    print(f"Saving observations (27-0) to {obs_path_27_0}")
-    ds_obs_weekly_27_0.to_netcdf(obs_path_27_0, mode='w')
-    
-    if observed_anomalies_27_0 is not None:
-        observed_anomalies_27_0 = observed_anomalies_27_0.assign_coords(
-            latitude=("values", lat_lon_coords["latitude"].values),
-            longitude=("values", lat_lon_coords["longitude"].values))
-        obs_anom_path_27_0 = os.path.join(output_dir, "observations_anomalies_weekly_27_0.nc")
-        if os.path.exists(obs_anom_path_27_0):
-            os.remove(obs_anom_path_27_0)
-        print(f"Saving observation anomalies (27-0) to {obs_anom_path_27_0}")
-        # Use Zarr format for robust handling of large dask arrays
-        zarr_path = obs_anom_path_27_0.replace('.nc', '.zarr')
-        if os.path.exists(zarr_path):
-            import shutil
-            shutil.rmtree(zarr_path)
-        observed_anomalies_27_0.to_zarr(zarr_path, mode='w', consolidated=True)
-        print(f"  Saved to Zarr format: {zarr_path}")
-    
-    if ds_climatology_weekly_obs_27_0 is not None:
-        ds_climatology_weekly_obs_27_0 = ds_climatology_weekly_obs_27_0.assign_coords(
-            latitude=("values", lat_lon_coords["latitude"].values),
-            longitude=("values", lat_lon_coords["longitude"].values))
-        obs_clim_path_27_0 = os.path.join(output_dir, "observations_climatology_weekly_27_0.nc")
-        if os.path.exists(obs_clim_path_27_0):
-            os.remove(obs_clim_path_27_0)
-        print(f"Saving observation climatology (27-0) to {obs_clim_path_27_0}")
-        ds_climatology_weekly_obs_27_0.to_netcdf(obs_clim_path_27_0, mode='w')
+## Export observations (27-0)
+#if ds_obs_weekly_27_0 is not None:
+#    ds_obs_weekly_27_0 = ds_obs_weekly_27_0.assign_coords(
+#        latitude=("values", lat_lon_coords["latitude"].values),
+#        longitude=("values", lat_lon_coords["longitude"].values))
+#    
+#    obs_path_27_0 = os.path.join(output_dir, "observations_weekly_27_0.nc")
+#    if os.path.exists(obs_path_27_0):
+#        os.remove(obs_path_27_0)
+#    print(f"Saving observations (27-0) to {obs_path_27_0}")
+#    ds_obs_weekly_27_0.to_netcdf(obs_path_27_0, mode='w')
+#    
+#    if observed_anomalies_27_0 is not None:
+#        observed_anomalies_27_0 = observed_anomalies_27_0.assign_coords(
+#            latitude=("values", lat_lon_coords["latitude"].values),
+#            longitude=("values", lat_lon_coords["longitude"].values))
+#        obs_anom_path_27_0 = os.path.join(output_dir, "observations_anomalies_weekly_27_0.nc")
+#        if os.path.exists(obs_anom_path_27_0):
+#            os.remove(obs_anom_path_27_0)
+#        print(f"Saving observation anomalies (27-0) to {obs_anom_path_27_0}")
+#        # Use Zarr format for robust handling of large dask arrays
+#        zarr_path = obs_anom_path_27_0.replace('.nc', '.zarr')
+#        if os.path.exists(zarr_path):
+#            import shutil
+#            shutil.rmtree(zarr_path)
+#        observed_anomalies_27_0.to_zarr(zarr_path, mode='w', consolidated=True)
+#        print(f"  Saved to Zarr format: {zarr_path}")
+#    
+#    if ds_climatology_weekly_obs_27_0 is not None:
+#        ds_climatology_weekly_obs_27_0 = ds_climatology_weekly_obs_27_0.assign_coords(
+#            latitude=("values", lat_lon_coords["latitude"].values),
+#            longitude=("values", lat_lon_coords["longitude"].values))
+#        obs_clim_path_27_0 = os.path.join(output_dir, "observations_climatology_weekly_27_0.nc")
+#        if os.path.exists(obs_clim_path_27_0):
+#            os.remove(obs_clim_path_27_0)
+#        print(f"Saving observation climatology (27-0) to {obs_clim_path_27_0}")
+#        ds_climatology_weekly_obs_27_0.to_netcdf(obs_clim_path_27_0, mode='w')
 
 # Force garbage collection to free memory and close file handles
-gc.collect()
+#gc.collect()
 
 # Export weekly finetuned model (27-0)
-if ds_inf_weekly_27_0 is not None:
-    ds_inf_weekly_27_0 = ds_inf_weekly_27_0.assign_coords(
+#if ds_inf_weekly_27_0 is not None:
+#    ds_inf_weekly_27_0 = ds_inf_weekly_27_0.assign_coords(
+#        latitude=("values", lat_lon_coords["latitude"].values),
+#        longitude=("values", lat_lon_coords["longitude"].values))
+#    
+#    
+#    weekly_27_0_path = os.path.join(output_dir, "weekly_finetuned_model_27_0.nc")
+#    if os.path.exists(weekly_27_0_path):
+#        os.remove(weekly_27_0_path)
+#    print(f"Saving weekly finetuned model (27-0) to {weekly_27_0_path}")
+#    ds_inf_weekly_27_0.to_netcdf(weekly_27_0_path, mode='w')
+    
+    #if predicted_anomalies_weekly_27_0 is not None:
+    #    predicted_anomalies_weekly_27_0 = predicted_anomalies_weekly_27_0.assign_coords(
+    #        latitude=("values", lat_lon_coords["latitude"].values),
+    #        longitude=("values", lat_lon_coords["longitude"].values))
+    #    weekly_27_0_anom_path = os.path.join(output_dir, "weekly_finetuned_model_anomalies_27_0.nc")
+    #    if os.path.exists(weekly_27_0_anom_path):
+    #        os.remove(weekly_27_0_anom_path)
+    #    print(f"Saving weekly finetuned model anomalies (27-0) to {weekly_27_0_anom_path}")
+    #    # Use Zarr format for robust handling of large dask arrays
+    #    zarr_path = weekly_27_0_anom_path.replace('.nc', '.zarr')
+    #    if os.path.exists(zarr_path):
+    #        import shutil
+    #        shutil.rmtree(zarr_path)
+    #    predicted_anomalies_weekly_27_0.to_zarr(zarr_path, mode='w', consolidated=True)
+    #    print(f"  Saved to Zarr format: {zarr_path}")
+    #
+    #if ds_climatology_weekly_inf_27_0 is not None:
+    #    ds_climatology_weekly_inf_27_0 = ds_climatology_weekly_inf_27_0.assign_coords(
+    #        latitude=("values", lat_lon_coords["latitude"].values),
+    #        longitude=("values", lat_lon_coords["longitude"].values))
+    #    weekly_27_0_clim_path = os.path.join(output_dir, "weekly_finetuned_model_climatology_27_0.nc")
+    #    if os.path.exists(weekly_27_0_clim_path):
+    #        os.remove(weekly_27_0_clim_path)
+    #    print(f"Saving weekly finetuned model climatology (27-0) to {weekly_27_0_clim_path}")
+    #    ds_climatology_weekly_inf_27_0.to_netcdf(weekly_27_0_clim_path, mode='w')
+
+# Force garbage collection to free memory and close file handles
+#gc.collect()
+
+## Export daily finetuned model weekly aggregation (3-0)
+#if ds_inf_daily_weekly_3_0 is not None:
+#    ds_inf_daily_weekly_3_0 = ds_inf_daily_weekly_3_0.assign_coords(
+#        latitude=("values", lat_lon_coords["latitude"].values),
+#        longitude=("values", lat_lon_coords["longitude"].values))
+#    
+#    daily_3_0_weekly_path = os.path.join(output_dir, "daily_finetuned_model_weekly_3_0.nc")
+#    if os.path.exists(daily_3_0_weekly_path):
+#        os.remove(daily_3_0_weekly_path)
+#    print(f"Saving daily finetuned model weekly (3-0) to {daily_3_0_weekly_path}")
+#    ds_inf_daily_weekly_3_0.to_netcdf(daily_3_0_weekly_path, mode='w')
+#    
+#    if predicted_anomalies_daily_3_0 is not None:
+#        predicted_anomalies_daily_3_0 = predicted_anomalies_daily_3_0.assign_coords(
+#            latitude=("values", lat_lon_coords["latitude"].values),
+#            longitude=("values", lat_lon_coords["longitude"].values))
+#        daily_3_0_weekly_anom_path = os.path.join(output_dir, "daily_finetuned_model_weekly_anomalies_3_0.nc")
+#        if os.path.exists(daily_3_0_weekly_anom_path):
+#            os.remove(daily_3_0_weekly_anom_path)
+#        print(f"Saving daily finetuned model weekly anomalies (3-0) to {daily_3_0_weekly_anom_path}")
+#        # Use Zarr format for robust handling of large dask arrays
+#        zarr_path = daily_3_0_weekly_anom_path.replace('.nc', '.zarr')
+#        if os.path.exists(zarr_path):
+#            import shutil
+#            shutil.rmtree(zarr_path)
+#        predicted_anomalies_daily_3_0.to_zarr(zarr_path, mode='w', consolidated=True)
+#        print(f"  Saved to Zarr format: {zarr_path}")
+#    
+#    if ds_climatology_weekly_inf_daily_3_0 is not None:
+#        ds_climatology_weekly_inf_daily_3_0 = ds_climatology_weekly_inf_daily_3_0.assign_coords(
+#            latitude=("values", lat_lon_coords["latitude"].values),
+#            longitude=("values", lat_lon_coords["longitude"].values))
+#        daily_3_0_weekly_clim_path = os.path.join(output_dir, "daily_finetuned_model_weekly_climatology_3_0.nc")
+#        if os.path.exists(daily_3_0_weekly_clim_path):
+#            os.remove(daily_3_0_weekly_clim_path)
+#        print(f"Saving daily finetuned model weekly climatology (3-0) to {daily_3_0_weekly_clim_path}")
+#        ds_climatology_weekly_inf_daily_3_0.to_netcdf(daily_3_0_weekly_clim_path, mode='w')
+#
+## Force garbage collection to free memory and close file handles
+#gc.collect()
+
+## Export reference model (27-0)
+#if ds_inf_weekly_27_0_ref is not None:
+#    print(f"Exporting reference model (27-0) data...")
+#    ds_inf_weekly_27_0_ref = ds_inf_weekly_27_0_ref.assign_coords(
+#        latitude=("values",lat_lon_coords["latitude"].values),
+#        longitude=("values", lat_lon_coords["longitude"].values),)
+#    ref_path_27_0 = os.path.join(output_dir, "reference_model_weekly_27_0.nc")
+#    if os.path.exists(ref_path_27_0):
+#        os.remove(ref_path_27_0)
+#    print(f"Saving reference model (27-0) to {ref_path_27_0}")
+#    ds_inf_weekly_27_0_ref.to_netcdf(ref_path_27_0, mode='w')
+#    
+#    if predicted_anomalies_ref_27_0 is not None:
+#        print(f"Exporting reference model (27-0) anomalies...")
+#        predicted_anomalies_ref_27_0 = predicted_anomalies_ref_27_0.assign_coords(
+#            latitude=("values",lat_lon_coords["latitude"].values),
+#            longitude=("values", lat_lon_coords["longitude"].values),)
+#        ref_anom_path_27_0 = os.path.join(output_dir, "reference_model_anomalies_weekly_27_0.nc")
+#        if os.path.exists(ref_anom_path_27_0):
+#            os.remove(ref_anom_path_27_0)
+#        print(f"Saving reference model (27-0) anomalies to {ref_anom_path_27_0}")
+#        # Use Zarr format for robust handling of large dask arrays
+#        zarr_path = ref_anom_path_27_0.replace('.nc', '.zarr')
+#        if os.path.exists(zarr_path):
+#            import shutil
+#            shutil.rmtree(zarr_path)
+#        predicted_anomalies_ref_27_0.to_zarr(zarr_path, mode='w', consolidated=True)
+#        print(f"  Saved to Zarr format: {zarr_path}")
+#    
+#    if ds_climatology_weekly_inf_27_0_ref is not None:
+#        print(f"Exporting reference model (27-0) climatology...")
+#        ds_climatology_weekly_inf_27_0_ref = ds_climatology_weekly_inf_27_0_ref.assign_coords(
+#            latitude=("values",lat_lon_coords["latitude"].values),
+#            longitude=("values", lat_lon_coords["longitude"].values),)
+#        ref_clim_path_27_0 = os.path.join(output_dir, "reference_model_climatology_weekly_27_0.nc")
+#        if os.path.exists(ref_clim_path_27_0):
+#            os.remove(ref_clim_path_27_0)
+#        print(f"Saving reference model (27-0) climatology to {ref_clim_path_27_0}")
+#        ds_climatology_weekly_inf_27_0_ref.to_netcdf(ref_clim_path_27_0, mode='w')
+#
+## Force garbage collection to free memory and close file handles
+#gc.collect()
+
+##################################################################################################################################
+# Export ROBUST climatology and anomalies
+print("=" * 80)
+print("EXPORTING ROBUST CLIMATOLOGY AND ANOMALIES")
+print("=" * 80)
+output_dir = "/ec/res4/scratch/nld4584/Anemoi_S2S_experiment/output_preprocessing"
+
+# Export ROBUST observations climatology and anomalies
+#if ds_climatology_weekly_obs_robust is not None:
+#    ds_climatology_weekly_obs_robust = ds_climatology_weekly_obs_robust.assign_coords(
+#        latitude=("values", lat_lon_coords["latitude"].values),
+#        longitude=("values", lat_lon_coords["longitude"].values))
+#    obs_clim_robust_path = os.path.join(output_dir, "observations_climatology_weekly_27_0_ROBUST.nc")
+#    if os.path.exists(obs_clim_robust_path):
+#        os.remove(obs_clim_robust_path)
+#    print(f"Saving ROBUST observation climatology to {obs_clim_robust_path}")
+#    encoding = create_netcdf_encoding(ds_climatology_weekly_obs_robust)
+#    ds_climatology_weekly_obs_robust.to_netcdf(obs_clim_robust_path, mode='w', encoding=encoding)
+    
+#    if observed_anomalies_robust is not None:
+#        observed_anomalies_robust = observed_anomalies_robust.assign_coords(
+#            latitude=("values", lat_lon_coords["latitude"].values),
+#            longitude=("values", lat_lon_coords["longitude"].values))
+#        obs_anom_robust_path = os.path.join(output_dir, "observations_anomalies_weekly_27_0_ROBUST.nc")
+#        if os.path.exists(obs_anom_robust_path):
+#            os.remove(obs_anom_robust_path)
+#        print(f"Saving ROBUST observation anomalies to {obs_anom_robust_path}")
+#        zarr_path = obs_anom_robust_path.replace('.nc', '.zarr')
+#        if os.path.exists(zarr_path):
+#            import shutil
+#            shutil.rmtree(zarr_path)
+#        observed_anomalies_robust.to_zarr(zarr_path, mode='w', consolidated=True)
+#        print(f"  Saved to Zarr format: {zarr_path}")
+
+# Force garbage collection
+#gc.collect()
+
+# Export ROBUST weekly finetuned model climatology and anomalies
+#if ds_climatology_weekly_inf_robust is not None:
+#    ds_climatology_weekly_inf_robust = ds_climatology_weekly_inf_robust.assign_coords(
+#        latitude=("values", lat_lon_coords["latitude"].values),
+#        longitude=("values", lat_lon_coords["longitude"].values))
+#    weekly_clim_robust_path = os.path.join(output_dir, "weekly_finetuned_model_climatology_27_0_ROBUST.nc")
+#    if os.path.exists(weekly_clim_robust_path):
+#        os.remove(weekly_clim_robust_path)
+#    print(f"Saving ROBUST weekly finetuned model climatology to {weekly_clim_robust_path}")
+#    encoding = create_netcdf_encoding(ds_climatology_weekly_inf_robust)
+#    ds_climatology_weekly_inf_robust.to_netcdf(weekly_clim_robust_path, mode='w', encoding=encoding)
+    
+# Already exported - weekly_finetuned_model_anomalies_27_0_ROBUST.zarr
+#if predicted_anomalies_weekly_robust is not None:
+#    predicted_anomalies_weekly_robust = predicted_anomalies_weekly_robust.assign_coords(
+#        latitude=("values", lat_lon_coords["latitude"].values),
+#        longitude=("values", lat_lon_coords["longitude"].values))
+#    weekly_anom_robust_path = os.path.join(output_dir, "weekly_finetuned_model_anomalies_27_0_ROBUST.nc")
+#    if os.path.exists(weekly_anom_robust_path):
+#        os.remove(weekly_anom_robust_path)
+#    print(f"Saving ROBUST weekly finetuned model anomalies to {weekly_anom_robust_path}")
+#    zarr_path = weekly_anom_robust_path.replace('.nc', '.zarr')
+#    if os.path.exists(zarr_path):
+#        import shutil
+#        shutil.rmtree(zarr_path)
+#    predicted_anomalies_weekly_robust.to_zarr(zarr_path, mode='w', consolidated=True)
+#    print(f"  Saved to Zarr format: {zarr_path}")
+
+# Force garbage collection
+gc.collect()
+
+# Export ROBUST daily finetuned model climatology and anomalies
+if ds_climatology_weekly_inf_daily_robust is not None:
+    ds_climatology_weekly_inf_daily_robust = ds_climatology_weekly_inf_daily_robust.assign_coords(
         latitude=("values", lat_lon_coords["latitude"].values),
         longitude=("values", lat_lon_coords["longitude"].values))
+    daily_clim_robust_path = os.path.join(output_dir, "daily_finetuned_model_weekly_climatology_3_0_ROBUST.zarr")
+    if os.path.exists(daily_clim_robust_path):
+        import shutil
+        shutil.rmtree(daily_clim_robust_path)
+    print(f"Saving ROBUST daily finetuned model weekly climatology to {daily_clim_robust_path}")
+    ds_climatology_weekly_inf_daily_robust.to_zarr(daily_clim_robust_path, mode='w', consolidated=True)
+    print(f"  Saved to Zarr format: {daily_clim_robust_path}")
     
-    
-    weekly_27_0_path = os.path.join(output_dir, "weekly_finetuned_model_27_0.nc")
-    if os.path.exists(weekly_27_0_path):
-        os.remove(weekly_27_0_path)
-    print(f"Saving weekly finetuned model (27-0) to {weekly_27_0_path}")
-    ds_inf_weekly_27_0.to_netcdf(weekly_27_0_path, mode='w')
-    
-    if predicted_anomalies_weekly_27_0 is not None:
-        predicted_anomalies_weekly_27_0 = predicted_anomalies_weekly_27_0.assign_coords(
+    if predicted_anomalies_daily_robust is not None:
+        predicted_anomalies_daily_robust = predicted_anomalies_daily_robust.assign_coords(
             latitude=("values", lat_lon_coords["latitude"].values),
             longitude=("values", lat_lon_coords["longitude"].values))
-        weekly_27_0_anom_path = os.path.join(output_dir, "weekly_finetuned_model_anomalies_27_0.nc")
-        if os.path.exists(weekly_27_0_anom_path):
-            os.remove(weekly_27_0_anom_path)
-        print(f"Saving weekly finetuned model anomalies (27-0) to {weekly_27_0_anom_path}")
-        # Use Zarr format for robust handling of large dask arrays
-        zarr_path = weekly_27_0_anom_path.replace('.nc', '.zarr')
+        daily_anom_robust_path = os.path.join(output_dir, "daily_finetuned_model_weekly_anomalies_3_0_ROBUST.nc")
+        if os.path.exists(daily_anom_robust_path):
+            os.remove(daily_anom_robust_path)
+        print(f"Saving ROBUST daily finetuned model weekly anomalies to {daily_anom_robust_path}")
+        zarr_path = daily_anom_robust_path.replace('.nc', '.zarr')
         if os.path.exists(zarr_path):
             import shutil
             shutil.rmtree(zarr_path)
-        predicted_anomalies_weekly_27_0.to_zarr(zarr_path, mode='w', consolidated=True)
+        predicted_anomalies_daily_robust.to_zarr(zarr_path, mode='w', consolidated=True)
         print(f"  Saved to Zarr format: {zarr_path}")
-    
-    if ds_climatology_weekly_inf_27_0 is not None:
-        ds_climatology_weekly_inf_27_0 = ds_climatology_weekly_inf_27_0.assign_coords(
-            latitude=("values", lat_lon_coords["latitude"].values),
-            longitude=("values", lat_lon_coords["longitude"].values))
-        weekly_27_0_clim_path = os.path.join(output_dir, "weekly_finetuned_model_climatology_27_0.nc")
-        if os.path.exists(weekly_27_0_clim_path):
-            os.remove(weekly_27_0_clim_path)
-        print(f"Saving weekly finetuned model climatology (27-0) to {weekly_27_0_clim_path}")
-        ds_climatology_weekly_inf_27_0.to_netcdf(weekly_27_0_clim_path, mode='w')
 
-# Force garbage collection to free memory and close file handles
+# Force garbage collection
 gc.collect()
 
-# Export daily finetuned model weekly aggregation (3-0)
-if ds_inf_daily_weekly_3_0 is not None:
-    ds_inf_daily_weekly_3_0 = ds_inf_daily_weekly_3_0.assign_coords(
+# Export ROBUST reference model climatology and anomalies
+if ds_climatology_weekly_inf_ref_robust is not None:
+    ds_climatology_weekly_inf_ref_robust = ds_climatology_weekly_inf_ref_robust.assign_coords(
         latitude=("values", lat_lon_coords["latitude"].values),
         longitude=("values", lat_lon_coords["longitude"].values))
+    ref_clim_robust_path = os.path.join(output_dir, "reference_model_climatology_weekly_27_0_ROBUST.zarr")
+    if os.path.exists(ref_clim_robust_path):
+        import shutil
+        shutil.rmtree(ref_clim_robust_path)
+    print(f"Saving ROBUST reference model climatology to {ref_clim_robust_path}")
+    ds_climatology_weekly_inf_ref_robust.to_zarr(ref_clim_robust_path, mode='w', consolidated=True)
+    print(f"  Saved to Zarr format: {ref_clim_robust_path}")
     
-    daily_3_0_weekly_path = os.path.join(output_dir, "daily_finetuned_model_weekly_3_0.nc")
-    if os.path.exists(daily_3_0_weekly_path):
-        os.remove(daily_3_0_weekly_path)
-    print(f"Saving daily finetuned model weekly (3-0) to {daily_3_0_weekly_path}")
-    ds_inf_daily_weekly_3_0.to_netcdf(daily_3_0_weekly_path, mode='w')
-    
-    if predicted_anomalies_daily_3_0 is not None:
-        predicted_anomalies_daily_3_0 = predicted_anomalies_daily_3_0.assign_coords(
+    if predicted_anomalies_ref_robust is not None:
+        predicted_anomalies_ref_robust = predicted_anomalies_ref_robust.assign_coords(
             latitude=("values", lat_lon_coords["latitude"].values),
             longitude=("values", lat_lon_coords["longitude"].values))
-        daily_3_0_weekly_anom_path = os.path.join(output_dir, "daily_finetuned_model_weekly_anomalies_3_0.nc")
-        if os.path.exists(daily_3_0_weekly_anom_path):
-            os.remove(daily_3_0_weekly_anom_path)
-        print(f"Saving daily finetuned model weekly anomalies (3-0) to {daily_3_0_weekly_anom_path}")
-        # Use Zarr format for robust handling of large dask arrays
-        zarr_path = daily_3_0_weekly_anom_path.replace('.nc', '.zarr')
+        ref_anom_robust_path = os.path.join(output_dir, "reference_model_anomalies_weekly_27_0_ROBUST.nc")
+        if os.path.exists(ref_anom_robust_path):
+            os.remove(ref_anom_robust_path)
+        print(f"Saving ROBUST reference model anomalies to {ref_anom_robust_path}")
+        zarr_path = ref_anom_robust_path.replace('.nc', '.zarr')
         if os.path.exists(zarr_path):
             import shutil
             shutil.rmtree(zarr_path)
-        predicted_anomalies_daily_3_0.to_zarr(zarr_path, mode='w', consolidated=True)
+        predicted_anomalies_ref_robust.to_zarr(zarr_path, mode='w', consolidated=True)
         print(f"  Saved to Zarr format: {zarr_path}")
-    
-    if ds_climatology_weekly_inf_daily_3_0 is not None:
-        ds_climatology_weekly_inf_daily_3_0 = ds_climatology_weekly_inf_daily_3_0.assign_coords(
-            latitude=("values", lat_lon_coords["latitude"].values),
-            longitude=("values", lat_lon_coords["longitude"].values))
-        daily_3_0_weekly_clim_path = os.path.join(output_dir, "daily_finetuned_model_weekly_climatology_3_0.nc")
-        if os.path.exists(daily_3_0_weekly_clim_path):
-            os.remove(daily_3_0_weekly_clim_path)
-        print(f"Saving daily finetuned model weekly climatology (3-0) to {daily_3_0_weekly_clim_path}")
-        ds_climatology_weekly_inf_daily_3_0.to_netcdf(daily_3_0_weekly_clim_path, mode='w')
 
-# Force garbage collection to free memory and close file handles
+# Force garbage collection
 gc.collect()
 
-# Export reference model (27-0)
-if ds_inf_weekly_27_0_ref is not None:
-    print(f"Exporting reference model (27-0) data...")
-    ds_inf_weekly_27_0_ref = ds_inf_weekly_27_0_ref.assign_coords(
-        latitude=("values",lat_lon_coords["latitude"].values),
-        longitude=("values", lat_lon_coords["longitude"].values),)
-    ref_path_27_0 = os.path.join(output_dir, "reference_model_weekly_27_0.nc")
-    if os.path.exists(ref_path_27_0):
-        os.remove(ref_path_27_0)
-    print(f"Saving reference model (27-0) to {ref_path_27_0}")
-    ds_inf_weekly_27_0_ref.to_netcdf(ref_path_27_0, mode='w')
-    
-    if predicted_anomalies_ref_27_0 is not None:
-        print(f"Exporting reference model (27-0) anomalies...")
-        predicted_anomalies_ref_27_0 = predicted_anomalies_ref_27_0.assign_coords(
-            latitude=("values",lat_lon_coords["latitude"].values),
-            longitude=("values", lat_lon_coords["longitude"].values),)
-        ref_anom_path_27_0 = os.path.join(output_dir, "reference_model_anomalies_weekly_27_0.nc")
-        if os.path.exists(ref_anom_path_27_0):
-            os.remove(ref_anom_path_27_0)
-        print(f"Saving reference model (27-0) anomalies to {ref_anom_path_27_0}")
-        # Use Zarr format for robust handling of large dask arrays
-        zarr_path = ref_anom_path_27_0.replace('.nc', '.zarr')
-        if os.path.exists(zarr_path):
-            import shutil
-            shutil.rmtree(zarr_path)
-        predicted_anomalies_ref_27_0.to_zarr(zarr_path, mode='w', consolidated=True)
-        print(f"  Saved to Zarr format: {zarr_path}")
-    
-    if ds_climatology_weekly_inf_27_0_ref is not None:
-        print(f"Exporting reference model (27-0) climatology...")
-        ds_climatology_weekly_inf_27_0_ref = ds_climatology_weekly_inf_27_0_ref.assign_coords(
-            latitude=("values",lat_lon_coords["latitude"].values),
-            longitude=("values", lat_lon_coords["longitude"].values),)
-        ref_clim_path_27_0 = os.path.join(output_dir, "reference_model_climatology_weekly_27_0.nc")
-        if os.path.exists(ref_clim_path_27_0):
-            os.remove(ref_clim_path_27_0)
-        print(f"Saving reference model (27-0) climatology to {ref_clim_path_27_0}")
-        ds_climatology_weekly_inf_27_0_ref.to_netcdf(ref_clim_path_27_0, mode='w')
+print("=" * 80)
+print("ROBUST CLIMATOLOGY AND ANOMALIES EXPORT COMPLETE")
+print("=" * 80)
 
-# Force garbage collection to free memory and close file handles
-gc.collect()
-
+##################################################################################################################################
 # Export lat_weights for use in metrics computation
-lat_weights_path = os.path.join(output_dir, "lat_weights.nc")
+lat_weights_path = os.path.join(output_dir, "lat_weights.zarr")
 if os.path.exists(lat_weights_path):
-    os.remove(lat_weights_path)
+    import shutil
+    shutil.rmtree(lat_weights_path)
 print(f"Saving latitude weights to {lat_weights_path}")
 lat_weights_ds = xr.Dataset({'lat_weights': lat_weights})
-lat_weights_ds.to_netcdf(lat_weights_path, mode='w')
+lat_weights_ds.to_zarr(lat_weights_path, mode='w', consolidated=True)
+print(f"  Saved to Zarr format: {lat_weights_path}")
 
 print("=" * 80)
 print("PREPROCESSING COMPLETE - 75 INIT DATES")
 print(f"All preprocessed data saved to: {output_dir}")
+print("  - ROBUST climatology and anomalies (±1 init_date indices)")
+print("  - All files in Zarr format for fast I/O")
 print("=" * 80)
